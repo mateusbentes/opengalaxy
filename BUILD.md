@@ -375,5 +375,6 @@ After building:
 ## 💬 Need Help?
 
 - Check [FAQ](FAQ.md)
-- Open an issue: https://github.com/yourusername/opengalaxy/issues
-- Join discussions: https://github.com/yourusername/opengalaxy/discussions
+- Open an issue: https://github.com/mateusbentes/opengalaxy/issues
+- Join discussions: https://github.com/mateusbentes/opengalaxy/discussions
+- Email: mateusbentes@tuta.io

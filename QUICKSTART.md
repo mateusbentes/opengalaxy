@@ -102,4 +102,6 @@ See [BUILD.md](BUILD.md) for detailed instructions.
 
 ## 💬 Need Help?
 
-Open an issue: https://github.com/yourusername/opengalaxy/issues
+- Issues: https://github.com/mateusbentes/opengalaxy/issues
+- Discussions: https://github.com/mateusbentes/opengalaxy/discussions
+- Email: mateusbentes@tuta.io

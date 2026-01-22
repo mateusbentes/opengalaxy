@@ -235,9 +235,9 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## 📧 Contact
 
-- **Issues**: https://github.com/yourusername/opengalaxy/issues
-- **Discussions**: https://github.com/yourusername/opengalaxy/discussions
-- **Email**: contact@opengalaxy.org
+- **Issues**: https://github.com/mateusbentes/opengalaxy/issues
+- **Discussions**: https://github.com/mateusbentes/opengalaxy/discussions
+- **Email**: mateusbentes@tuta.io
 
 ## 🗺️ Roadmap
 

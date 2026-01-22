@@ -307,9 +307,10 @@ opengalaxy/
 
 ## 💬 Communication
 
-- **GitHub Issues**: Bug reports and feature requests
-- **GitHub Discussions**: General questions and ideas
-- **Pull Requests**: Code contributions
+- **GitHub Issues**: https://github.com/mateusbentes/opengalaxy/issues
+- **GitHub Discussions**: https://github.com/mateusbentes/opengalaxy/discussions
+- **Email**: mateusbentes@tuta.io
+- **Pull Requests**: Code contributions welcome
 
 ## 📜 License
 
