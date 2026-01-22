@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Core library sources
+# Core library sources
 set(CORE_SOURCES
     src/util/log.cpp
     src/net/http_client.cpp
@@ -8,6 +9,7 @@ set(CORE_SOURCES
     src/api/gog_client.cpp
     src/runners/runner.cpp
     src/runners/runner_manager.cpp
+    src/runners/wrapper_runner.cpp
     src/library/library_service.cpp
     src/install/install_service.cpp
 )

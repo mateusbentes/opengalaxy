@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
+#include "wrapper_runner.h"
 #include <QProcess>
 #include <QFileInfo>
 #include <QDir>
-
 namespace opengalaxy::runners {
 
 // Simple native runner implementation
@@ -65,15 +65,28 @@ RunnerManager::~RunnerManager() = default;
 void RunnerManager::discoverRunners()
 {
     LOG_INFO("Discovering runners...");
-    
+
     // Always add native runner
     registerRunner(std::make_unique<NativeRunner>());
-    
-    // TODO: Discover Wine, Proton, DOSBox, ISA translators
-    
+
+    // ISA translators / wrappers (availability checked via executable existence)
+#ifdef Q_OS_LINUX
+    registerRunner(std::make_unique<WrapperRunner>("Box64", "/usr/bin/box64", Platform::Linux,
+                                                  Architecture::ARM64, Architecture::X86_64, true));
+    registerRunner(std::make_unique<WrapperRunner>("FEX", "/usr/bin/FEXInterpreter", Platform::Linux,
+                                                  Architecture::ARM64, Architecture::X86_64, true));
+    registerRunner(std::make_unique<WrapperRunner>("QEMU", "/usr/bin/qemu-x86_64", Platform::Linux,
+                                                  Architecture::ARM64, Architecture::X86_64, true));
+#endif
+#ifdef Q_OS_MACOS
+    // Note: Rosetta 2 does not have a stable public wrapper executable;
+    // we expose it as a logical runner name and use /usr/bin/arch to request x86_64.
+    registerRunner(std::make_unique<WrapperRunner>("Rosetta2", "/usr/bin/arch", Platform::MacOS,
+                                                  Architecture::ARM64, Architecture::X86_64, true));
+#endif
+
     emit runnersDiscovered(static_cast<int>(runners_.size()));
 }
-
 std::vector<RunnerCapabilities> RunnerManager::availableRunners() const
 {
     std::vector<RunnerCapabilities> caps;

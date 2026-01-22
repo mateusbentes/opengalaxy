@@ -10,25 +10,35 @@
 #include "opengalaxy/install/install_service.h"
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
-#include "main.moc"
+// main.moc is included by CMake's AUTOGEN; do not include it manually in a .cpp
 
 using namespace opengalaxy;
 
-class CLI : public QObject {
-    Q_OBJECT
-
+class CLI {
 public:
-    CLI(QCoreApplication* app) : app_(app) {
-        session_ = new api::Session(this);
-        gogClient_ = new api::GOGClient(session_, this);
-        libraryService_ = new library::LibraryService(gogClient_, this);
-        installService_ = new install::InstallService(this);
-        runnerManager_ = new runners::RunnerManager(this);
+    CLI(QCoreApplication* app)
+        : app_(app)
+    {
+        session_ = new api::Session();
+        gogClient_ = new api::GOGClient(session_);
+        libraryService_ = new library::LibraryService(gogClient_);
+        installService_ = new install::InstallService();
+        runnerManager_ = new runners::RunnerManager();
     }
 
-    void login(const QString& username, const QString& password) {
+    ~CLI()
+    {
+        delete runnerManager_;
+        delete installService_;
+        delete libraryService_;
+        delete gogClient_;
+        delete session_;
+    }
+
+    void login(const QString& username, const QString& password)
+    {
         std::cout << "Logging in..." << std::endl;
-        
+
         session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
             if (result.isOk()) {
                 std::cout << "Login successful!" << std::endl;
@@ -40,7 +50,8 @@ public:
         });
     }
 
-    void listGames() {
+    void listGames()
+    {
         if (!session_->isAuthenticated()) {
             std::cerr << "Not logged in. Please login first." << std::endl;
             app_->exit(1);
@@ -48,12 +59,12 @@ public:
         }
 
         std::cout << "Fetching library..." << std::endl;
-        
+
         libraryService_->fetchLibrary(false, [this](util::Result<std::vector<api::GameInfo>> result) {
             if (result.isOk()) {
                 const auto& games = result.value();
                 std::cout << "\nYour library (" << games.size() << " games):\n" << std::endl;
-                
+
                 for (const auto& game : games) {
                     std::cout << "  " << game.title.toStdString();
                     if (game.isInstalled) {
@@ -64,7 +75,7 @@ public:
                     std::cout << "    Platform: " << game.platform.toStdString() << std::endl;
                     std::cout << std::endl;
                 }
-                
+
                 app_->quit();
             } else {
                 std::cerr << "Failed to fetch library: " << result.errorMessage().toStdString() << std::endl;
@@ -73,7 +84,8 @@ public:
         });
     }
 
-    void installGame(const QString& gameId, const QString& installDir) {
+    void installGame(const QString& gameId, const QString& installDir)
+    {
         if (!session_->isAuthenticated()) {
             std::cerr << "Not logged in. Please login first." << std::endl;
             app_->exit(1);
@@ -81,7 +93,7 @@ public:
         }
 
         std::cout << "Fetching game details..." << std::endl;
-        
+
         libraryService_->getGame(gameId, [this, installDir](util::Result<api::GameInfo> result) {
             if (!result.isOk()) {
                 std::cerr << "Game not found: " << result.errorMessage().toStdString() << std::endl;
@@ -96,8 +108,7 @@ public:
                 game,
                 installDir,
                 [](const install::InstallService::InstallProgress& progress) {
-                    std::cout << "\r[" << progress.percentage << "%] " 
-                             << progress.status.toStdString() << "..." << std::flush;
+                    std::cout << "\r[" << progress.percentage << "%] " << progress.status.toStdString() << "..." << std::flush;
                 },
                 [this](util::Result<QString> result) {
                     std::cout << std::endl;
@@ -108,12 +119,12 @@ public:
                         std::cerr << "Installation failed: " << result.errorMessage().toStdString() << std::endl;
                         app_->exit(1);
                     }
-                }
-            );
+                });
         });
     }
 
-    void launchGame(const QString& gameId) {
+    void launchGame(const QString& gameId)
+    {
         if (!session_->isAuthenticated()) {
             std::cerr << "Not logged in. Please login first." << std::endl;
             app_->exit(1);
@@ -128,7 +139,7 @@ public:
             }
 
             const auto& game = result.value();
-            
+
             if (!game.isInstalled) {
                 std::cerr << "Game is not installed." << std::endl;
                 app_->exit(1);
@@ -150,7 +161,7 @@ public:
             }
 
             std::cout << "Using runner: " << runner->name().toStdString() << std::endl;
-            
+
             auto process = runner->launch(config);
             if (!process) {
                 std::cerr << "Failed to launch game." << std::endl;
@@ -159,21 +170,21 @@ public:
             }
 
             std::cout << "Game launched successfully." << std::endl;
-            
-            // Keep process alive - transfer ownership to parent or wait
+
             process->setParent(app_);
             process.release();
             app_->quit();
         });
     }
 
-    void listRunners() {
+    void listRunners()
+    {
         std::cout << "Discovering runners..." << std::endl;
         runnerManager_->discoverRunners();
-        
+
         auto runners = runnerManager_->availableRunners();
-        std::cout << "\nAvailable runners (" << runners.size() << "):\n" << std::endl;
-        
+        std::cout << "\nAvailable runners (" << runners.size() << "): \n" << std::endl;
+
         for (const auto& runner : runners) {
             std::cout << "  " << runner.name.toStdString() << " " << runner.version.toStdString() << std::endl;
             std::cout << "    Path: " << runner.executablePath.toStdString() << std::endl;
@@ -186,7 +197,7 @@ public:
                 default: std::cout << "Unknown"; break;
             }
             std::cout << std::endl;
-            
+
             if (runner.requiresISATranslation) {
                 std::cout << "    ISA Translation: ";
                 switch (runner.hostArch) {
@@ -208,7 +219,7 @@ public:
             }
             std::cout << std::endl;
         }
-        
+
         app_->quit();
     }
 

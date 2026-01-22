@@ -1,24 +1,32 @@
 #include "game_card.h"
+
 #include <QVBoxLayout>
-#include <QHBoxLayout>
 #include <QGraphicsOpacityEffect>
+#include <QMouseEvent>
 
 namespace opengalaxy {
 namespace ui {
 
-GameCard::GameCard(const QString &title, const QString &platform, const QString &coverUrl, QWidget *parent)
+GameCard::GameCard(const QString& gameId,
+                   const QString& title,
+                   const QString& platform,
+                   const QString& coverUrl,
+                   QWidget* parent)
     : QWidget(parent)
+    , gameId_(gameId)
 {
+    Q_UNUSED(coverUrl);
+
     setFixedSize(280, 400);
     setCursor(Qt::PointingHandCursor);
-    
+
     // Main layout
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
-    
+
     // Cover image container
-    QWidget* coverContainer = new QWidget(this);
+    auto* coverContainer = new QWidget(this);
     coverContainer->setFixedSize(280, 320);
     coverContainer->setStyleSheet(R"(
         QWidget {
@@ -27,10 +35,10 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
             border-radius: 12px;
         }
     )");
-    
-    QVBoxLayout* coverLayout = new QVBoxLayout(coverContainer);
+
+    auto* coverLayout = new QVBoxLayout(coverContainer);
     coverLayout->setContentsMargins(0, 0, 0, 0);
-    
+
     // Cover image (placeholder)
     coverImage = new QLabel(coverContainer);
     coverImage->setAlignment(Qt::AlignCenter);
@@ -43,7 +51,7 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
         }
     )");
     coverLayout->addWidget(coverImage);
-    
+
     // Play button overlay (hidden by default)
     playButton = new QPushButton("▶ PLAY", coverContainer);
     playButton->setFixedSize(120, 45);
@@ -63,15 +71,16 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
         }
     )");
     playButton->hide();
-    
+    connect(playButton, &QPushButton::clicked, this, [this]() { emit playRequested(gameId_); });
+
     // Position play button in center
     playButton->move((coverContainer->width() - playButton->width()) / 2,
                      (coverContainer->height() - playButton->height()) / 2);
-    
+
     mainLayout->addWidget(coverContainer);
-    
+
     // Info section
-    QWidget* infoContainer = new QWidget(this);
+    auto* infoContainer = new QWidget(this);
     infoContainer->setFixedHeight(80);
     infoContainer->setStyleSheet(R"(
         QWidget {
@@ -80,12 +89,11 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
             border-bottom-right-radius: 12px;
         }
     )");
-    
-    QVBoxLayout* infoLayout = new QVBoxLayout(infoContainer);
+
+    auto* infoLayout = new QVBoxLayout(infoContainer);
     infoLayout->setContentsMargins(16, 12, 16, 12);
     infoLayout->setSpacing(4);
-    
-    // Game title
+
     gameTitle = new QLabel(title, infoContainer);
     gameTitle->setStyleSheet(R"(
         QLabel {
@@ -98,8 +106,7 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
     gameTitle->setWordWrap(true);
     gameTitle->setMaximumHeight(40);
     infoLayout->addWidget(gameTitle);
-    
-    // Platform
+
     platformLabel = new QLabel(platform, infoContainer);
     platformLabel->setStyleSheet(R"(
         QLabel {
@@ -109,9 +116,9 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
         }
     )");
     infoLayout->addWidget(platformLabel);
-    
+
     mainLayout->addWidget(infoContainer);
-    
+
     // Card style
     setStyleSheet(R"(
         GameCard {
@@ -119,71 +126,67 @@ GameCard::GameCard(const QString &title, const QString &platform, const QString 
             border-radius: 12px;
         }
     )");
-    
+
     // Shadow effect
     shadowEffect = new QGraphicsDropShadowEffect(this);
     shadowEffect->setBlurRadius(20);
     shadowEffect->setColor(QColor(0, 0, 0, 100));
     shadowEffect->setOffset(0, 4);
     setGraphicsEffect(shadowEffect);
-    
+
     setupAnimations();
 }
 
-GameCard::~GameCard()
-{
-}
+GameCard::~GameCard() = default;
 
 void GameCard::setupAnimations()
 {
-    // Hover lift animation
     hoverAnimation = new QPropertyAnimation(this, "pos");
     hoverAnimation->setDuration(200);
     hoverAnimation->setEasingCurve(QEasingCurve::OutCubic);
-    
-    // Shadow animation
+
     shadowAnimation = new QPropertyAnimation(shadowEffect, "blurRadius");
     shadowAnimation->setDuration(200);
     shadowAnimation->setEasingCurve(QEasingCurve::OutCubic);
 }
 
-void GameCard::enterEvent(QEnterEvent *event)
+void GameCard::mouseDoubleClickEvent(QMouseEvent* event)
 {
     Q_UNUSED(event);
-    
-    // Lift card
+    emit detailsRequested(gameId_);
+}
+
+void GameCard::enterEvent(QEnterEvent* event)
+{
+    Q_UNUSED(event);
+
     QPoint currentPos = pos();
     hoverAnimation->setStartValue(currentPos);
     hoverAnimation->setEndValue(currentPos - QPoint(0, 8));
     hoverAnimation->start();
-    
-    // Increase shadow
+
     shadowAnimation->setStartValue(20);
     shadowAnimation->setEndValue(35);
     shadowAnimation->start();
-    
-    // Show play button
+
     playButton->show();
-    
+
     QWidget::enterEvent(event);
 }
 
-void GameCard::leaveEvent(QEvent *event)
+void GameCard::leaveEvent(QEvent* event)
 {
-    // Lower card
     QPoint currentPos = pos();
     hoverAnimation->setStartValue(currentPos);
     hoverAnimation->setEndValue(currentPos + QPoint(0, 8));
     hoverAnimation->start();
-    
-    // Decrease shadow
+
     shadowAnimation->setStartValue(35);
     shadowAnimation->setEndValue(20);
     shadowAnimation->start();
-    
-    // Hide play button
+
     playButton->hide();
-    
+
     QWidget::leaveEvent(event);
 }
 

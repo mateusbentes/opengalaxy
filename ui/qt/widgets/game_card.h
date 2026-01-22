@@ -15,16 +15,27 @@ class GameCard : public QWidget
     Q_OBJECT
 
 public:
-    explicit GameCard(const QString &title, const QString &platform, const QString &coverUrl, QWidget *parent = nullptr);
+    explicit GameCard(const QString& gameId,
+                      const QString &title,
+                      const QString &platform,
+                      const QString &coverUrl,
+                      QWidget *parent = nullptr);
     ~GameCard();
+
+signals:
+    void playRequested(const QString& gameId);
+    void detailsRequested(const QString& gameId);
 
 protected:
     void enterEvent(QEnterEvent *event) override;
     void leaveEvent(QEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent* event) override;
 
 private:
     void setupAnimations();
-    
+
+    QString gameId_;
+
     QLabel *coverImage;
     QLabel *gameTitle;
     QLabel *platformLabel;
@@ -33,7 +44,6 @@ private:
     QPropertyAnimation *hoverAnimation;
     QPropertyAnimation *shadowAnimation;
 };
-
 } // namespace ui
 } // namespace opengalaxy
 
