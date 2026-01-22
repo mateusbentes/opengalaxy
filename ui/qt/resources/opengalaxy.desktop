@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=OpenGalaxy
+GenericName=Game Launcher
+Comment=Open-source GOG Galaxy alternative
+Icon=opengalaxy
+Exec=opengalaxy
+Terminal=false
+Categories=Game;
+Keywords=games;gog;launcher;

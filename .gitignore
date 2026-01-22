@@ -1,41 +1,149 @@
-# Prerequisites
-*.d
+# Build directories
+build/
+build-*/
+builds/
+cmake-build-*/
+cmake-build-debug/
+cmake-build-release/
+out/
+bin/
+lib/
+dist/
+target/
+.build/
+_build/
 
-# Compiled Object files
-*.slo
-*.lo
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+
+# Qt
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.qm
+.qmake.stash
+
+# C++ compiled files
 *.o
 *.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
 *.so
+*.so.*
 *.dylib
 *.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
 *.lib
-
-# Executables
 *.exe
 *.out
 *.app
 
-# debug information files
-*.dwo
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.autosave
+
+# AI Assistants
+.refact/
+.refact_knowledge/
+.qodo/
+.cursor/
+.aider*
+.copilot/
+
+# Qt Creator
+*.user
+*.user.*
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+
+# Temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.cache
+
+# Package files
+*.deb
+*.rpm
+*.AppImage
+*.dmg
+*.pkg
+*.exe
+*.msi
+
+# Test results
+Testing/
+*.gcov
+*.gcda
+*.gcno
+coverage/
+coverage.info
+
+# Documentation build
+docs/_build/
+docs/html/
+docs/latex/
+
+# Session and user data (for development)
+*.json
+!package.json
+!tsconfig.json
+
+# Backup files
+*~
+*.orig
+*.rej
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Application data (don't commit user sessions)
+session.json
+opengalaxy.log
+
+# Third-party dependencies (if using submodules)
+third_party/*/
+!third_party/.gitkeep
+
+# Packaging artifacts
+*.tar.gz
+*.zip
+AppDir/
+flatpak-build/
