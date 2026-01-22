@@ -106,28 +106,10 @@ LoginPage::LoginPage(QWidget *parent)
     )");
     containerLayout->addWidget(loginButton);
     
-    // OAuth button
-    QPushButton* oauthButton = new QPushButton("Sign In with Browser (OAuth)", container);
-    oauthButton->setStyleSheet(R"(
-        QPushButton {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(124, 77, 255, 0.3);
-            border-radius: 12px;
-            padding: 14px 40px;
-            color: #b8b8d1;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        QPushButton:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: #7c4dff;
-            color: #ffffff;
-        }
-    )");
-    containerLayout->addWidget(oauthButton);
-    
+    // (OAuth removed; password login only)
+
     containerLayout->addStretch();
-    
+
     // Add container to main layout with centering
     mainLayout->addStretch();
     QHBoxLayout* centerLayout = new QHBoxLayout();
@@ -136,7 +118,7 @@ LoginPage::LoginPage(QWidget *parent)
     centerLayout->addStretch();
     mainLayout->addLayout(centerLayout);
     mainLayout->addStretch();
-    
+
     // Set page background
     setStyleSheet(R"(
         LoginPage {
@@ -144,10 +126,9 @@ LoginPage::LoginPage(QWidget *parent)
                 stop:0 #1a0f2e, stop:1 #2d1b4e);
         }
     )");
-    
+
     // Connect signals
     connect(loginButton, &QPushButton::clicked, this, &LoginPage::onLoginClicked);
-    connect(oauthButton, &QPushButton::clicked, this, &LoginPage::onOAuthClicked);
     connect(passwordEdit, &QLineEdit::returnPressed, this, &LoginPage::onLoginClicked);
 }
 
@@ -157,25 +138,20 @@ LoginPage::~LoginPage()
 
 void LoginPage::onLoginClicked()
 {
-    QString username = usernameEdit->text().trimmed();
-    QString password = passwordEdit->text();
-    
+    const QString username = usernameEdit->text().trimmed();
+    const QString password = passwordEdit->text();
+
     if (username.isEmpty() || password.isEmpty()) {
         QMessageBox::warning(this, "Login Error", "Please enter both username and password.");
         return;
     }
-    
-    // For now, accept any login (demo mode)
-    // TODO: Connect to actual Session API
-    emit loginSuccess();
+
+    emit loginRequested(username, password);
 }
 
 void LoginPage::onOAuthClicked()
 {
-    // For now, just emit success (demo mode)
-    // TODO: Implement OAuth flow
-    QMessageBox::information(this, "OAuth Login", "OAuth login will open your browser.\nFor now, using demo mode.");
-    emit loginSuccess();
+    // Removed (password login only)
 }
 
 } // namespace ui

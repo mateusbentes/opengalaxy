@@ -19,14 +19,15 @@ Session::Session(QObject* parent) : QObject(parent), authenticated_(false) {
 
 Session::~Session() = default;
 
-void Session::loginWithPassword(const QString& username, const QString& password, AuthCallback callback) {
+void Session::loginWithPassword(const QString& username, const QString& password, AuthCallback callback)
+{
     QTimer::singleShot(100, this, [this, username, password, callback = std::move(callback)]() mutable {
         // NOTE: These are GOG's public OAuth client credentials for desktop applications.
         // They are not secret and are meant to be embedded in client applications.
         // See: https://gogapidocs.readthedocs.io/en/latest/auth.html
         const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
         const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
-        
+
         QJsonObject body;
         body["login"] = username;
         body["password"] = password;
@@ -35,33 +36,29 @@ void Session::loginWithPassword(const QString& username, const QString& password
         body["grant_type"] = "password";
 
         net::HttpClient* client = new net::HttpClient(this);
-        connect(client, &net::HttpClient::destroyed, this, &QObject::deleteLater);
-        client->post("https://auth.gog.com/token", QJsonDocument(body).toJson(), 
+        client->post("https://auth.gog.com/token", QJsonDocument(body).toJson(),
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
-            if (result) {
-                auto json = QJsonDocument::fromJson(result.value().body).object();
-                AuthTokens tokens;
-                tokens.accessToken = json["access_token"].toString();
-                tokens.refreshToken = json["refresh_token"].toString();
-                tokens.expiresAt = QDateTime::currentDateTime().addSecs(json["expires_in"].toInt());
-                setTokens(tokens);
-                fetchUserInfo([callback = std::move(callback)](util::Result<UserInfo> userResult) mutable {
-                    if (userResult) {
-                        callback(util::Result<AuthTokens>::success({}));
-                    } else {
-                        callback(util::Result<AuthTokens>::error(userResult.errorMessage()));
-                    }
-                });
-            } else {
-                callback(util::Result<AuthTokens>::error(result.errorMessage()));
-            }
-        });
+                         if (result) {
+                             auto json = QJsonDocument::fromJson(result.value().body).object();
+                             AuthTokens tokens;
+                             tokens.accessToken = json["access_token"].toString();
+                             tokens.refreshToken = json["refresh_token"].toString();
+                             tokens.expiresAt = QDateTime::currentDateTime().addSecs(json["expires_in"].toInt());
+                             setTokens(tokens);
+                             callback(util::Result<AuthTokens>::success(tokens));
+                         } else {
+                             callback(util::Result<AuthTokens>::error(result.errorMessage()));
+                         }
+                     });
     });
 }
 
-void Session::loginWithOAuth(AuthCallback callback) {
-    QTimer::singleShot(100, this, [callback = std::move(callback)]() mutable {
-        callback(util::Result<AuthTokens>::error("OAuth not implemented"));
+void Session::loginWithOAuth(AuthCallback callback)
+{
+    // Minimal, non-embedded implementation: use the already-working password flow disabled in UI,
+    // and require external tooling for now. We return a clear error until we implement PKCE + redirect.
+    QTimer::singleShot(0, this, [callback = std::move(callback)]() mutable {
+        callback(util::Result<AuthTokens>::error("OAuth web login not implemented yet (PKCE + local redirect server pending)."));
     });
 }
 
@@ -157,16 +154,33 @@ void Session::saveSession() {
     }
 }
 
-void Session::fetchUserInfo(UserCallback callback) {
-    QTimer::singleShot(100, this, [callback = std::move(callback)]() mutable {
+void Session::fetchUserInfo(UserCallback callback)
+{
+    // Matches MiniGalaxy approach: embed endpoint gives username with Bearer token.
+    net::HttpClient* client = new net::HttpClient(this);
+
+    net::HttpClient::Request req;
+    req.url = "https://embed.gog.com/userData.json";
+    req.method = "GET";
+    req.headers["Authorization"] = "Bearer " + tokens_.accessToken;
+
+    client->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+        if (!result.isOk()) {
+            callback(util::Result<UserInfo>::error(result.errorMessage()));
+            return;
+        }
+
+        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
         UserInfo user;
-        user.username = "testuser";
-        user.userId = "12345";
+        user.username = obj.value("username").toString();
+        user.userId = obj.value("userId").toVariant().toString();
         callback(util::Result<UserInfo>::success(user));
     });
 }
 
-QString Session::getSecureStoragePath() const {
+
+QString Session::getSecureStoragePath() const
+{
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/session.json";
 }
 

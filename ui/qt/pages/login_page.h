@@ -16,12 +16,11 @@ public:
     ~LoginPage();
 
 signals:
-    void loginSuccess();
+    void loginRequested(const QString& username, const QString& password);
 
 private slots:
     void onLoginClicked();
     void onOAuthClicked();
-
 private:
     QLineEdit* usernameEdit;
     QLineEdit* passwordEdit;

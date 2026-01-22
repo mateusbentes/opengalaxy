@@ -21,19 +21,49 @@ QString GOGClient::buildAuthHeader() const {
     return QString();
 }
 
-void GOGClient::fetchLibrary(GamesCallback callback) {
-    QTimer::singleShot(100, this, [this, callback = std::move(callback)]() mutable {
+void GOGClient::fetchLibrary(GamesCallback callback)
+{
+    QTimer::singleShot(0, this, [this, callback = std::move(callback)]() mutable {
         if (!session_->isAuthenticated()) {
             callback(util::Result<std::vector<GameInfo>>::error("Not authenticated"));
             return;
         }
-        std::vector<GameInfo> games;
-        GameInfo game;
-        game.id = "1234567890";
-        game.title = "Test Game";
-        game.platform = "windows";
-        games.push_back(game);
-        callback(util::Result<std::vector<GameInfo>>::success(games));
+
+        net::HttpClient::Request req;
+        req.url = "https://embed.gog.com/account/getFilteredProducts?mediaType=1&page=1";
+        req.method = "GET";
+        req.headers["Authorization"] = buildAuthHeader();
+
+        httpClient_->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+            if (!result.isOk()) {
+                callback(util::Result<std::vector<GameInfo>>::error(result.errorMessage()));
+                return;
+            }
+
+            const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
+            const QJsonArray products = obj.value("products").toArray();
+
+            std::vector<GameInfo> games;
+            games.reserve(products.size());
+
+            for (const auto& v : products) {
+                const QJsonObject p = v.toObject();
+                GameInfo g;
+                g.id = QString::number(p.value("id").toVariant().toLongLong());
+                g.title = p.value("title").toString();
+                g.coverUrl = p.value("image").toString();
+
+                const QJsonObject worksOn = p.value("worksOn").toObject();
+                if (worksOn.value("Linux").toBool()) g.platform = "linux";
+                else if (worksOn.value("Windows").toBool()) g.platform = "windows";
+                else if (worksOn.value("Mac").toBool() || worksOn.value("macOS").toBool()) g.platform = "mac";
+                else g.platform = "";
+
+                games.push_back(std::move(g));
+            }
+
+            callback(util::Result<std::vector<GameInfo>>::success(std::move(games)));
+        });
     });
 }
 

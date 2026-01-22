@@ -75,11 +75,9 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     QWidget* scrollWidget = new QWidget(scrollArea);
     gameGrid = new QGridLayout(scrollWidget);
-    gameGrid->setSpacing(20);
-    gameGrid->setContentsMargins(0, 0, 0, 0);
-
     scrollArea->setWidget(scrollWidget);
     mainLayout->addWidget(scrollArea);
+    mainLayout->addStretch(1);
 
     // Set page background
     setStyleSheet(R"(
@@ -88,8 +86,41 @@ LibraryPage::LibraryPage(QWidget* parent)
                 stop:0 #1a0f2e, stop:1 #2d1b4e);
         }
     )");
+    // Load real library from GOG after login.
+    libraryService_.fetchLibrary(false, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
+        if (!result.isOk()) {
+            QMessageBox::warning(this, "Library", result.errorMessage());
+            loadGames(); // fallback to demo
+            return;
+        }
 
-    loadGames();
+        // Clear current grid
+        while (QLayoutItem* item = gameGrid->takeAt(0)) {
+            if (QWidget* w = item->widget()) {
+                w->deleteLater();
+            }
+            delete item;
+        }
+
+        int row = 0;
+        int col = 0;
+        const int columns = 3;
+
+        for (const auto& game : result.value()) {
+            auto* card = new GameCard(game.id, game.title, game.platform, game.coverUrl, this);
+            connect(card, &GameCard::detailsRequested, this, &LibraryPage::openGameDetails);
+            connect(card, &GameCard::playRequested, this, &LibraryPage::launchGame);
+            gameGrid->addWidget(card, row, col);
+
+            col++;
+            if (col >= columns) {
+                col = 0;
+                row++;
+            }
+        }
+
+        gameGrid->setRowStretch(row + 1, 1);
+    });
 }
 
 LibraryPage::~LibraryPage() = default;

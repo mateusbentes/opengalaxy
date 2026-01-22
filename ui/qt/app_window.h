@@ -4,6 +4,9 @@
 #include <QMainWindow>
 #include <QStackedWidget>
 #include <QListWidget>
+
+#include "opengalaxy/api/session.h"
+
 #include "pages/login_page.h"
 #include "pages/library_page.h"
 #include "pages/store_page.h"
@@ -19,22 +22,25 @@ class AppWindow : public QMainWindow
 
 public:
     AppWindow(QWidget *parent = nullptr);
-    ~AppWindow();
+    ~AppWindow() override;
 
 private slots:
     void onLoginSuccess();
+    void startPasswordLogin(const QString& username, const QString& password);
 
 private:
     void setupSidebar();
 
-    QStackedWidget* stackedWidget;
-    QListWidget* sidebar;
-    
-    LoginPage* loginPage;
-    LibraryPage* libraryPage;
-    StorePage* storePage;
-    FriendsPage* friendsPage;
-    SettingsPage* settingsPage;
+    QStackedWidget* stackedWidget = nullptr;
+    QListWidget* sidebar = nullptr;
+
+    api::Session* session_ = nullptr;
+
+    LoginPage* loginPage = nullptr;
+    LibraryPage* libraryPage = nullptr;
+    StorePage* storePage = nullptr;
+    FriendsPage* friendsPage = nullptr;
+    SettingsPage* settingsPage = nullptr;
 };
 
 } // namespace ui
