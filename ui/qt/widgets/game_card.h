@@ -5,13 +5,18 @@
 #include <QPropertyAnimation>
 #include <QGraphicsDropShadowEffect>
 #include <QLabel>
+#include <QPushButton>
+
+namespace opengalaxy {
+namespace ui {
 
 class GameCard : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit GameCard(const QString &gameName, QWidget *parent = nullptr);
+    explicit GameCard(const QString &title, const QString &platform, const QString &coverUrl, QWidget *parent = nullptr);
+    ~GameCard();
 
 protected:
     void enterEvent(QEnterEvent *event) override;
@@ -22,10 +27,14 @@ private:
     
     QLabel *coverImage;
     QLabel *gameTitle;
-    QLabel *playButton;
+    QLabel *platformLabel;
+    QPushButton *playButton;
     QGraphicsDropShadowEffect *shadowEffect;
     QPropertyAnimation *hoverAnimation;
     QPropertyAnimation *shadowAnimation;
 };
+
+} // namespace ui
+} // namespace opengalaxy
 
 #endif // GAME_CARD_H

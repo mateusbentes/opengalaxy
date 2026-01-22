@@ -3,7 +3,9 @@
 
 #include <QWidget>
 #include <QGridLayout>
-#include "../widgets/game_card.h"
+
+namespace opengalaxy {
+namespace ui {
 
 class LibraryPage : public QWidget
 {
@@ -11,10 +13,15 @@ class LibraryPage : public QWidget
 
 public:
     explicit LibraryPage(QWidget *parent = nullptr);
+    ~LibraryPage();
 
 private:
-    void setupGrid();
-    QGridLayout *gridLayout;
+    void loadGames();
+    
+    QGridLayout* gameGrid;
 };
+
+} // namespace ui
+} // namespace opengalaxy
 
 #endif // LIBRARY_PAGE_H

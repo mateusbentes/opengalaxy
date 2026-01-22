@@ -3,8 +3,9 @@
 
 #include <QWidget>
 #include <QLineEdit>
-#include <QPushButton>
-#include <QPropertyAnimation>
+
+namespace opengalaxy {
+namespace ui {
 
 class LoginPage : public QWidget
 {
@@ -12,18 +13,21 @@ class LoginPage : public QWidget
 
 public:
     explicit LoginPage(QWidget *parent = nullptr);
-    
+    ~LoginPage();
+
 signals:
     void loginSuccess();
 
 private slots:
     void onLoginClicked();
+    void onOAuthClicked();
 
 private:
-    QLineEdit *usernameEdit;
-    QLineEdit *passwordEdit;
-    QPushButton *loginButton;
-    QPropertyAnimation *fadeAnimation;
+    QLineEdit* usernameEdit;
+    QLineEdit* passwordEdit;
 };
+
+} // namespace ui
+} // namespace opengalaxy
 
 #endif // LOGIN_PAGE_H
