@@ -21,11 +21,17 @@ Session::~Session() = default;
 
 void Session::loginWithPassword(const QString& username, const QString& password, AuthCallback callback) {
     QTimer::singleShot(100, this, [this, username, password, callback = std::move(callback)]() mutable {
+        // NOTE: These are GOG's public OAuth client credentials for desktop applications.
+        // They are not secret and are meant to be embedded in client applications.
+        // See: https://gogapidocs.readthedocs.io/en/latest/auth.html
+        const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
+        const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
+        
         QJsonObject body;
         body["login"] = username;
         body["password"] = password;
-        body["client_id"] = "468999770165";
-        body["client_secret"] = "9d85bc8330b3df6d97c98e309705a47ddbd299ca";
+        body["client_id"] = CLIENT_ID;
+        body["client_secret"] = CLIENT_SECRET;
         body["grant_type"] = "password";
 
         net::HttpClient* client = new net::HttpClient(this);
@@ -72,10 +78,14 @@ void Session::refreshToken(AuthCallback callback) {
             callback(util::Result<AuthTokens>::error("No refresh token"));
             return;
         }
+        
+        const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
+        const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
+        
         QJsonObject body;
         body["refresh_token"] = tokens_.refreshToken;
-        body["client_id"] = "468999770165";
-        body["client_secret"] = "9d85bc8330b3df6d97c98e309705a47ddbd299ca";
+        body["client_id"] = CLIENT_ID;
+        body["client_secret"] = CLIENT_SECRET;
         body["grant_type"] = "refresh_token";
 
         net::HttpClient* client = new net::HttpClient(this);

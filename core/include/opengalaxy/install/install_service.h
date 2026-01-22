@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QMutex>
 #include <functional>
 #include "../util/result.h"
 #include "../api/models.h"
@@ -54,7 +55,8 @@ signals:
 
 private:
     struct InstallTask;
-    QMap<QString, InstallTask*> activeTasks_;
+    std::map<QString, std::unique_ptr<InstallTask>> activeTasks_;
+    mutable QMutex tasksMutex_;
 
     void downloadAndExtract(InstallTask* task);
     bool verifyChecksum(const QString& filePath, const QString& expectedChecksum);

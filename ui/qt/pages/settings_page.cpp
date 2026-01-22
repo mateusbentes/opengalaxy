@@ -54,7 +54,7 @@ SettingsPage::SettingsPage(QWidget *parent)
     scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setStyleSheet("border: none;");
 
-    QWidget *content = new QWidget();
+    QWidget *content = new QWidget(scrollArea);
     QVBoxLayout *contentLayout = new QVBoxLayout(content);
     contentLayout->setContentsMargins(0, 0, 0, 40);
     contentLayout->setSpacing(0);

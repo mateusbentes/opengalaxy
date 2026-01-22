@@ -62,7 +62,7 @@ LibraryPage::LibraryPage(QWidget *parent)
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setStyleSheet("QScrollArea { background: transparent; border: none; }");
     
-    QWidget* scrollWidget = new QWidget();
+    QWidget* scrollWidget = new QWidget(scrollArea);
     gameGrid = new QGridLayout(scrollWidget);
     gameGrid->setSpacing(20);
     gameGrid->setContentsMargins(0, 0, 0, 0);

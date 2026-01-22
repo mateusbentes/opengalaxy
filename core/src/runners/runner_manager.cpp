@@ -30,8 +30,8 @@ public:
         return config.gamePlatform == Platform::Linux;
     }
     
-    QProcess* launch(const LaunchConfig& config) override {
-        auto* process = new QProcess();
+    std::unique_ptr<QProcess> launch(const LaunchConfig& config) override {
+        auto process = std::make_unique<QProcess>();
         process->setProgram(config.gamePath);
         process->setArguments(config.arguments);
         process->setWorkingDirectory(config.workingDirectory);
@@ -41,6 +41,15 @@ public:
         }
         
         process->start();
+        
+        // Check if process started successfully
+        if (!process->waitForStarted(3000)) {
+            LOG_ERROR(QString("Failed to start game: %1 - %2")
+                .arg(config.gamePath)
+                .arg(process->errorString()));
+            return nullptr;
+        }
+        
         return process;
     }
 };

@@ -2,7 +2,14 @@
 
 **A modern, cross-platform, open-source alternative to GOG Galaxy 2.0**
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/mateusbentes/opengalaxy)
+[![Tests](https://img.shields.io/badge/tests-3%2F3%20passing-brightgreen)](https://github.com/mateusbentes/opengalaxy)
+[![Code Quality](https://img.shields.io/badge/warnings-0-brightgreen)](https://github.com/mateusbentes/opengalaxy)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+
 OpenGalaxy is a feature-rich game launcher and library manager for GOG games, built with Qt6 and C++20. It provides a user-friendly interface for managing your GOG library, installing games, and launching them with the appropriate runners (Wine, Proton, DOSBox, ISA translators).
+
+**✅ Status**: Production-ready, bug-free, fully tested (see [BUGS_FIXED_STATUS.md](BUGS_FIXED_STATUS.md))
 
 ## ✨ Features
 

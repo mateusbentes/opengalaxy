@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QDir>
 #include <QTimer>
+#include <QMutexLocker>
+#include <map>
 
 namespace opengalaxy::install {
 
@@ -38,14 +40,19 @@ void InstallService::installGame(const api::GameInfo& game, const QString& insta
         return;
     }
 
-    auto* task = new InstallTask();
+    auto task = std::make_unique<InstallTask>();
     task->gameId = game.id;
     task->game = game;
     task->installDir = installDir;
     task->progressCallback = progressCallback;
     task->completionCallback = completionCallback;
     
-    activeTasks_[game.id] = task;
+    InstallTask* taskPtr = task.get();
+    
+    {
+        QMutexLocker locker(&tasksMutex_);
+        activeTasks_[game.id] = std::move(task);
+    }
     
     emit installStarted(game.id);
     
@@ -65,9 +72,22 @@ void InstallService::installGame(const api::GameInfo& game, const QString& insta
     // Simulate progress
     QTimer* timer = new QTimer(this);
     int currentProgress = 0;
+    QString gameId = game.id;
     
-    connect(timer, &QTimer::timeout, [this, task, timer, currentProgress]() mutable {
+    connect(timer, &QTimer::timeout, [this, gameId, timer, currentProgress]() mutable {
         currentProgress += 10;
+        
+        InstallTask* task = nullptr;
+        {
+            QMutexLocker locker(&tasksMutex_);
+            auto it = activeTasks_.find(gameId);
+            if (it == activeTasks_.end()) {
+                timer->stop();
+                timer->deleteLater();
+                return;
+            }
+            task = it->second.get();
+        }
         
         InstallProgress progress;
         progress.gameId = task->gameId;
@@ -94,16 +114,20 @@ void InstallService::installGame(const api::GameInfo& game, const QString& insta
             QString installPath = task->installDir + "/" + task->game.title;
             QDir().mkpath(installPath);
             
-            activeTasks_.remove(task->gameId);
+            CompletionCallback completionCallback = task->completionCallback;
+            QString taskGameId = task->gameId;
             
-            LOG_INFO(QString("Installation complete: %1").arg(installPath));
-            emit installCompleted(task->gameId, installPath);
-            
-            if (task->completionCallback) {
-                task->completionCallback(util::Result<QString>::success(installPath));
+            {
+                QMutexLocker locker(&tasksMutex_);
+                activeTasks_.erase(taskGameId);
             }
             
-            delete task;
+            LOG_INFO(QString("Installation complete: %1").arg(installPath));
+            emit installCompleted(taskGameId, installPath);
+            
+            if (completionCallback) {
+                completionCallback(util::Result<QString>::success(installPath));
+            }
         }
     });
     
@@ -131,18 +155,18 @@ void InstallService::uninstallGame(const QString& gameId, const QString& install
 
 void InstallService::cancelInstallation(const QString& gameId)
 {
-    if (!activeTasks_.contains(gameId)) {
+    QMutexLocker locker(&tasksMutex_);
+    
+    auto it = activeTasks_.find(gameId);
+    if (it == activeTasks_.end()) {
         return;
     }
     
-    auto* task = activeTasks_[gameId];
-    
-    if (task->reply) {
-        task->reply->abort();
+    if (it->second->reply) {
+        it->second->reply->abort();
     }
     
-    activeTasks_.remove(gameId);
-    delete task;
+    activeTasks_.erase(it);
     
     LOG_INFO(QString("Installation cancelled: %1").arg(gameId));
     emit installCancelled(gameId);
@@ -150,7 +174,8 @@ void InstallService::cancelInstallation(const QString& gameId)
 
 bool InstallService::isInstalling(const QString& gameId) const
 {
-    return activeTasks_.contains(gameId);
+    QMutexLocker locker(&tasksMutex_);
+    return activeTasks_.find(gameId) != activeTasks_.end();
 }
 
 } // namespace opengalaxy::install

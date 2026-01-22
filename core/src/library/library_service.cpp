@@ -191,8 +191,12 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
 {
     QSqlQuery query(db_->database());
     
-    db_->database().transaction();
+    if (!db_->database().transaction()) {
+        LOG_ERROR("Failed to start database transaction");
+        return;
+    }
     
+    bool hasError = false;
     for (const auto& game : games) {
         query.prepare(R"(
             INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size)
@@ -210,10 +214,20 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         
         if (!query.exec()) {
             LOG_ERROR(QString("Failed to cache game: %1").arg(query.lastError().text()));
+            hasError = true;
+            break;
         }
     }
     
-    db_->database().commit();
+    if (hasError) {
+        db_->database().rollback();
+        LOG_ERROR("Database transaction rolled back due to errors");
+    } else {
+        if (!db_->database().commit()) {
+            LOG_ERROR("Failed to commit database transaction");
+            db_->database().rollback();
+        }
+    }
 }
 
 std::vector<api::GameInfo> LibraryService::loadCachedGames()

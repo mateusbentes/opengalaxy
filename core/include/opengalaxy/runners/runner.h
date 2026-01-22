@@ -73,8 +73,8 @@ public:
     // Check if this runner can run the given game
     virtual bool canRun(const LaunchConfig& config) const = 0;
 
-    // Launch game
-    virtual QProcess* launch(const LaunchConfig& config) = 0;
+    // Launch game (returns owned QProcess - caller must manage lifetime)
+    virtual std::unique_ptr<QProcess> launch(const LaunchConfig& config) = 0;
 
     // Configuration
     virtual QStringList configOptions() const { return {}; }

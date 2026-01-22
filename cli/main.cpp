@@ -10,6 +10,7 @@
 #include "opengalaxy/install/install_service.h"
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
+#include "main.moc"
 
 using namespace opengalaxy;
 
@@ -150,7 +151,7 @@ public:
 
             std::cout << "Using runner: " << runner->name().toStdString() << std::endl;
             
-            QProcess* process = runner->launch(config);
+            auto process = runner->launch(config);
             if (!process) {
                 std::cerr << "Failed to launch game." << std::endl;
                 app_->exit(1);
@@ -158,6 +159,10 @@ public:
             }
 
             std::cout << "Game launched successfully." << std::endl;
+            
+            // Keep process alive - transfer ownership to parent or wait
+            process->setParent(app_);
+            process.release();
             app_->quit();
         });
     }
@@ -291,5 +296,3 @@ int main(int argc, char *argv[])
 
     return app.exec();
 }
-
-#include "main.moc"
