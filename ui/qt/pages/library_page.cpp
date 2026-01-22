@@ -4,14 +4,13 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
-#include <QPushButton>
 #include <QScrollArea>
 #include <QMessageBox>
 #include <QFileInfo>
-#include <QSqlDatabase>
-#include <QSqlQuery>
+#include <QFileDialog>
 
 #include "../widgets/game_card.h"
+#include "../widgets/notification_widget.h"
 #include "../dialogs/game_details_dialog.h"
 
 namespace opengalaxy {
@@ -23,6 +22,7 @@ LibraryPage::LibraryPage(QWidget* parent)
     , gogClient_(&session_, this)
     , libraryService_(&gogClient_, this)
     , runnerManager_(this)
+    , installService_(this)
 {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(40, 30, 40, 30);
@@ -43,7 +43,6 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     headerLayout->addStretch();
 
-    // Search box
     QLineEdit* searchBox = new QLineEdit(this);
     searchBox->setPlaceholderText("Search games...");
     searchBox->setFixedWidth(300);
@@ -67,7 +66,7 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     mainLayout->addLayout(headerLayout);
 
-    // Scroll area for games
+    // Scroll area
     QScrollArea* scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
@@ -75,30 +74,32 @@ LibraryPage::LibraryPage(QWidget* parent)
 
     QWidget* scrollWidget = new QWidget(scrollArea);
     gameGrid = new QGridLayout(scrollWidget);
+    gameGrid->setSpacing(20);
+    gameGrid->setContentsMargins(0, 0, 0, 0);
+
     scrollArea->setWidget(scrollWidget);
     mainLayout->addWidget(scrollArea);
     mainLayout->addStretch(1);
 
-    // Set page background
+    // Background
     setStyleSheet(R"(
         LibraryPage {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 #1a0f2e, stop:1 #2d1b4e);
         }
     )");
-    // Load real library from GOG after login.
+
+    // Load library
     libraryService_.fetchLibrary(false, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
         if (!result.isOk()) {
             QMessageBox::warning(this, "Library", result.errorMessage());
-            loadGames(); // fallback to demo
             return;
         }
 
-        // Clear current grid
+        // Clear grid
+        cardsById_.clear();
         while (QLayoutItem* item = gameGrid->takeAt(0)) {
-            if (QWidget* w = item->widget()) {
-                w->deleteLater();
-            }
+            if (QWidget* w = item->widget()) w->deleteLater();
             delete item;
         }
 
@@ -108,8 +109,14 @@ LibraryPage::LibraryPage(QWidget* parent)
 
         for (const auto& game : result.value()) {
             auto* card = new GameCard(game.id, game.title, game.platform, game.coverUrl, this);
+            card->setInstalled(game.isInstalled);
+
             connect(card, &GameCard::detailsRequested, this, &LibraryPage::openGameDetails);
             connect(card, &GameCard::playRequested, this, &LibraryPage::launchGame);
+            connect(card, &GameCard::installRequested, this, &LibraryPage::installGame);
+            connect(card, &GameCard::cancelInstallRequested, this, &LibraryPage::cancelInstall);
+
+            cardsById_.insert(game.id, card);
             gameGrid->addWidget(card, row, col);
 
             col++;
@@ -120,6 +127,38 @@ LibraryPage::LibraryPage(QWidget* parent)
         }
 
         gameGrid->setRowStretch(row + 1, 1);
+    });
+
+    // Install progress
+    connect(&installService_, &install::InstallService::installStarted, this, [this](const QString& gameId) {
+        if (cardsById_.contains(gameId)) {
+            cardsById_[gameId]->setInstalling(true);
+            cardsById_[gameId]->setInstallProgress(0);
+        }
+        NotificationWidget::showToast("Installing...", this);
+    });
+
+    connect(&installService_, &install::InstallService::installProgress, this, [this](const QString& gameId, int percentage) {
+        if (cardsById_.contains(gameId)) {
+            cardsById_[gameId]->setInstallProgress(percentage);
+        }
+    });
+
+    connect(&installService_, &install::InstallService::installCompleted, this, [this](const QString& gameId, const QString& installPath) {
+        if (cardsById_.contains(gameId)) {
+            cardsById_[gameId]->setInstalling(false);
+            cardsById_[gameId]->setInstalled(true);
+        }
+        libraryService_.updateGameInstallation(gameId, installPath, "");
+        NotificationWidget::showToast("Install completed", this);
+    });
+
+    connect(&installService_, &install::InstallService::installFailed, this, [this](const QString& gameId, const QString& error) {
+        if (cardsById_.contains(gameId)) {
+            cardsById_[gameId]->setInstalling(false);
+            cardsById_[gameId]->setInstallProgress(0);
+        }
+        NotificationWidget::showToast("Install failed: " + error, this);
     });
 }
 
@@ -147,14 +186,14 @@ void LibraryPage::launchGame(const QString& gameId)
 
         api::GameInfo game = result.value();
         if (game.installPath.isEmpty()) {
-            QMessageBox::information(this, "Not installed", "This demo entry has no install path set.");
+            QMessageBox::information(this, "Not installed", "Game is not installed yet.");
             return;
         }
 
         runners::LaunchConfig cfg;
         cfg.gamePath = game.installPath;
         cfg.workingDirectory = QFileInfo(game.installPath).absolutePath();
-        cfg.arguments = {}; // game args not modeled yet
+        cfg.arguments = {};
         cfg.environment = game.extraEnvironment;
 
         const QString p = game.platform.toLower();
@@ -185,62 +224,38 @@ void LibraryPage::launchGame(const QString& gameId)
     });
 }
 
-void LibraryPage::loadGames()
+void LibraryPage::installGame(const QString& gameId)
 {
-    struct GameData {
-        QString id;
-        QString title;
-        QString platform;
-        QString coverUrl;
-        QString installPath;
-    };
+    const QString installDir = QFileDialog::getExistingDirectory(this, "Choose install folder");
+    if (installDir.isEmpty()) return;
 
-    QList<GameData> demoGames = {
-        {"gog_cyberpunk_2077", "Cyberpunk 2077", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_witcher_3", "The Witcher 3", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"steam_baldurs_gate_3", "Baldur's Gate 3", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_stardew_valley", "Stardew Valley", "Linux", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"steam_hollow_knight", "Hollow Knight", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_terraria", "Terraria", "Linux", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_disco_elysium", "Disco Elysium", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_hades", "Hades", "Windows", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-        {"gog_celeste", "Celeste", "Linux", "https://images.gog.com/5f05cf8fc3f4b6e6d6b1c3c3c3c3c3c3c3.jpg", ""},
-    };
+    gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId](opengalaxy::util::Result<api::GameInfo> result) {
+        if (!result.isOk()) {
+            QMessageBox::warning(this, "Install", result.errorMessage());
+            return;
+        }
 
-    // Ensure demo IDs exist in DB so properties can be saved.
-    {
-        QSqlDatabase db = QSqlDatabase::database("library");
-        if (db.isOpen()) {
-            QSqlQuery q(db);
-            for (const auto& g : demoGames) {
-                q.prepare("INSERT OR IGNORE INTO games (id, title, platform, coverUrl) VALUES (?, ?, ?, ?)");
-                q.addBindValue(g.id);
-                q.addBindValue(g.title);
-                q.addBindValue(g.platform);
-                q.addBindValue(g.coverUrl);
-                q.exec();
+        api::GameInfo game = result.value();
+
+        // Keep title/platform from cached library row
+        libraryService_.getGame(gameId, [this, installDir, game](auto cached) mutable {
+            if (cached.isOk()) {
+                game.platform = cached.value().platform;
+                game.title = cached.value().title;
             }
-        }
+            installService_.installGame(game, installDir, nullptr, [](util::Result<QString>) {});
+        });
+    });
+}
+
+void LibraryPage::cancelInstall(const QString& gameId)
+{
+    installService_.cancelInstallation(gameId);
+    if (cardsById_.contains(gameId)) {
+        cardsById_[gameId]->setInstalling(false);
+        cardsById_[gameId]->setInstallProgress(0);
     }
-
-    int row = 0;
-    int col = 0;
-    const int columns = 3;
-
-    for (const auto& game : demoGames) {
-        auto* card = new GameCard(game.id, game.title, game.platform, game.coverUrl, this);
-        connect(card, &GameCard::detailsRequested, this, &LibraryPage::openGameDetails);
-        connect(card, &GameCard::playRequested, this, &LibraryPage::launchGame);
-        gameGrid->addWidget(card, row, col);
-
-        col++;
-        if (col >= columns) {
-            col = 0;
-            row++;
-        }
-    }
-
-    gameGrid->setRowStretch(row + 1, 1);
+    NotificationWidget::showToast("Install cancelled", this);
 }
 
 } // namespace ui

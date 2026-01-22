@@ -3,48 +3,63 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QTimer>
+#include <QUrl>
 #include "opengalaxy/net/http_client.h"
 
 namespace opengalaxy::api {
 
 GOGClient::GOGClient(Session* session, QObject* parent)
-    : QObject(parent), session_(session) {
+    : QObject(parent)
+    , session_(session)
+{
     httpClient_ = new net::HttpClient(this);
 }
 
 GOGClient::~GOGClient() = default;
-
-QString GOGClient::buildAuthHeader() const {
+QString GOGClient::buildAuthHeader() const
+{
     if (session_->isAuthenticated()) {
         return "Bearer " + session_->tokens().accessToken;
     }
     return QString();
 }
 
+namespace {
+struct LibraryAccumulator {
+    std::vector<GameInfo> games;
+    int currentPage = 1;
+    int totalPages = 1;
+    GOGClient::GamesCallback callback;
+};
+}
+
 void GOGClient::fetchLibrary(GamesCallback callback)
 {
-    QTimer::singleShot(0, this, [this, callback = std::move(callback)]() mutable {
-        if (!session_->isAuthenticated()) {
-            callback(util::Result<std::vector<GameInfo>>::error("Not authenticated"));
-            return;
-        }
+    if (!session_->isAuthenticated()) {
+        callback(util::Result<std::vector<GameInfo>>::error("Not authenticated"));
+        return;
+    }
 
+    auto acc = std::make_shared<LibraryAccumulator>();
+    acc->callback = std::move(callback);
+
+    const auto fetchPage = [this, acc](auto&& self) -> void {
         net::HttpClient::Request req;
-        req.url = "https://embed.gog.com/account/getFilteredProducts?mediaType=1&page=1";
+        req.url = QString("https://embed.gog.com/account/getFilteredProducts?mediaType=1&page=%1").arg(acc->currentPage);
         req.method = "GET";
         req.headers["Authorization"] = buildAuthHeader();
 
-        httpClient_->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+        httpClient_->request(req, [this, acc, self](util::Result<net::HttpClient::Response> result) mutable {
             if (!result.isOk()) {
-                callback(util::Result<std::vector<GameInfo>>::error(result.errorMessage()));
+                acc->callback(util::Result<std::vector<GameInfo>>::error(result.errorMessage()));
                 return;
             }
 
             const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
-            const QJsonArray products = obj.value("products").toArray();
+            acc->totalPages = obj.value("totalPages").toInt(1);
 
-            std::vector<GameInfo> games;
-            games.reserve(products.size());
+            const QJsonArray products = obj.value("products").toArray();
+            acc->games.reserve(acc->games.size() + static_cast<size_t>(products.size()));
 
             for (const auto& v : products) {
                 const QJsonObject p = v.toObject();
@@ -59,64 +74,62 @@ void GOGClient::fetchLibrary(GamesCallback callback)
                 else if (worksOn.value("Mac").toBool() || worksOn.value("macOS").toBool()) g.platform = "mac";
                 else g.platform = "";
 
-                games.push_back(std::move(g));
+                acc->games.push_back(std::move(g));
             }
 
-            callback(util::Result<std::vector<GameInfo>>::success(std::move(games)));
+            if (acc->currentPage >= acc->totalPages) {
+                acc->callback(util::Result<std::vector<GameInfo>>::success(std::move(acc->games)));
+                return;
+            }
+
+            acc->currentPage++;
+            self(self);
         });
-    });
-}
+    };
 
-void GOGClient::fetchGameDetails(const QString& gameId, GameCallback callback) {
-    QTimer::singleShot(100, this, [this, gameId, callback = std::move(callback)]() mutable {
+    fetchPage(fetchPage);
+}
+void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
+{
+    if (!session_->isAuthenticated()) {
+        callback(util::Result<GameInfo>::error("Not authenticated"));
+        return;
+    }
+
+    // Uses api.gog.com product details (MiniGalaxy-style) to get installer entries.
+    const QString url = QString("https://api.gog.com/products/%1?locale=en-US&expand=downloads")
+                            .arg(QUrl::toPercentEncoding(gameId));
+
+    net::HttpClient::Request req;
+    req.url = url;
+    req.method = "GET";
+    req.headers["Authorization"] = buildAuthHeader();
+
+    httpClient_->request(req, [gameId, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+        if (!result.isOk()) {
+            callback(util::Result<GameInfo>::error(result.errorMessage()));
+            return;
+        }
+
+        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
         GameInfo game;
         game.id = gameId;
-        game.title = "Game " + gameId;
-        game.platform = "windows";
+        game.title = obj.value("title").toString();
+
+        const QJsonObject downloads = obj.value("downloads").toObject();
+        const QJsonArray installers = downloads.value("installers").toArray();
+
+        for (const auto& v : installers) {
+            const QJsonObject inst = v.toObject();
+            GameInfo::DownloadLink link;
+            link.platform = inst.value("os").toString();
+            link.language = inst.value("language").toString();
+            link.version = inst.value("version").toString();
+            link.url = inst.value("link").toString();
+            game.downloads.push_back(link);
+        }
+
         callback(util::Result<GameInfo>::success(game));
-    });
-}
-
-void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback) {
-    QTimer::singleShot(100, this, [gameId, callback = std::move(callback)]() mutable {
-        GameInfo game;
-        game.id = gameId;
-        game.title = "Downloads for " + gameId;
-        GameInfo::DownloadLink link;
-        link.url = "https://example.com/download.exe";
-        link.platform = "windows";
-        game.downloads.push_back(link);
-        callback(util::Result<GameInfo>::success(game));
-    });
-}
-
-void GOGClient::fetchAchievements(const QString& gameId, AchievementsCallback callback) {
-    QTimer::singleShot(100, this, [gameId, callback = std::move(callback)]() mutable {
-        std::vector<Achievement> achs;
-        Achievement ach;
-        ach.id = "1";
-        ach.name = "Test Achievement";
-        ach.unlocked = true;
-        achs.push_back(ach);
-        callback(util::Result<std::vector<Achievement>>::success(achs));
-    });
-}
-
-void GOGClient::unlockAchievement(const QString& gameId, const QString& achievementId,
-                                std::function<void(util::Result<void>)> callback) {
-    QTimer::singleShot(100, this, [gameId, achievementId, callback = std::move(callback)]() mutable {
-        callback(util::Result<void>::success());
-    });
-}
-
-void GOGClient::listCloudSaves(const QString& gameId, CloudSavesCallback callback) {
-    QTimer::singleShot(100, this, [gameId, callback = std::move(callback)]() mutable {
-        std::vector<CloudSave> saves;
-        CloudSave save;
-        save.filename = "savegame.sav";
-        save.size = 1024;
-        saves.push_back(save);
-        callback(util::Result<std::vector<CloudSave>>::success(saves));
     });
 }
 
@@ -135,27 +148,57 @@ void GOGClient::downloadCloudSave(const QString& gameId, const QString& filename
     });
 }
 
-void GOGClient::searchStore(const QString& query,
-                          std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback) {
-    QTimer::singleShot(100, this, [query, callback = std::move(callback)]() mutable {
+void GOGClient::searchStore(
+    const QString& query,
+    std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback)
+{
+    // Public endpoint used by many clients: api.gog.com product search
+    // Note: Pricing may not be present without additional locale/country context.
+    const QString url = QString("https://api.gog.com/products?search=%1&limit=30")
+                            .arg(QUrl::toPercentEncoding(query));
+
+    net::HttpClient::Request req;
+    req.url = url;
+    req.method = "GET";
+
+    httpClient_->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+        if (!result.isOk()) {
+            callback(util::Result<std::vector<StoreGameInfo>>::error(result.errorMessage()));
+            return;
+        }
+
+        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
+        const QJsonArray items = obj.value("products").toArray();
+
         std::vector<StoreGameInfo> games;
-        StoreGameInfo game;
-        game.id = "store1";
-        game.title = "Store Game: " + query;
-        games.push_back(game);
-        callback(util::Result<std::vector<StoreGameInfo>>::success(games));
+        games.reserve(static_cast<size_t>(items.size()));
+
+        for (const auto& v : items) {
+            const QJsonObject p = v.toObject();
+            StoreGameInfo g;
+            g.id = QString::number(p.value("id").toVariant().toLongLong());
+            g.title = p.value("title").toString();
+            g.coverUrl = p.value("image").toString();
+
+            // pricing often absent; keep empty if not provided
+            if (p.contains("price") && p.value("price").isObject()) {
+                const auto priceObj = p.value("price").toObject();
+                g.price = priceObj.value("finalAmount").toString();
+                g.discountPrice = priceObj.value("baseAmount").toString();
+                g.discountPercent = priceObj.value("discountPercentage").toInt(0);
+            }
+
+            games.push_back(std::move(g));
+        }
+
+        callback(util::Result<std::vector<StoreGameInfo>>::success(std::move(games)));
     });
 }
 
-void GOGClient::fetchStoreGames(std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback) {
-    QTimer::singleShot(100, this, [callback = std::move(callback)]() mutable {
-        std::vector<StoreGameInfo> games;
-        StoreGameInfo game;
-        game.id = "storegame";
-        game.title = "Popular Store Game";
-        games.push_back(game);
-        callback(util::Result<std::vector<StoreGameInfo>>::success(games));
-    });
+void GOGClient::fetchStoreGames(std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback)
+{
+    // Store list without search is not implemented; UI uses search.
+    callback(util::Result<std::vector<StoreGameInfo>>::success({}));
 }
 
 void GOGClient::handleApiError(const net::HttpClient::Response& response, const QString& operation) {

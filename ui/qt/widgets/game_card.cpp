@@ -1,8 +1,8 @@
 #include "game_card.h"
 
 #include <QVBoxLayout>
-#include <QGraphicsOpacityEffect>
 #include <QMouseEvent>
+#include <algorithm>
 
 namespace opengalaxy {
 namespace ui {
@@ -20,12 +20,11 @@ GameCard::GameCard(const QString& gameId,
     setFixedSize(280, 400);
     setCursor(Qt::PointingHandCursor);
 
-    // Main layout
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // Cover image container
+    // Cover
     auto* coverContainer = new QWidget(this);
     coverContainer->setFixedSize(280, 320);
     coverContainer->setStyleSheet(R"(
@@ -39,7 +38,6 @@ GameCard::GameCard(const QString& gameId,
     auto* coverLayout = new QVBoxLayout(coverContainer);
     coverLayout->setContentsMargins(0, 0, 0, 0);
 
-    // Cover image (placeholder)
     coverImage = new QLabel(coverContainer);
     coverImage->setAlignment(Qt::AlignCenter);
     coverImage->setText("🎮");
@@ -52,13 +50,13 @@ GameCard::GameCard(const QString& gameId,
     )");
     coverLayout->addWidget(coverImage);
 
-    // Play button overlay (hidden by default)
-    playButton = new QPushButton("▶ PLAY", coverContainer);
-    playButton->setFixedSize(120, 45);
-    playButton->setStyleSheet(R"(
+    // Action button
+    actionButton_ = new QPushButton(coverContainer);
+    actionButton_->setFixedSize(140, 45);
+    actionButton_->setStyleSheet(R"(
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #00e676, stop:1 #00c853);
+                stop:0 #7c4dff, stop:1 #5a3aff);
             border: none;
             border-radius: 8px;
             color: white;
@@ -67,19 +65,51 @@ GameCard::GameCard(const QString& gameId,
         }
         QPushButton:hover {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #00ff88, stop:1 #00d65f);
+                stop:0 #8c5dff, stop:1 #6a4aff);
         }
     )");
-    playButton->hide();
-    connect(playButton, &QPushButton::clicked, this, [this]() { emit playRequested(gameId_); });
+    actionButton_->hide();
 
-    // Position play button in center
-    playButton->move((coverContainer->width() - playButton->width()) / 2,
-                     (coverContainer->height() - playButton->height()) / 2);
+    // Progress
+    progressBar_ = new QProgressBar(coverContainer);
+    progressBar_->setFixedSize(220, 10);
+    progressBar_->setRange(0, 100);
+    progressBar_->setValue(0);
+    progressBar_->setTextVisible(false);
+    progressBar_->setStyleSheet(R"(
+        QProgressBar {
+            background: rgba(0,0,0,0.35);
+            border: none;
+            border-radius: 5px;
+        }
+        QProgressBar::chunk {
+            background: #00e676;
+            border-radius: 5px;
+        }
+    )");
+    progressBar_->hide();
+
+    // Position overlay widgets
+    actionButton_->move((coverContainer->width() - actionButton_->width()) / 2,
+                        (coverContainer->height() - actionButton_->height()) / 2);
+    progressBar_->move((coverContainer->width() - progressBar_->width()) / 2,
+                       actionButton_->y() + actionButton_->height() + 12);
+
+    connect(actionButton_, &QPushButton::clicked, this, [this]() {
+        if (installing_) {
+            emit cancelInstallRequested(gameId_);
+            return;
+        }
+        if (installed_) {
+            emit playRequested(gameId_);
+        } else {
+            emit installRequested(gameId_);
+        }
+    });
 
     mainLayout->addWidget(coverContainer);
 
-    // Info section
+    // Info
     auto* infoContainer = new QWidget(this);
     infoContainer->setFixedHeight(80);
     infoContainer->setStyleSheet(R"(
@@ -119,15 +149,7 @@ GameCard::GameCard(const QString& gameId,
 
     mainLayout->addWidget(infoContainer);
 
-    // Card style
-    setStyleSheet(R"(
-        GameCard {
-            background: transparent;
-            border-radius: 12px;
-        }
-    )");
-
-    // Shadow effect
+    // Shadow
     shadowEffect = new QGraphicsDropShadowEffect(this);
     shadowEffect->setBlurRadius(20);
     shadowEffect->setColor(QColor(0, 0, 0, 100));
@@ -135,9 +157,48 @@ GameCard::GameCard(const QString& gameId,
     setGraphicsEffect(shadowEffect);
 
     setupAnimations();
+    refreshButton();
 }
 
 GameCard::~GameCard() = default;
+
+void GameCard::setInstalled(bool installed)
+{
+    installed_ = installed;
+    refreshButton();
+}
+
+void GameCard::setInstalling(bool installing)
+{
+    installing_ = installing;
+    refreshButton();
+}
+
+void GameCard::setInstallProgress(int percent)
+{
+    installProgress_ = std::clamp(percent, 0, 100);
+    progressBar_->setValue(installProgress_);
+    if (installing_) {
+        progressBar_->show();
+    }
+}
+
+void GameCard::refreshButton()
+{
+    if (installing_) {
+        actionButton_->setText("CANCEL");
+        progressBar_->show();
+        return;
+    }
+
+    progressBar_->hide();
+
+    if (installed_) {
+        actionButton_->setText("▶ PLAY");
+    } else {
+        actionButton_->setText("⬇ INSTALL");
+    }
+}
 
 void GameCard::setupAnimations()
 {
@@ -169,7 +230,10 @@ void GameCard::enterEvent(QEnterEvent* event)
     shadowAnimation->setEndValue(35);
     shadowAnimation->start();
 
-    playButton->show();
+    actionButton_->show();
+    if (installing_) {
+        progressBar_->show();
+    }
 
     QWidget::enterEvent(event);
 }
@@ -185,7 +249,8 @@ void GameCard::leaveEvent(QEvent* event)
     shadowAnimation->setEndValue(20);
     shadowAnimation->start();
 
-    playButton->hide();
+    actionButton_->hide();
+    progressBar_->hide();
 
     QWidget::leaveEvent(event);
 }

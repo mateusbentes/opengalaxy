@@ -2,8 +2,12 @@
 #define STORE_PAGE_H
 
 #include <QWidget>
-#include <QVBoxLayout>
 #include <QListView>
+#include <QLineEdit>
+#include <QStandardItemModel>
+
+#include "opengalaxy/api/session.h"
+#include "opengalaxy/api/gog_client.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -17,7 +21,14 @@ public:
     ~StorePage();
 
 private:
-    QListView *storeView;
+    void doSearch();
+
+    QLineEdit* searchEdit_ = nullptr;
+    QListView* storeView_ = nullptr;
+    QStandardItemModel* model_ = nullptr;
+
+    api::Session session_;
+    api::GOGClient gogClient_;
 };
 
 } // namespace ui

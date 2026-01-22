@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "opengalaxy/install/install_service.h"
 #include "opengalaxy/util/log.h"
+#include "opengalaxy/net/http_client.h"
+
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
@@ -9,7 +11,9 @@
 #include <QTimer>
 #include <QMutexLocker>
 #include <map>
-
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QProcess>
 namespace opengalaxy::install {
 
 struct InstallService::InstallTask {
@@ -30,13 +34,20 @@ InstallService::InstallService(QObject* parent)
 
 InstallService::~InstallService() = default;
 
-void InstallService::installGame(const api::GameInfo& game, const QString& installDir,
-                                 ProgressCallback progressCallback, CompletionCallback completionCallback)
+void InstallService::installGame(const api::GameInfo& game,
+                                 const QString& installDir,
+                                 ProgressCallback progressCallback,
+                                 CompletionCallback completionCallback)
 {
     LOG_INFO(QString("Installing game: %1").arg(game.title));
-    
+
     if (isInstalling(game.id)) {
         completionCallback(util::Result<QString>::error("Game is already being installed"));
+        return;
+    }
+
+    if (game.downloads.empty()) {
+        completionCallback(util::Result<QString>::error("No downloads available for this game"));
         return;
     }
 
@@ -44,94 +55,124 @@ void InstallService::installGame(const api::GameInfo& game, const QString& insta
     task->gameId = game.id;
     task->game = game;
     task->installDir = installDir;
-    task->progressCallback = progressCallback;
-    task->completionCallback = completionCallback;
-    
+    task->progressCallback = std::move(progressCallback);
+    task->completionCallback = std::move(completionCallback);
+
     InstallTask* taskPtr = task.get();
-    
     {
         QMutexLocker locker(&tasksMutex_);
         activeTasks_[game.id] = std::move(task);
     }
-    
+
     emit installStarted(game.id);
-    
-    // Create install directory
+
     QDir().mkpath(installDir);
-    
-    // Simulate download and installation
-    InstallProgress progress;
-    progress.gameId = game.id;
-    progress.status = "downloading";
-    progress.percentage = 0;
-    
-    if (progressCallback) {
-        progressCallback(progress);
+
+    // Pick first windows installer by default (we'll improve selection later)
+    api::GameInfo::DownloadLink selected = game.downloads.front();
+    for (const auto& dl : game.downloads) {
+        if (dl.platform.toLower().contains("windows")) {
+            selected = dl;
+            break;
+        }
     }
-    
-    // Simulate progress
-    QTimer* timer = new QTimer(this);
-    int currentProgress = 0;
-    QString gameId = game.id;
-    
-    connect(timer, &QTimer::timeout, [this, gameId, timer, currentProgress]() mutable {
-        currentProgress += 10;
-        
-        InstallTask* task = nullptr;
-        {
+
+    // Step 1: Resolve real download URL (GOG returns JSON with { downlink, checksum })
+    net::HttpClient* http = new net::HttpClient(this);
+
+    net::HttpClient::Request req;
+    req.url = selected.url;
+    req.method = "GET";
+
+    http->request(req, [this, taskPtr, selected, http](util::Result<net::HttpClient::Response> result) mutable {
+        if (!result.isOk()) {
+            emit installFailed(taskPtr->gameId, result.errorMessage());
+            taskPtr->completionCallback(util::Result<QString>::error(result.errorMessage()));
             QMutexLocker locker(&tasksMutex_);
-            auto it = activeTasks_.find(gameId);
-            if (it == activeTasks_.end()) {
-                timer->stop();
-                timer->deleteLater();
-                return;
-            }
-            task = it->second.get();
+            activeTasks_.erase(taskPtr->gameId);
+            return;
         }
-        
-        InstallProgress progress;
-        progress.gameId = task->gameId;
-        progress.percentage = currentProgress;
-        
-        if (currentProgress < 50) {
-            progress.status = "downloading";
-        } else if (currentProgress < 90) {
-            progress.status = "extracting";
-        } else {
-            progress.status = "verifying";
+
+        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
+        const QString downlink = obj.value("downlink").toString();
+        if (downlink.isEmpty()) {
+            const QString err = "Missing downlink in download response";
+            emit installFailed(taskPtr->gameId, err);
+            taskPtr->completionCallback(util::Result<QString>::error(err));
+            QMutexLocker locker(&tasksMutex_);
+            activeTasks_.erase(taskPtr->gameId);
+            return;
         }
-        
-        if (task->progressCallback) {
-            task->progressCallback(progress);
-        }
-        
-        emit installProgress(task->gameId, currentProgress);
-        
-        if (currentProgress >= 100) {
-            timer->stop();
-            timer->deleteLater();
-            
-            QString installPath = task->installDir + "/" + task->game.title;
-            QDir().mkpath(installPath);
-            
-            CompletionCallback completionCallback = task->completionCallback;
-            QString taskGameId = task->gameId;
-            
-            {
-                QMutexLocker locker(&tasksMutex_);
-                activeTasks_.erase(taskGameId);
-            }
-            
-            LOG_INFO(QString("Installation complete: %1").arg(installPath));
-            emit installCompleted(taskGameId, installPath);
-            
-            if (completionCallback) {
-                completionCallback(util::Result<QString>::success(installPath));
-            }
-        }
+
+        // Step 2: Download installer to installDir
+        const QString installerPath = taskPtr->installDir + "/" + taskPtr->game.title + ".exe";
+
+        InstallProgress prog;
+        prog.gameId = taskPtr->gameId;
+        prog.status = "downloading";
+        prog.currentFile = installerPath;
+        if (taskPtr->progressCallback) taskPtr->progressCallback(prog);
+
+        http->downloadFile(downlink, installerPath,
+                          [this, taskPtr, installerPath](util::Result<net::HttpClient::Response> dlRes) mutable {
+                              if (!dlRes.isOk()) {
+                                  emit installFailed(taskPtr->gameId, dlRes.errorMessage());
+                                  taskPtr->completionCallback(util::Result<QString>::error(dlRes.errorMessage()));
+                                  QMutexLocker locker(&tasksMutex_);
+                                  activeTasks_.erase(taskPtr->gameId);
+                                  return;
+                              }
+
+                              // Step 3: Run installer with Wine (GUI)
+                              InstallProgress prog;
+                              prog.gameId = taskPtr->gameId;
+                              prog.status = "installing";
+                              prog.currentFile = installerPath;
+                              prog.percentage = 100;
+                              if (taskPtr->progressCallback) taskPtr->progressCallback(prog);
+
+                              // Create an install folder and run installer.
+                              const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
+                              QDir().mkpath(installPath);
+
+                              auto* proc = new QProcess(this);
+                              proc->setProgram("/usr/bin/wine");
+                              proc->setArguments({installerPath});
+                              proc->setWorkingDirectory(installPath);
+                              proc->start();
+
+                              connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                                      [this, taskPtr, installPath, proc](int exitCode, QProcess::ExitStatus status) mutable {
+                                          proc->deleteLater();
+
+                                          if (status != QProcess::NormalExit || exitCode != 0) {
+                                              const QString err = QString("Installer exited with code %1").arg(exitCode);
+                                              emit installFailed(taskPtr->gameId, err);
+                                              taskPtr->completionCallback(util::Result<QString>::error(err));
+                                              QMutexLocker locker(&tasksMutex_);
+                                              activeTasks_.erase(taskPtr->gameId);
+                                              return;
+                                          }
+
+                                          emit installCompleted(taskPtr->gameId, installPath);
+                                          taskPtr->completionCallback(util::Result<QString>::success(installPath));
+                                          QMutexLocker locker(&tasksMutex_);
+                                          activeTasks_.erase(taskPtr->gameId);
+                                      });
+                          },
+                          [this, taskPtr](qint64 received, qint64 total) {
+                              InstallProgress p;
+                              p.gameId = taskPtr->gameId;
+                              p.downloadedBytes = received;
+                              p.totalBytes = total;
+                              p.status = "downloading";
+                              if (total > 0) {
+                                  p.percentage = static_cast<int>((received * 100) / total);
+                              }
+                              if (taskPtr->progressCallback) taskPtr->progressCallback(p);
+                              emit installProgress(taskPtr->gameId, p.percentage);
+                          });
     });
-    
-    timer->start(500); // Update every 500ms
 }
 
 void InstallService::uninstallGame(const QString& gameId, const QString& installPath,

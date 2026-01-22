@@ -6,6 +6,7 @@
 #include <QStringList>
 #include <QMap>
 #include <vector>
+
 namespace opengalaxy::api {
 
 /**
@@ -28,26 +29,23 @@ struct GameInfo {
     qint64 size = 0;         // Download size in bytes
 
     // Per-game properties (user overrides)
-    // runner: "Auto" (empty) | "Native" | "Box64" | "FEX" | "Rosetta2" | "QEMU"
+    // runner: "Auto" (empty) | "Native" | "Wine" | "Proton-GE (...)" | "Box64" | "FEX" | "Rosetta2" | "QEMU"
     QString preferredRunner;
-    // Optional wrapper executable path (e.g., /usr/bin/box64, /usr/bin/qemu-x86_64)
     QString runnerExecutable;
-    // Extra arguments passed to the runner/wrapper (not the game)
     QStringList runnerArguments;
-    // Extra environment variables (KEY=VALUE) applied on launch
     QMap<QString, QString> extraEnvironment;
 
     // Download URLs
     struct DownloadLink {
-        QString url;
-        QString platform;     // windows, linux, mac
+        QString url;           // API link (returns JSON with { downlink, checksum })
+        QString platform;      // windows, linux, mac
         QString language;
         QString version;
         qint64 size = 0;
+        QString checksumUrl;   // optional: URL to checksum XML
     };
     std::vector<DownloadLink> downloads;
 };
-
 /**
  * @brief User session information
  */
