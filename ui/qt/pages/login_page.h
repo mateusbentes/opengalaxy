@@ -2,13 +2,9 @@
 #define LOGIN_PAGE_H
 
 #include <QWidget>
-#include <QVBoxLayout>
 #include <QLineEdit>
 #include <QPushButton>
-#include <QLabel>
-
-namespace opengalaxy {
-namespace ui {
+#include <QPropertyAnimation>
 
 class LoginPage : public QWidget
 {
@@ -16,7 +12,9 @@ class LoginPage : public QWidget
 
 public:
     explicit LoginPage(QWidget *parent = nullptr);
-    ~LoginPage();
+    
+signals:
+    void loginSuccess();
 
 private slots:
     void onLoginClicked();
@@ -25,9 +23,7 @@ private:
     QLineEdit *usernameEdit;
     QLineEdit *passwordEdit;
     QPushButton *loginButton;
+    QPropertyAnimation *fadeAnimation;
 };
-
-} // namespace ui
-} // namespace opengalaxy
 
 #endif // LOGIN_PAGE_H

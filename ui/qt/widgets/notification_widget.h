@@ -2,26 +2,32 @@
 #define NOTIFICATION_WIDGET_H
 
 #include <QWidget>
-#include <QListWidget>
-#include <QVBoxLayout>
 #include <QLabel>
-
-namespace opengalaxy {
-namespace ui {
+#include <QPropertyAnimation>
+#include <QTimer>
 
 class NotificationWidget : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit NotificationWidget(QWidget *parent = nullptr);
+    explicit NotificationWidget(const QString &message, QWidget *parent = nullptr);
     ~NotificationWidget();
 
-private:
-    QListWidget *listWidget;
-};
+    void showNotification();
+    static void showToast(const QString &message, QWidget *parent = nullptr);
 
-} // namespace ui
-} // namespace opengalaxy
+private slots:
+    void startHideAnimation();
+
+private:
+    void setupUI();
+    void setupAnimations();
+    
+    QLabel *messageLabel;
+    QPropertyAnimation *slideInAnimation;
+    QPropertyAnimation *slideOutAnimation;
+    QTimer *hideTimer;
+};
 
 #endif // NOTIFICATION_WIDGET_H

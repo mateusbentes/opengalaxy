@@ -40,6 +40,10 @@ else()
     add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS})
 endif()
 
+target_include_directories(opengalaxy PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/qt
+)
+
 target_link_libraries(opengalaxy
     PRIVATE
         opengalaxy_core

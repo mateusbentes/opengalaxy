@@ -2,31 +2,30 @@
 #define GAME_CARD_H
 
 #include <QWidget>
-#include <QVBoxLayout>
+#include <QPropertyAnimation>
+#include <QGraphicsDropShadowEffect>
 #include <QLabel>
-#include <QPushButton>
-
-namespace opengalaxy {
-namespace ui {
 
 class GameCard : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit GameCard(QWidget *parent = nullptr);
-    ~GameCard();
+    explicit GameCard(const QString &gameName, QWidget *parent = nullptr);
 
-private slots:
-    void onPlayClicked();
+protected:
+    void enterEvent(QEnterEvent *event) override;
+    void leaveEvent(QEvent *event) override;
 
 private:
-    QLabel *titleLabel;
-    QLabel *iconLabel;
-    QPushButton *playButton;
+    void setupAnimations();
+    
+    QLabel *coverImage;
+    QLabel *gameTitle;
+    QLabel *playButton;
+    QGraphicsDropShadowEffect *shadowEffect;
+    QPropertyAnimation *hoverAnimation;
+    QPropertyAnimation *shadowAnimation;
 };
-
-} // namespace ui
-} // namespace opengalaxy
 
 #endif // GAME_CARD_H

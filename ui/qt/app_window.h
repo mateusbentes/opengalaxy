@@ -2,10 +2,8 @@
 #define APP_WINDOW_H
 
 #include <QMainWindow>
-#include <QTabWidget>
-#include <QSystemTrayIcon>
-#include <QMenuBar>
-
+#include <QStackedWidget>
+#include <QListWidget>
 #include "pages/login_page.h"
 #include "pages/library_page.h"
 #include "pages/store_page.h"
@@ -20,16 +18,23 @@ class AppWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit AppWindow(QWidget *parent = nullptr);
+    AppWindow(QWidget *parent = nullptr);
     ~AppWindow();
 
 private slots:
-    void createMenus();
+    void onLoginSuccess();
 
 private:
-    QTabWidget *tabWidget;
-    QSystemTrayIcon *trayIcon;
-    LoginPage *loginPage;
+    void setupSidebar();
+
+    QStackedWidget* stackedWidget;
+    QListWidget* sidebar;
+    
+    LoginPage* loginPage;
+    LibraryPage* libraryPage;
+    StorePage* storePage;
+    FriendsPage* friendsPage;
+    SettingsPage* settingsPage;
 };
 
 } // namespace ui

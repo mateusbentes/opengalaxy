@@ -2,11 +2,8 @@
 #define LIBRARY_PAGE_H
 
 #include <QWidget>
-#include <QVBoxLayout>
-#include <QListView>
-
-namespace opengalaxy {
-namespace ui {
+#include <QGridLayout>
+#include "../widgets/game_card.h"
 
 class LibraryPage : public QWidget
 {
@@ -14,13 +11,10 @@ class LibraryPage : public QWidget
 
 public:
     explicit LibraryPage(QWidget *parent = nullptr);
-    ~LibraryPage();
 
 private:
-    QListView *libraryView;
+    void setupGrid();
+    QGridLayout *gridLayout;
 };
-
-} // namespace ui
-} // namespace opengalaxy
 
 #endif // LIBRARY_PAGE_H

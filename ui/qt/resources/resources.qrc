@@ -1,5 +1,6 @@
 <!DOCTYPE RCC>
 <RCC version="1.0">
-    <!-- Resources will be added as needed -->
-    <!-- Icons, translations, etc. -->
+    <qresource prefix="/">
+        <file>styles/dark_theme.qss</file>
+    </qresource>
 </RCC>
