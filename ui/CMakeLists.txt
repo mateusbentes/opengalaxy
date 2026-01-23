@@ -48,7 +48,7 @@ set(UI_RESOURCES
 
 # Qt Linguist: Create/update translation files and compile them
 if(Qt6LinguistTools_FOUND)
-    qt_add_lupdate(opengalaxy TS_FILES ${TS_FILES})
+    qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
     qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
     message(STATUS "Qt Linguist tools found - translations enabled")
 else()
