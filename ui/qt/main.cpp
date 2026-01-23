@@ -5,6 +5,7 @@
 #include <QFontDatabase>
 
 #include "app_window.h"
+#include "i18n/translation_manager.h"
 
 int main(int argc, char *argv[])
 {
@@ -37,8 +38,12 @@ int main(int argc, char *argv[])
     QFont appFont("Segoe UI", 10);
     app.setFont(appFont);
     
+    // Initialize translation system
+    opengalaxy::ui::TranslationManager translationManager(&app);
+    translationManager.loadFromSettings();
+    
     // Create and show main window
-    opengalaxy::ui::AppWindow window;
+    opengalaxy::ui::AppWindow window(&translationManager);
     window.show();
 
     return app.exec();

@@ -97,8 +97,9 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
     }
 
     // Uses api.gog.com product details (MiniGalaxy-style) to get installer entries.
-    const QString url = QString("https://api.gog.com/products/%1?locale=en-US&expand=downloads")
-                            .arg(QUrl::toPercentEncoding(gameId));
+    const QString url = QString("https://api.gog.com/products/%1?locale=%2&expand=downloads")
+                            .arg(QString(QUrl::toPercentEncoding(gameId)),
+                                 QString(QUrl::toPercentEncoding(locale_)));
 
     net::HttpClient::Request req;
     req.url = url;

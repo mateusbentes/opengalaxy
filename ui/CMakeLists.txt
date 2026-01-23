@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
+# Find Qt6 LinguistTools for translations
+find_package(Qt6 COMPONENTS LinguistTools QUIET)
+
 set(UI_SOURCES
     qt/main.cpp
     qt/app_window.cpp
@@ -13,6 +16,7 @@ set(UI_SOURCES
     qt/widgets/notification_widget.cpp
     qt/dialogs/game_details_dialog.cpp
     qt/dialogs/cloud_saves_dialog.cpp
+    qt/i18n/translation_manager.cpp
 )
 
 set(UI_HEADERS
@@ -27,11 +31,26 @@ set(UI_HEADERS
     qt/widgets/notification_widget.h
     qt/dialogs/game_details_dialog.h
     qt/dialogs/cloud_saves_dialog.h
+    qt/i18n/translation_manager.h
+)
+
+# Translation files
+set(TS_FILES
+    qt/resources/i18n/opengalaxy_en_US.ts
 )
 
 set(UI_RESOURCES
     qt/resources/resources.qrc
 )
+
+# Qt Linguist: Create/update translation files and compile them
+if(Qt6LinguistTools_FOUND)
+    qt_add_lupdate(opengalaxy TS_FILES ${TS_FILES})
+    qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
+    message(STATUS "Qt Linguist tools found - translations enabled")
+else()
+    message(STATUS "Qt Linguist tools not found - translations disabled")
+endif()
 
 # Create executable (resources optional for now)
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/resources.qrc)

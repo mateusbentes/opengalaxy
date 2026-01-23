@@ -16,7 +16,7 @@ LoginPage::LoginPage(QWidget *parent)
 {
     // Create main layout
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 0);
+    mainLayout->setContentsMargins(0, 0, 0, 60);  // Add bottom margin to prevent cutoff
     mainLayout->setSpacing(0);
     
     // Create centered container
@@ -24,14 +24,14 @@ LoginPage::LoginPage(QWidget *parent)
     container->setMaximumWidth(450);
     
     QVBoxLayout* containerLayout = new QVBoxLayout(container);
-    containerLayout->setContentsMargins(40, 40, 40, 40);
+    containerLayout->setContentsMargins(40, 40, 40, 60);  // Increased bottom margin
     containerLayout->setSpacing(20);
     
     // Title
-    QLabel* titleLabel = new QLabel("Welcome to OpenGalaxy", container);
+    QLabel* titleLabel = new QLabel(tr("Welcome to OpenGalaxy"), container);
     titleLabel->setStyleSheet(R"(
         QLabel {
-            color: #ffffff;
+            color: #3c3a37;
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 20px;
@@ -41,10 +41,10 @@ LoginPage::LoginPage(QWidget *parent)
     containerLayout->addWidget(titleLabel);
     
     // Subtitle
-    QLabel* subtitleLabel = new QLabel("Sign in to access your library", container);
+    QLabel* subtitleLabel = new QLabel(tr("Sign in to access your library"), container);
     subtitleLabel->setStyleSheet(R"(
         QLabel {
-            color: #b8b8d1;
+            color: #5a5855;
             font-size: 16px;
             margin-bottom: 30px;
         }
@@ -54,39 +54,43 @@ LoginPage::LoginPage(QWidget *parent)
     
     // Username field
     usernameEdit = new QLineEdit(container);
-    usernameEdit->setPlaceholderText("Email or Username");
+    usernameEdit->setPlaceholderText(tr("Email or Username"));
     usernameEdit->setStyleSheet(R"(
         QLineEdit {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(124, 77, 255, 0.3);
+            background: #ffffff;
+            border: 2px solid #d0cec9;
             border-radius: 12px;
             padding: 16px 20px;
-            color: #ffffff;
+            color: #3c3a37;
             font-size: 16px;
         }
         QLineEdit:focus {
-            border-color: #7c4dff;
-            background: rgba(255, 255, 255, 0.12);
+            border-color: #9b4dca;
+            background: #ffffff;
         }
         QLineEdit::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: #8a8884;
         }
     )");
     containerLayout->addWidget(usernameEdit);
     
     // Password field
     passwordEdit = new QLineEdit(container);
-    passwordEdit->setPlaceholderText("Password");
+    passwordEdit->setPlaceholderText(tr("Password"));
     passwordEdit->setEchoMode(QLineEdit::Password);
     passwordEdit->setStyleSheet(usernameEdit->styleSheet());
     containerLayout->addWidget(passwordEdit);
     
+    // Add spacing before button
+    containerLayout->addSpacing(10);
+    
     // Login button
-    QPushButton* loginButton = new QPushButton("Sign In", container);
+    QPushButton* loginButton = new QPushButton(tr("Sign In"), container);
+    loginButton->setMinimumHeight(56);  // Ensure button has minimum height
     loginButton->setStyleSheet(R"(
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #7c4dff, stop:1 #5a3aff);
+                stop:0 #9b4dca, stop:1 #8b3dba);
             border: none;
             border-radius: 12px;
             padding: 16px 40px;
@@ -97,33 +101,31 @@ LoginPage::LoginPage(QWidget *parent)
         }
         QPushButton:hover {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #8c5dff, stop:1 #6a4aff);
+                stop:0 #ab5dda, stop:1 #9b4dca);
         }
         QPushButton:pressed {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 #6c3def, stop:1 #4a2aef);
+                stop:0 #8b3dba, stop:1 #7b2daa);
         }
     )");
     containerLayout->addWidget(loginButton);
     
-    // (OAuth removed; password login only)
-
-    containerLayout->addStretch();
+    // Add spacing after button to prevent cutoff
+    containerLayout->addSpacing(20);
 
     // Add container to main layout with centering
-    mainLayout->addStretch();
+    mainLayout->addStretch(1);
     QHBoxLayout* centerLayout = new QHBoxLayout();
     centerLayout->addStretch();
     centerLayout->addWidget(container);
     centerLayout->addStretch();
     mainLayout->addLayout(centerLayout);
-    mainLayout->addStretch();
+    mainLayout->addStretch(1);
 
-    // Set page background
+    // Set page background - GOG Galaxy beige/cream color
     setStyleSheet(R"(
         LoginPage {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #1a0f2e, stop:1 #2d1b4e);
+            background: #f5f3f0;
         }
     )");
 
@@ -142,7 +144,7 @@ void LoginPage::onLoginClicked()
     const QString password = passwordEdit->text();
 
     if (username.isEmpty() || password.isEmpty()) {
-        QMessageBox::warning(this, "Login Error", "Please enter both username and password.");
+        QMessageBox::warning(this, tr("Login Error"), tr("Please enter both username and password."));
         return;
     }
 

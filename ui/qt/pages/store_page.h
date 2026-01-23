@@ -8,6 +8,7 @@
 
 #include "opengalaxy/api/session.h"
 #include "opengalaxy/api/gog_client.h"
+#include "i18n/translation_manager.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -17,7 +18,7 @@ class StorePage : public QWidget
     Q_OBJECT
 
 public:
-    explicit StorePage(QWidget *parent = nullptr);
+    explicit StorePage(TranslationManager* translationManager, QWidget *parent = nullptr);
     ~StorePage();
 
 private:
@@ -29,6 +30,7 @@ private:
 
     api::Session session_;
     api::GOGClient gogClient_;
+    TranslationManager* translationManager_ = nullptr;
 };
 
 } // namespace ui

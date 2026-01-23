@@ -49,6 +49,10 @@ public:
                     std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback);
     void fetchStoreGames(std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback);
 
+    // Locale settings
+    void setLocale(const QString& locale) { locale_ = locale; }
+    QString locale() const { return locale_; }
+
 signals:
     void libraryUpdated();
     void gameDetailsUpdated(const QString& gameId);
@@ -56,6 +60,7 @@ signals:
 private:
     Session* session_;
     net::HttpClient* httpClient_;
+    QString locale_ = "en-US";
 
     // API endpoints
     static constexpr const char* API_BASE = "https://api.gog.com";

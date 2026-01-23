@@ -9,6 +9,8 @@ FriendsPage::FriendsPage(QWidget *parent)
     friendsView = new QListView(this);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setContentsMargins(40, 30, 40, 40);  // Add proper margins, especially bottom
+    layout->setSpacing(0);
     layout->addWidget(friendsView);
 }
 

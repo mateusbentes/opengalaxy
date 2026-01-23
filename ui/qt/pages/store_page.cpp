@@ -8,44 +8,49 @@
 namespace opengalaxy {
 namespace ui {
 
-StorePage::StorePage(QWidget* parent)
+StorePage::StorePage(TranslationManager* translationManager, QWidget* parent)
     : QWidget(parent)
     , session_(this)
     , gogClient_(&session_, this)
+    , translationManager_(translationManager)
 {
+    // Set GOG API locale based on current UI language
+    if (translationManager_) {
+        gogClient_.setLocale(translationManager_->gogApiLocale());
+    }
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(40, 30, 40, 30);
+    layout->setContentsMargins(40, 30, 40, 40);  // Increased bottom margin to prevent cutoff
     layout->setSpacing(16);
 
     auto* header = new QHBoxLayout();
-    auto* title = new QLabel("Store", this);
+    auto* title = new QLabel(tr("Store"), this);
     title->setStyleSheet(R"(
-        QLabel { color: #ffffff; font-size: 28px; font-weight: 700; }
+        QLabel { color: #3c3a37; font-size: 28px; font-weight: 700; }
     )");
     header->addWidget(title);
     header->addStretch();
 
     searchEdit_ = new QLineEdit(this);
-    searchEdit_->setPlaceholderText("Search on GOG...");
+    searchEdit_->setPlaceholderText(tr("Search on GOG..."));
     searchEdit_->setFixedWidth(360);
     searchEdit_->setStyleSheet(R"(
         QLineEdit {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(124, 77, 255, 0.3);
+            background: #ffffff;
+            border: 2px solid #d0cec9;
             border-radius: 8px;
             padding: 10px 16px;
-            color: #ffffff;
+            color: #3c3a37;
             font-size: 14px;
         }
-        QLineEdit:focus { border-color: #7c4dff; }
-        QLineEdit::placeholder { color: rgba(255, 255, 255, 0.4); }
+        QLineEdit:focus { border-color: #9b4dca; }
+        QLineEdit::placeholder { color: #8a8884; }
     )");
     header->addWidget(searchEdit_);
 
     layout->addLayout(header);
 
     storeView_ = new QListView(this);
-    storeView_->setStyleSheet("QListView { background: transparent; border: none; color: white; }");
+    storeView_->setStyleSheet("QListView { background: transparent; border: none; color: #3c3a37; }");
     model_ = new QStandardItemModel(this);
     storeView_->setModel(model_);
 
@@ -53,8 +58,7 @@ StorePage::StorePage(QWidget* parent)
 
     setStyleSheet(R"(
         StorePage {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                stop:0 #1a0f2e, stop:1 #2d1b4e);
+            background: #f5f3f0;
         }
     )");
 
@@ -72,7 +76,7 @@ void StorePage::doSearch()
 
     gogClient_.searchStore(query, [this](opengalaxy::util::Result<std::vector<api::StoreGameInfo>> result) {
         if (!result.isOk()) {
-            QMessageBox::warning(this, "Store", result.errorMessage());
+            QMessageBox::warning(this, tr("Store"), result.errorMessage());
             return;
         }
 
