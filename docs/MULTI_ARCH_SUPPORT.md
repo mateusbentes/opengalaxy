@@ -8,13 +8,16 @@ OpenGalaxy is designed to compile and run on multiple processor architectures. T
 
 ### ✅ Fully Supported
 
-| Architecture | Status | Notes |
-|--------------|--------|-------|
-| **x86_64 (AMD64)** | ✅ Tested | Primary development platform |
-| **ARM64 (aarch64)** | ✅ Ready | Raspberry Pi, Apple Silicon, ARM servers |
-| **x86 (i386/i686)** | ✅ Ready | 32-bit Intel/AMD (legacy) |
-| **ARMv7** | ⚠️ Untested | Should work with Qt6 ARM support |
-| **RISC-V** | ⚠️ Untested | Experimental, depends on Qt6 support |
+| Architecture | Status | Detection | Notes |
+|--------------|--------|-----------|-------|
+| **x86_64 (AMD64)** | ✅ Tested | `x86_64`, `amd64` | Primary development platform |
+| **ARM64 (aarch64)** | ✅ Ready | `arm64`, `aarch64` | Raspberry Pi, Apple Silicon, ARM servers |
+| **x86 (i386/i686)** | ✅ Ready | `i386`, `i686`, `x86` | 32-bit Intel/AMD (legacy) |
+| **ARMv7** | ⚠️ Untested | `armv7`, `armv7l` | Raspberry Pi 3, older ARM devices |
+| **RISC-V 64** | ⚠️ Untested | `riscv64`, `riscv` | Experimental, depends on Qt6 support |
+| **PowerPC 64** | ⚠️ Untested | `ppc64`, `ppc64le` | IBM POWER systems |
+| **MIPS 64** | ⚠️ Untested | `mips64`, `mips64el` | MIPS-based systems |
+| **LoongArch 64** | ⚠️ Untested | `loongarch64` | Chinese LoongArch processors |
 
 ## Architecture Detection
 

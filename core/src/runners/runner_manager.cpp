@@ -16,14 +16,48 @@
 
 namespace opengalaxy::runners {
 
+// Helper to convert architecture to string
+static QString architectureToString(Architecture arch)
+{
+    switch (arch) {
+        case Architecture::X86: return "x86";
+        case Architecture::X86_64: return "x86_64";
+        case Architecture::ARM: return "arm";
+        case Architecture::ARM64: return "arm64";
+        case Architecture::RISCV64: return "riscv64";
+        case Architecture::PPC64: return "ppc64";
+        case Architecture::MIPS64: return "mips64";
+        case Architecture::LoongArch64: return "loongarch64";
+        default: return "unknown";
+    }
+}
+
 // Helper to detect host architecture
 static Architecture hostArchitecture()
 {
     const QString arch = QSysInfo::currentCpuArchitecture().toLower();
+    
+    // x86 family
     if (arch == "x86_64" || arch == "amd64") return Architecture::X86_64;
-    if (arch == "i386" || arch == "x86") return Architecture::X86;
+    if (arch == "i386" || arch == "i686" || arch == "x86") return Architecture::X86;
+    
+    // ARM family
     if (arch == "arm64" || arch == "aarch64") return Architecture::ARM64;
     if (arch.startsWith("arm")) return Architecture::ARM;
+    
+    // RISC-V
+    if (arch == "riscv64" || arch == "riscv") return Architecture::RISCV64;
+    
+    // PowerPC
+    if (arch == "ppc64" || arch == "ppc64le" || arch == "powerpc64" || arch == "powerpc64le") 
+        return Architecture::PPC64;
+    
+    // MIPS
+    if (arch == "mips64" || arch == "mips64el") return Architecture::MIPS64;
+    
+    // LoongArch
+    if (arch == "loongarch64") return Architecture::LoongArch64;
+    
     return Architecture::Unknown;
 }
 

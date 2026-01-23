@@ -14,10 +14,14 @@ namespace opengalaxy::runners {
  */
 enum class Architecture {
     Unknown,
-    X86,        // 32-bit x86
-    X86_64,     // 64-bit x86
-    ARM,        // 32-bit ARM
-    ARM64       // 64-bit ARM (aarch64)
+    X86,        // 32-bit x86 (i386, i686)
+    X86_64,     // 64-bit x86 (amd64)
+    ARM,        // 32-bit ARM (armv7)
+    ARM64,      // 64-bit ARM (aarch64)
+    RISCV64,    // 64-bit RISC-V
+    PPC64,      // 64-bit PowerPC
+    MIPS64,     // 64-bit MIPS
+    LoongArch64 // 64-bit LoongArch
 };
 
 /**
