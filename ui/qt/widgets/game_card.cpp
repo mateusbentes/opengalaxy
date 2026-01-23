@@ -8,6 +8,8 @@
 #include <QPixmap>
 #include <QUrl>
 #include <QDebug>
+#include <QTimer>
+#include <QRandomGenerator>
 #include <algorithm>
 
 namespace opengalaxy {
@@ -56,9 +58,12 @@ GameCard::GameCard(const QString& gameId,
     coverImage->setFixedSize(420, 220);
     coverLayout->addWidget(coverImage);
 
-    // Load cover image if URL is provided
+    // Load cover image if URL is provided (with a small delay to prevent overwhelming the network)
     if (!coverUrl.isEmpty()) {
-        loadCoverImage(coverUrl);
+        // Use a timer to stagger image loading
+        QTimer::singleShot(QRandomGenerator::global()->bounded(100, 500), this, [this, coverUrl]() {
+            loadCoverImage(coverUrl);
+        });
     }
 
     // Action button
@@ -354,37 +359,57 @@ void GameCard::loadCoverImage(const QString& url)
         return;
     }
 
-    // Create network manager
-    QNetworkAccessManager* manager = new QNetworkAccessManager(this);
+    // Create network manager (reuse if possible)
+    static QNetworkAccessManager* sharedManager = nullptr;
+    if (!sharedManager) {
+        sharedManager = new QNetworkAccessManager();
+        // Configure for better connection handling
+        sharedManager->setTransferTimeout(10000); // 10 second timeout
+    }
     
-    // Make request
+    // Make request with proper headers
     QNetworkRequest request(qurl);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setRawHeader("User-Agent", "OpenGalaxy/0.1.0");
+    request.setRawHeader("Accept", "image/*");
     
-    QNetworkReply* reply = manager->get(request);
+    // Set connection keep-alive
+    request.setRawHeader("Connection", "keep-alive");
     
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    QNetworkReply* reply = sharedManager->get(request);
+    
+    connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
         reply->deleteLater();
         
         if (reply->error() != QNetworkReply::NoError) {
-            // Only log if it's not an empty URL issue
-            if (reply->error() != QNetworkReply::ProtocolUnknownError) {
-                qDebug() << "Failed to load cover image:" << reply->errorString();
+            // Silently ignore connection errors for cover images
+            // They're not critical and will just show the placeholder
+            if (reply->error() != QNetworkReply::ProtocolUnknownError &&
+                reply->error() != QNetworkReply::RemoteHostClosedError &&
+                reply->error() != QNetworkReply::OperationCanceledError) {
+                qDebug() << "Failed to load cover image for" << gameId_ << ":" << reply->errorString();
             }
             return;
         }
         
         QByteArray imageData = reply->readAll();
-        QPixmap pixmap;
+        if (imageData.isEmpty()) {
+            return;
+        }
         
+        QPixmap pixmap;
         if (pixmap.loadFromData(imageData)) {
             // Scale to fit within the cover container while maintaining aspect ratio
             QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio, Qt::SmoothTransformation);
             coverImage->setPixmap(scaled);
             coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
-        } else {
-            qDebug() << "Failed to parse cover image data";
         }
+    });
+    
+    // Handle errors during download
+    connect(reply, &QNetworkReply::errorOccurred, this, [this, reply](QNetworkReply::NetworkError error) {
+        // Silently ignore common network errors for cover images
+        Q_UNUSED(error);
     });
 }
 
