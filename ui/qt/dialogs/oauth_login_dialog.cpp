@@ -110,25 +110,27 @@ void OAuthLoginDialog::setupUi()
 
 void OAuthLoginDialog::startOAuthFlow()
 {
-    // Start local server to receive OAuth callback
+    // Start local server to receive OAuth callback on fixed port
     localServer_ = new QTcpServer(this);
     
-    // Try to listen on a random port
-    if (!localServer_->listen(QHostAddress::LocalHost, 0)) {
+    // Try to listen on the fixed port that GOG expects
+    if (!localServer_->listen(QHostAddress::LocalHost, LOCAL_PORT)) {
         QMessageBox::critical(this, tr("Error"), 
-            tr("Failed to start local server for OAuth callback.\n\n%1")
+            tr("Failed to start local server on port %1.\n\n"
+               "Make sure the port is not in use by another application.\n\n"
+               "Error: %2")
+            .arg(LOCAL_PORT)
             .arg(localServer_->errorString()));
         reject();
         return;
     }
     
-    localPort_ = localServer_->serverPort();
+    localPort_ = LOCAL_PORT;
     connect(localServer_, &QTcpServer::newConnection, this, &OAuthLoginDialog::onIncomingConnection);
     
-    // Build OAuth URL with local redirect
-    QString redirectUri = QString("%1:%2").arg(REDIRECT_URI_BASE).arg(localPort_);
+    // Build OAuth URL with registered redirect URI
     QString authUrl = QString("https://auth.gog.com/auth?client_id=%1&redirect_uri=%2&response_type=code&layout=client2")
-                          .arg(CLIENT_ID, QUrl::toPercentEncoding(redirectUri));
+                          .arg(CLIENT_ID, QUrl::toPercentEncoding(REDIRECT_URI));
     
     // Open in default browser
     if (!QDesktopServices::openUrl(QUrl(authUrl))) {

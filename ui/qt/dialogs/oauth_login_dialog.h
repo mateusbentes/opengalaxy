@@ -43,7 +43,8 @@ private:
 
     // GOG OAuth parameters
     static constexpr const char* CLIENT_ID = "46899977096215655";
-    static constexpr const char* REDIRECT_URI_BASE = "http://localhost";
+    static constexpr const char* REDIRECT_URI = "http://localhost:7127";
+    static constexpr int LOCAL_PORT = 7127;
 };
 
 } // namespace ui
