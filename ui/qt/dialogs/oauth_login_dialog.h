@@ -24,13 +24,10 @@ public:
 signals:
     void authorizationReceived(const QString& code);
 
-private slots:
-    void onIncomingConnection();
-    void onReadyRead();
-
 private:
     void setupUi();
     void startOAuthFlow();
+    void showCodeInputDialog();
     QString extractCodeFromUrl(const QUrl& url);
 
     QTcpServer* localServer_ = nullptr;
@@ -43,8 +40,8 @@ private:
 
     // GOG OAuth parameters
     static constexpr const char* CLIENT_ID = "46899977096215655";
-    static constexpr const char* REDIRECT_URI = "http://localhost:7127";
-    static constexpr int LOCAL_PORT = 7127;
+    // Use GOG's registered redirect URI for embed clients
+    static constexpr const char* REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
 };
 
 } // namespace ui

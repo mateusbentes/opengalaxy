@@ -6,9 +6,8 @@
 #include <QMessageBox>
 #include <QUrlQuery>
 #include <QDesktopServices>
-#include <QTcpSocket>
 #include <QTimer>
-#include <QRegularExpression>
+#include <QInputDialog>
 
 namespace opengalaxy {
 namespace ui {
@@ -110,25 +109,7 @@ void OAuthLoginDialog::setupUi()
 
 void OAuthLoginDialog::startOAuthFlow()
 {
-    // Start local server to receive OAuth callback on fixed port
-    localServer_ = new QTcpServer(this);
-    
-    // Try to listen on the fixed port that GOG expects
-    if (!localServer_->listen(QHostAddress::LocalHost, LOCAL_PORT)) {
-        QMessageBox::critical(this, tr("Error"), 
-            tr("Failed to start local server on port %1.\n\n"
-               "Make sure the port is not in use by another application.\n\n"
-               "Error: %2")
-            .arg(LOCAL_PORT)
-            .arg(localServer_->errorString()));
-        reject();
-        return;
-    }
-    
-    localPort_ = LOCAL_PORT;
-    connect(localServer_, &QTcpServer::newConnection, this, &OAuthLoginDialog::onIncomingConnection);
-    
-    // Build OAuth URL with registered redirect URI
+    // Build OAuth URL with GOG's registered redirect URI
     QString authUrl = QString("https://auth.gog.com/auth?client_id=%1&redirect_uri=%2&response_type=code&layout=client2")
                           .arg(CLIENT_ID, QUrl::toPercentEncoding(REDIRECT_URI));
     
@@ -140,92 +121,30 @@ void OAuthLoginDialog::startOAuthFlow()
         return;
     }
     
-    statusLabel_->setText(tr("Browser opened. Please sign in with GOG..."));
+    statusLabel_->setText(tr("After logging in, you'll see a code.\nPlease copy and paste it here."));
+    
+    // Show input dialog after a delay
+    QTimer::singleShot(2000, this, &OAuthLoginDialog::showCodeInputDialog);
 }
 
-void OAuthLoginDialog::onIncomingConnection()
+void OAuthLoginDialog::showCodeInputDialog()
 {
-    QTcpSocket* socket = localServer_->nextPendingConnection();
-    connect(socket, &QTcpSocket::readyRead, this, &OAuthLoginDialog::onReadyRead);
-    connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
-}
-
-void OAuthLoginDialog::onReadyRead()
-{
-    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
-    if (!socket) return;
+    bool ok;
+    QString code = QInputDialog::getText(this, 
+        tr("Enter Authorization Code"),
+        tr("After logging in, GOG will show you a code.\nPlease copy and paste it here:"),
+        QLineEdit::Normal,
+        "",
+        &ok);
     
-    QString request = QString::fromUtf8(socket->readAll());
-    
-    // Extract the URL from the HTTP request
-    QRegularExpression re("GET\\s+([^\\s]+)");
-    QRegularExpressionMatch match = re.match(request);
-    
-    if (match.hasMatch()) {
-        QString path = match.captured(1);
-        QUrl url("http://localhost" + path);
-        
-        authCode_ = extractCodeFromUrl(url);
-        
-        // Send response to browser
-        QString response;
-        if (!authCode_.isEmpty()) {
-            response = R"(HTTP/1.1 200 OK
-Content-Type: text/html; charset=utf-8
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login Successful</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f3f0; }
-        .success { color: #4caf50; font-size: 24px; margin-bottom: 20px; }
-        .message { color: #5a5855; font-size: 16px; }
-    </style>
-</head>
-<body>
-    <div class="success">✓ Login Successful!</div>
-    <div class="message">You can close this window and return to OpenGalaxy.</div>
-    <script>setTimeout(function(){ window.close(); }, 2000);</script>
-</body>
-</html>)";
-            success_ = true;
-            statusLabel_->setText(tr("Login successful! Closing..."));
-        } else {
-            response = R"(HTTP/1.1 400 Bad Request
-Content-Type: text/html; charset=utf-8
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Login Failed</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f3f0; }
-        .error { color: #f44336; font-size: 24px; margin-bottom: 20px; }
-        .message { color: #5a5855; font-size: 16px; }
-    </style>
-</head>
-<body>
-    <div class="error">✗ Login Failed</div>
-    <div class="message">No authorization code received. Please try again.</div>
-</body>
-</html>)";
-            statusLabel_->setText(tr("Login failed. Please try again."));
-        }
-        
-        socket->write(response.toUtf8());
-        socket->flush();
-        socket->disconnectFromHost();
-        
-        // Close dialog after a short delay
-        QTimer::singleShot(1000, this, [this]() {
-            if (success_) {
-                emit authorizationReceived(authCode_);
-                accept();
-            } else {
-                reject();
-            }
-        });
+    if (ok && !code.isEmpty()) {
+        authCode_ = code.trimmed();
+        success_ = true;
+        statusLabel_->setText(tr("Code received! Logging in..."));
+        emit authorizationReceived(authCode_);
+        accept();
+    } else {
+        reject();
     }
 }
 
