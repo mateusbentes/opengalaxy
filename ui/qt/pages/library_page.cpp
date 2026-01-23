@@ -300,18 +300,29 @@ void LibraryPage::launchGame(const QString& gameId)
 
 void LibraryPage::installGame(const QString& gameId)
 {
-    QString baseDir = QFileDialog::getExistingDirectory(this, "Choose install folder");
-    if (baseDir.isEmpty()) return;
-
-    // Create Games/OpenGalaxy directory if it doesn't exist
-    QDir dir(baseDir);
+    // Use default installation directory: ~/Games/OpenGalaxy
+    QString homeDir = QDir::homePath();
+    QDir dir(homeDir);
+    
+    // Create Games directory if it doesn't exist
     if (!dir.exists("Games")) {
-        dir.mkdir("Games");
+        if (!dir.mkdir("Games")) {
+            QMessageBox::warning(this, "Install Error", 
+                "Failed to create Games directory in home folder");
+            return;
+        }
     }
     dir.cd("Games");
+    
+    // Create OpenGalaxy directory if it doesn't exist
     if (!dir.exists("OpenGalaxy")) {
-        dir.mkdir("OpenGalaxy");
+        if (!dir.mkdir("OpenGalaxy")) {
+            QMessageBox::warning(this, "Install Error", 
+                "Failed to create OpenGalaxy directory");
+            return;
+        }
     }
+    
     const QString installDir = dir.absoluteFilePath("OpenGalaxy");
 
     gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId](opengalaxy::util::Result<api::GameInfo> result) {
