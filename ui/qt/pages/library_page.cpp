@@ -25,6 +25,8 @@ LibraryPage::LibraryPage(api::Session* session, QWidget* parent)
     , runnerManager_(this)
     , installService_(this)
 {
+    // Set session for authenticated downloads
+    installService_.setSession(session_);
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(40, 30, 40, 30);
     mainLayout->setSpacing(30);

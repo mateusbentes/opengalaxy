@@ -19,6 +19,9 @@ class InstallService : public QObject {
 public:
     explicit InstallService(QObject* parent = nullptr);
     ~InstallService() override;
+    
+    // Set the session for authenticated downloads (forward declared)
+    void setSession(void* session) { session_ = session; }
 
     struct InstallProgress {
         QString gameId;
@@ -57,10 +60,12 @@ private:
     struct InstallTask;
     std::map<QString, std::unique_ptr<InstallTask>> activeTasks_;
     mutable QMutex tasksMutex_;
+    void* session_ = nullptr;  // api::Session* (void* to avoid forward declaration issues)
 
     void downloadAndExtract(InstallTask* task);
     bool verifyChecksum(const QString& filePath, const QString& expectedChecksum);
     bool extractArchive(const QString& archivePath, const QString& destPath, ProgressCallback progressCallback);
+    QString buildAuthHeader() const;
 };
 
 } // namespace opengalaxy::install

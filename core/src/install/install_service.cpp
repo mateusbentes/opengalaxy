@@ -2,6 +2,7 @@
 #include "opengalaxy/install/install_service.h"
 #include "opengalaxy/util/log.h"
 #include "opengalaxy/net/http_client.h"
+#include "opengalaxy/api/session.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
@@ -33,6 +34,17 @@ InstallService::InstallService(QObject* parent)
 }
 
 InstallService::~InstallService() = default;
+
+QString InstallService::buildAuthHeader() const
+{
+    if (session_) {
+        auto* session = static_cast<api::Session*>(session_);
+        if (session->isAuthenticated()) {
+            return "Bearer " + session->tokens().accessToken;
+        }
+    }
+    return QString();
+}
 
 void InstallService::installGame(const api::GameInfo& game,
                                  const QString& installDir,
@@ -105,6 +117,12 @@ void InstallService::installGame(const api::GameInfo& game,
     net::HttpClient::Request req;
     req.url = downloadUrl;
     req.method = "GET";
+    
+    // Add authentication header for GOG API
+    QString authHeader = buildAuthHeader();
+    if (!authHeader.isEmpty()) {
+        req.headers["Authorization"] = authHeader;
+    }
 
     http->request(req, [this, taskPtr, selected, http](util::Result<net::HttpClient::Response> result) mutable {
         if (!result.isOk()) {
