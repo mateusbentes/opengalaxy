@@ -208,27 +208,93 @@ void InstallService::installGame(const api::GameInfo& game,
                               const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
                               QDir().mkpath(installPath);
 
-                              // Find Wine executable
+                              // Find Wine/Proton executable (prefer Proton-GE > Proton > Wine-Staging > Wine)
                               QString wineExe;
-                              QStringList winePaths = {
-                                  "/usr/bin/wine",
-                                  "/usr/local/bin/wine",
-                                  "/opt/wine/bin/wine",
-                                  QStandardPaths::findExecutable("wine")
+                              QString runnerName;
+                              
+                              // Check for Proton-GE (best compatibility for games)
+                              QStringList protonGePaths = {
+                                  QDir::homePath() + "/.steam/steam/compatibilitytools.d/GE-Proton*/proton",
+                                  QDir::homePath() + "/.local/share/Steam/compatibilitytools.d/GE-Proton*/proton",
+                                  "/usr/share/steam/compatibilitytools.d/GE-Proton*/proton"
                               };
                               
-                              for (const QString& path : winePaths) {
-                                  if (!path.isEmpty() && QFile::exists(path)) {
-                                      wineExe = path;
-                                      break;
+                              for (const QString& pattern : protonGePaths) {
+                                  QDir dir(QFileInfo(pattern).path());
+                                  if (dir.exists()) {
+                                      QStringList entries = dir.entryList(QStringList() << "GE-Proton*", QDir::Dirs, QDir::Name | QDir::Reversed);
+                                      if (!entries.isEmpty()) {
+                                          QString protonPath = dir.absolutePath() + "/" + entries.first() + "/proton";
+                                          if (QFile::exists(protonPath)) {
+                                              wineExe = protonPath;
+                                              runnerName = "Proton-GE";
+                                              break;
+                                          }
+                                      }
+                                  }
+                              }
+                              
+                              // Check for regular Proton
+                              if (wineExe.isEmpty()) {
+                                  QStringList protonPaths = {
+                                      QDir::homePath() + "/.steam/steam/steamapps/common/Proton*/proton",
+                                      QDir::homePath() + "/.local/share/Steam/steamapps/common/Proton*/proton"
+                                  };
+                                  
+                                  for (const QString& pattern : protonPaths) {
+                                      QDir dir(QFileInfo(pattern).path());
+                                      if (dir.exists()) {
+                                          QStringList entries = dir.entryList(QStringList() << "Proton*", QDir::Dirs, QDir::Name | QDir::Reversed);
+                                          if (!entries.isEmpty()) {
+                                              QString protonPath = dir.absolutePath() + "/" + entries.first() + "/proton";
+                                              if (QFile::exists(protonPath)) {
+                                                  wineExe = protonPath;
+                                                  runnerName = "Proton";
+                                                  break;
+                                              }
+                                          }
+                                      }
+                                  }
+                              }
+                              
+                              // Check for Wine variants (Wine-Staging, Wine-TKG, etc.)
+                              if (wineExe.isEmpty()) {
+                                  QStringList winePaths = {
+                                      QStandardPaths::findExecutable("wine-staging"),
+                                      QStandardPaths::findExecutable("wine-tkg"),
+                                      "/usr/bin/wine-staging",
+                                      "/usr/local/bin/wine-staging",
+                                      QStandardPaths::findExecutable("wine"),
+                                      "/usr/bin/wine",
+                                      "/usr/local/bin/wine",
+                                      "/opt/wine/bin/wine",
+                                      "/opt/wine-staging/bin/wine"
+                                  };
+                                  
+                                  for (const QString& path : winePaths) {
+                                      if (!path.isEmpty() && QFile::exists(path)) {
+                                          wineExe = path;
+                                          if (path.contains("staging")) {
+                                              runnerName = "Wine-Staging";
+                                          } else if (path.contains("tkg")) {
+                                              runnerName = "Wine-TKG";
+                                          } else {
+                                              runnerName = "Wine";
+                                          }
+                                          break;
+                                      }
                                   }
                               }
                               
                               if (wineExe.isEmpty()) {
-                                  const QString err = "Wine not found. Please install Wine to run Windows installers.\n"
-                                                     "Ubuntu/Debian: sudo apt install wine\n"
-                                                     "Fedora: sudo dnf install wine\n"
-                                                     "Arch: sudo pacman -S wine";
+                                  const QString err = "Wine/Proton not found. Please install Wine or Proton to run Windows installers.\n\n"
+                                                     "Wine:\n"
+                                                     "  Ubuntu/Debian: sudo apt install wine\n"
+                                                     "  Fedora: sudo dnf install wine\n"
+                                                     "  Arch: sudo pacman -S wine\n\n"
+                                                     "Proton-GE (recommended for games):\n"
+                                                     "  Download from: https://github.com/GloriousEggroll/proton-ge-custom/releases\n"
+                                                     "  Extract to: ~/.steam/steam/compatibilitytools.d/";
                                   LOG_ERROR(err);
                                   emit installFailed(taskPtr->gameId, err);
                                   if (taskPtr->completionCallback) {
@@ -239,17 +305,33 @@ void InstallService::installGame(const api::GameInfo& game,
                                   return;
                               }
 
-                              LOG_INFO(QString("Running installer with Wine: %1 %2").arg(wineExe, installerPath));
+                              LOG_INFO(QString("Running installer with %1: %2 %3").arg(runnerName, wineExe, installerPath));
 
                               auto* proc = new QProcess(this);
-                              proc->setProgram(wineExe);
-                              proc->setArguments({installerPath});
-                              proc->setWorkingDirectory(installPath);
                               
-                              // Set environment for Wine
+                              // Set environment for Wine/Proton
                               QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-                              env.insert("WINEPREFIX", installPath + "/.wine");
+                              
+                              // Configure based on runner type
+                              if (runnerName.contains("Proton")) {
+                                  // Proton uses different environment variables
+                                  env.insert("STEAM_COMPAT_DATA_PATH", installPath + "/.proton");
+                                  env.insert("STEAM_COMPAT_CLIENT_INSTALL_PATH", QDir::homePath() + "/.steam/steam");
+                                  
+                                  // Proton command: proton run installer.exe
+                                  proc->setProgram(wineExe);
+                                  proc->setArguments({"run", installerPath});
+                              } else {
+                                  // Wine/Wine-Staging command: wine installer.exe
+                                  env.insert("WINEPREFIX", installPath + "/.wine");
+                                  env.insert("WINEDEBUG", "-all");  // Reduce Wine debug output
+                                  
+                                  proc->setProgram(wineExe);
+                                  proc->setArguments({installerPath});
+                              }
+                              
                               proc->setProcessEnvironment(env);
+                              proc->setWorkingDirectory(installPath);
                               
                               proc->start();
                               

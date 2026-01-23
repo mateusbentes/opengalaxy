@@ -42,7 +42,24 @@ Mark game as installed
 
 ### Requirements
 
-**Wine must be installed** to run Windows game installers:
+**Wine or Proton must be installed** to run Windows game installers.
+
+#### Option 1: Proton-GE (Recommended for Games)
+
+Proton-GE provides the best compatibility for Windows games:
+
+```bash
+# Download latest Proton-GE
+wget https://github.com/GloriousEggroll/proton-ge-custom/releases/download/GE-Proton8-25/GE-Proton8-25.tar.gz
+
+# Extract to Steam compatibility tools directory
+mkdir -p ~/.steam/steam/compatibilitytools.d
+tar -xf GE-Proton8-25.tar.gz -C ~/.steam/steam/compatibilitytools.d/
+```
+
+#### Option 2: Wine
+
+Standard Wine installation:
 
 ```bash
 # Ubuntu/Debian
@@ -55,33 +72,85 @@ sudo dnf install wine
 sudo pacman -S wine
 ```
 
-### Wine Detection
+#### Option 3: Wine-Staging
 
-OpenGalaxy searches for Wine in these locations:
-1. `/usr/bin/wine` (standard location)
-2. `/usr/local/bin/wine` (custom install)
-3. `/opt/wine/bin/wine` (alternative location)
-4. System PATH (`which wine`)
+Wine-Staging includes experimental features:
 
-### Wine Installation Process
+```bash
+# Ubuntu/Debian
+sudo apt install wine-staging
+
+# Arch Linux
+sudo pacman -S wine-staging
+```
+
+### Runner Detection
+
+OpenGalaxy automatically detects and prefers runners in this order:
+
+1. **Proton-GE** (best for games)
+   - `~/.steam/steam/compatibilitytools.d/GE-Proton*/proton`
+   - `~/.local/share/Steam/compatibilitytools.d/GE-Proton*/proton`
+
+2. **Proton** (Steam's Wine fork)
+   - `~/.steam/steam/steamapps/common/Proton*/proton`
+   - `~/.local/share/Steam/steamapps/common/Proton*/proton`
+
+3. **Wine-Staging** (experimental features)
+   - System PATH: `wine-staging`
+   - `/usr/bin/wine-staging`
+
+4. **Wine-TKG** (custom builds)
+   - System PATH: `wine-tkg`
+
+5. **Wine** (standard)
+   - System PATH: `wine`
+   - `/usr/bin/wine`
+   - `/usr/local/bin/wine`
+   - `/opt/wine/bin/wine`
+
+### Installation Process
 
 When installing a Windows game:
 
 1. **Download** the `.exe` installer
-2. **Find Wine** executable
-3. **Create** Wine prefix in game directory
-4. **Run** installer: `wine installer.exe`
+2. **Detect runner** (Proton-GE > Proton > Wine-Staging > Wine)
+3. **Create prefix** in game directory
+4. **Run installer**:
+   - Proton: `proton run installer.exe`
+   - Wine: `wine installer.exe`
 5. **Wait** for installer GUI to complete
 6. **Mark** game as installed
 
-### Wine Prefix
+### Prefix Isolation
 
-Each game gets its own Wine prefix:
+Each game gets its own isolated prefix:
+
+**Proton**:
+```
+~/Games/GameName/.proton/
+```
+
+**Wine**:
 ```
 ~/Games/GameName/.wine/
 ```
 
 This isolates games from each other and prevents conflicts.
+
+### Runner-Specific Behavior
+
+#### Proton/Proton-GE
+- Uses Steam compatibility layer
+- Better DirectX support (DXVK built-in)
+- Automatic dependencies (vcrun, dotnet)
+- Environment: `STEAM_COMPAT_DATA_PATH`
+
+#### Wine/Wine-Staging
+- Standard Wine behavior
+- Manual dependency installation
+- More control over configuration
+- Environment: `WINEPREFIX`
 
 ## Error Handling
 
