@@ -144,26 +144,36 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
 
         for (const auto& v : installers) {
             const QJsonObject inst = v.toObject();
+            
+            // Get the files array - this contains the actual download links
+            const QJsonArray files = inst.value("files").toArray();
+            
+            if (files.isEmpty()) {
+                qDebug() << "  Installer has no files, skipping";
+                continue;
+            }
+            
+            // Use the first file's downlink URL
+            const QJsonObject firstFile = files[0].toObject();
+            QString downlinkUrl = firstFile.value("downlink").toString();
+            
+            if (downlinkUrl.isEmpty()) {
+                qDebug() << "  No downlink URL found, skipping";
+                continue;
+            }
+            
             GameInfo::DownloadLink link;
             link.platform = inst.value("os").toString();
             link.language = inst.value("language").toString();
             link.version = inst.value("version").toString();
-            
-            // The "link" field is actually a URL to get the real download link
-            QString linkUrl = inst.value("link").toString();
-            if (linkUrl.isEmpty()) {
-                // Try "manualUrl" as fallback
-                linkUrl = inst.value("manualUrl").toString();
-            }
-            
-            link.url = linkUrl;
+            link.url = downlinkUrl;
+            link.size = firstFile.value("size").toVariant().toLongLong();
             
             qDebug() << "  Installer:" << link.platform << link.language << link.version;
-            qDebug() << "  Link:" << link.url;
+            qDebug() << "  Downlink:" << link.url;
+            qDebug() << "  Size:" << link.size << "bytes";
             
-            if (!link.url.isEmpty()) {
-                game.downloads.push_back(link);
-            }
+            game.downloads.push_back(link);
         }
 
         if (game.downloads.empty()) {
