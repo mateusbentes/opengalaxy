@@ -18,6 +18,7 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 
 ### Developer Documentation
 - **[Architecture](ARCHITECTURE.md)** - System design and component overview
+- **[Multi-Architecture Support](MULTI_ARCH_SUPPORT.md)** - Building for different CPU architectures
 - **[Testing Guide](TESTING.md)** - Unit tests and test coverage
 - **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
 - **[API Reference](API.md)** - Core library API documentation (coming soon)
