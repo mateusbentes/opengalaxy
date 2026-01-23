@@ -51,16 +51,36 @@ if(Qt6LinguistTools_FOUND)
     qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
     qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
     message(STATUS "Qt Linguist tools found - translations enabled")
+    
+    # Create a temporary resources file with translations
+    set(RESOURCES_WITH_I18N ${CMAKE_CURRENT_BINARY_DIR}/resources_with_i18n.qrc)
+    configure_file(
+        ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/resources.qrc
+        ${RESOURCES_WITH_I18N}
+        COPYONLY
+    )
+    set(UI_RESOURCES ${RESOURCES_WITH_I18N})
 else()
     message(STATUS "Qt Linguist tools not found - translations disabled")
+    
+    # Create resources file without translations
+    set(RESOURCES_NO_I18N ${CMAKE_CURRENT_BINARY_DIR}/resources_no_i18n.qrc)
+    file(WRITE ${RESOURCES_NO_I18N}
+"<!DOCTYPE RCC>
+<RCC version=\"1.0\">
+    <qresource prefix=\"/\">
+        <file alias=\"styles/dark_theme.qss\">${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/styles/dark_theme.qss</file>
+    </qresource>
+    <qresource prefix=\"/data\">
+        <file alias=\"opengalaxyicon.png\">${CMAKE_SOURCE_DIR}/data/opengalaxyicon.png</file>
+    </qresource>
+</RCC>
+")
+    set(UI_RESOURCES ${RESOURCES_NO_I18N})
 endif()
 
-# Create executable (resources optional for now)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/resources.qrc)
-    add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS} ${UI_RESOURCES})
-else()
-    add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS})
-endif()
+# Create executable
+add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS} ${UI_RESOURCES})
 
 target_include_directories(opengalaxy PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/qt
