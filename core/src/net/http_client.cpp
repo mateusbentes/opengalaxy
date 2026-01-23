@@ -172,7 +172,13 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
             }
 
             LOG_ERROR(QString("HTTP request failed: %1 - %2").arg(req.url, response.error));
-            callback(util::Result<Response>::error(response.error, response.statusCode));
+            
+            // For authentication endpoints, pass the response body so caller can parse error details
+            if (response.statusCode >= 400 && response.statusCode < 500 && !response.body.isEmpty()) {
+                callback(util::Result<Response>::success(response));
+            } else {
+                callback(util::Result<Response>::error(response.error, response.statusCode));
+            }
             emit requestFinished(req.url, response.statusCode);
             return;
         }

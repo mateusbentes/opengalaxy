@@ -27,6 +27,18 @@
         <source>Login failed</source>
         <translation>Login failed</translation>
     </message>
+    <message>
+        <source>Login or password are wrong</source>
+        <translation>Login or password are wrong</translation>
+    </message>
+    <message>
+        <source>Network error. Please check your internet connection.</source>
+        <translation>Network error. Please check your internet connection.</translation>
+    </message>
+    <message>
+        <source>Connection timeout. Please try again.</source>
+        <translation>Connection timeout. Please try again.</translation>
+    </message>
 </context>
 <context>
     <name>opengalaxy::ui::LoginPage</name>

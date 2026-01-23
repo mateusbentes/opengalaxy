@@ -40,14 +40,50 @@ void Session::loginWithPassword(const QString& username, const QString& password
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
                          if (result) {
                              auto json = QJsonDocument::fromJson(result.value().body).object();
+                             
+                             // Check for error in response
+                             if (json.contains("error")) {
+                                 QString errorMsg = json["error"].toString();
+                                 QString errorDesc = json["error_description"].toString();
+                                 
+                                 // Provide user-friendly error messages
+                                 if (errorMsg == "invalid_grant" || errorMsg == "invalid_client") {
+                                     callback(util::Result<AuthTokens>::error("Login or password are wrong"));
+                                 } else if (!errorDesc.isEmpty()) {
+                                     callback(util::Result<AuthTokens>::error(errorDesc));
+                                 } else {
+                                     callback(util::Result<AuthTokens>::error("Authentication failed: " + errorMsg));
+                                 }
+                                 return;
+                             }
+                             
+                             // Success - extract tokens
                              AuthTokens tokens;
                              tokens.accessToken = json["access_token"].toString();
                              tokens.refreshToken = json["refresh_token"].toString();
                              tokens.expiresAt = QDateTime::currentDateTime().addSecs(json["expires_in"].toInt());
+                             
+                             if (tokens.accessToken.isEmpty()) {
+                                 callback(util::Result<AuthTokens>::error("Invalid response from server"));
+                                 return;
+                             }
+                             
                              setTokens(tokens);
                              callback(util::Result<AuthTokens>::success(tokens));
                          } else {
-                             callback(util::Result<AuthTokens>::error(result.errorMessage()));
+                             // Network or HTTP error
+                             QString errorMsg = result.errorMessage();
+                             
+                             // Simplify technical error messages
+                             if (errorMsg.contains("401") || errorMsg.contains("403")) {
+                                 callback(util::Result<AuthTokens>::error("Login or password are wrong"));
+                             } else if (errorMsg.contains("network") || errorMsg.contains("connection")) {
+                                 callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
+                             } else if (errorMsg.contains("timeout")) {
+                                 callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
+                             } else {
+                                 callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
+                             }
                          }
                      });
     });
