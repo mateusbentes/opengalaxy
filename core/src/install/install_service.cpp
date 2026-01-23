@@ -77,11 +77,27 @@ void InstallService::installGame(const api::GameInfo& game,
         }
     }
 
+    // Validate download URL before proceeding
+    if (selected.url.isEmpty()) {
+        const QString err = "No valid download URL available for this game";
+        emit installFailed(game.id, err);
+        completionCallback(util::Result<QString>::error(err));
+        QMutexLocker locker(&tasksMutex_);
+        activeTasks_.erase(game.id);
+        return;
+    }
+
+    // Fix protocol-relative URLs (GOG API may return //cdn.gog.com/...)
+    QString downloadUrl = selected.url;
+    if (downloadUrl.startsWith("//")) {
+        downloadUrl = "https:" + downloadUrl;
+    }
+
     // Step 1: Resolve real download URL (GOG returns JSON with { downlink, checksum })
     net::HttpClient* http = new net::HttpClient(this);
 
     net::HttpClient::Request req;
-    req.url = selected.url;
+    req.url = downloadUrl;
     req.method = "GET";
 
     http->request(req, [this, taskPtr, selected, http](util::Result<net::HttpClient::Response> result) mutable {
@@ -94,7 +110,7 @@ void InstallService::installGame(const api::GameInfo& game,
         }
 
         const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
-        const QString downlink = obj.value("downlink").toString();
+        QString downlink = obj.value("downlink").toString();
         if (downlink.isEmpty()) {
             const QString err = "Missing downlink in download response";
             emit installFailed(taskPtr->gameId, err);
@@ -102,6 +118,11 @@ void InstallService::installGame(const api::GameInfo& game,
             QMutexLocker locker(&tasksMutex_);
             activeTasks_.erase(taskPtr->gameId);
             return;
+        }
+
+        // Fix protocol-relative URLs in downlink
+        if (downlink.startsWith("//")) {
+            downlink = "https:" + downlink;
         }
 
         // Step 2: Download installer to installDir

@@ -260,13 +260,20 @@ void LibraryPage::launchGame(const QString& gameId)
         runners::LaunchConfig cfg;
         cfg.gamePath = game.installPath;
         cfg.workingDirectory = QFileInfo(game.installPath).absolutePath();
-        cfg.arguments = {};
+        cfg.arguments = {}; // Game arguments (can be extended later)
         cfg.environment = game.extraEnvironment;
 
         const QString p = game.platform.toLower();
         if (p.contains("windows")) cfg.gamePlatform = runners::Platform::Windows;
         else if (p.contains("mac")) cfg.gamePlatform = runners::Platform::MacOS;
         else cfg.gamePlatform = runners::Platform::Linux;
+
+        // Detect game architecture from binary
+        cfg.gameArch = runners::Runner::detectArchitecture(game.installPath);
+
+        // Wire up custom runner settings
+        cfg.runnerExecutableOverride = game.runnerExecutable.trimmed();
+        cfg.runnerArguments = game.runnerArguments; // Already a QStringList
 
         runners::Runner* runner = nullptr;
         if (!game.preferredRunner.trimmed().isEmpty()) {

@@ -153,19 +153,30 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
     });
 }
 
+void GOGClient::listCloudSaves(const QString& gameId, CloudSavesCallback callback) {
+    // NOTE: GOG does not provide a public REST API for cloud saves.
+    // Cloud saves are handled by the official Galaxy client using the GOG Galaxy SDK (IStorage interface).
+    // This would require either:
+    // 1. Integrating the proprietary GOG Galaxy SDK (C++ library)
+    // 2. Reverse-engineering the Galaxy client's cloud save protocol
+    // 3. Waiting for GOG to provide a public API
+    //
+    // For now, this returns an empty list. Users should use the official Galaxy client
+    // for cloud save functionality, or manually sync saves using external tools.
+    callback(util::Result<std::vector<CloudSave>>::success({}));
+}
+
 void GOGClient::uploadCloudSave(const QString& gameId, const QString& filePath,
                                std::function<void(util::Result<void>)> callback) {
-    QTimer::singleShot(100, this, [callback = std::move(callback)]() mutable {
-        callback(util::Result<void>::success());
-    });
+    // Cloud saves not implemented - see listCloudSaves() for details
+    callback(util::Result<void>::error("Cloud saves require GOG Galaxy SDK integration"));
 }
 
 void GOGClient::downloadCloudSave(const QString& gameId, const QString& filename,
                                 const QString& destPath,
                                 std::function<void(util::Result<void>)> callback) {
-    QTimer::singleShot(100, this, [callback = std::move(callback)]() mutable {
-        callback(util::Result<void>::success());
-    });
+    // Cloud saves not implemented - see listCloudSaves() for details
+    callback(util::Result<void>::error("Cloud saves require GOG Galaxy SDK integration"));
 }
 
 void GOGClient::searchStore(

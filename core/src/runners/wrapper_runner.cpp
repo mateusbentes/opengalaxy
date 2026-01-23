@@ -65,6 +65,18 @@ std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
 {
     auto process = std::make_unique<QProcess>();
 
+    // Use custom executable if provided, otherwise use auto-detected one
+    const QString chosenWrapper =
+        config.runnerExecutableOverride.trimmed().isEmpty()
+            ? wrapperExecutable_
+            : config.runnerExecutableOverride.trimmed();
+
+    if (chosenWrapper.isEmpty() || !QFileInfo::exists(chosenWrapper)) {
+        LOG_ERROR(QString("Wrapper executable not found for %1: '%2'")
+                      .arg(runnerName_, chosenWrapper));
+        return nullptr;
+    }
+
     // env: start from current environment and override
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
     for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
@@ -75,17 +87,19 @@ std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
     QStringList args;
 
     if (runnerName_ == "Rosetta2") {
-        // Use: arch -x86_64 <game> [gameArgs...]
+        // Use: arch -x86_64 [runnerArgs...] <game> [gameArgs...]
         args << "-x86_64";
+        args << config.runnerArguments;  // Custom wrapper args
         args << config.gamePath;
-        args << config.arguments;
+        args << config.arguments;        // Game args
     } else {
         // Use: <wrapper> [runnerArgs...] <game> [gameArgs...]
-        args << config.arguments;
+        args << config.runnerArguments;  // Custom wrapper args first
         args << config.gamePath;
+        args << config.arguments;        // Game args after
     }
 
-    process->setProgram(wrapperExecutable_);
+    process->setProgram(chosenWrapper);
     process->setArguments(args);
     process->setWorkingDirectory(config.workingDirectory);
 
@@ -93,12 +107,12 @@ std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
 
     if (!process->waitForStarted(3000)) {
         LOG_ERROR(QString("Failed to start game via %1 (%2): %3")
-                      .arg(runnerName_, wrapperExecutable_, process->errorString()));
+                      .arg(runnerName_, chosenWrapper, process->errorString()));
         return nullptr;
     }
 
-    LOG_INFO(QString("Launched game via %1 on %2")
-                 .arg(runnerName_, platformToString(config.gamePlatform)));
+    LOG_INFO(QString("Launched game via %1 on %2 (executable: %3)")
+                 .arg(runnerName_, platformToString(config.gamePlatform), chosenWrapper));
 
     return process;
 }

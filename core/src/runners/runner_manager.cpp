@@ -11,8 +11,31 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QProcessEnvironment>
+#include <QStandardPaths>
+#include <QSysInfo>
 
 namespace opengalaxy::runners {
+
+// Helper to detect host architecture
+static Architecture hostArchitecture()
+{
+    const QString arch = QSysInfo::currentCpuArchitecture().toLower();
+    if (arch == "x86_64" || arch == "amd64") return Architecture::X86_64;
+    if (arch == "i386" || arch == "x86") return Architecture::X86;
+    if (arch == "arm64" || arch == "aarch64") return Architecture::ARM64;
+    if (arch.startsWith("arm")) return Architecture::ARM;
+    return Architecture::Unknown;
+}
+
+// Helper to find executable in PATH
+static QString findExe(const QStringList& names)
+{
+    for (const auto& n : names) {
+        const QString p = QStandardPaths::findExecutable(n);
+        if (!p.isEmpty()) return p;
+    }
+    return {};
+}
 
 // Simple native runner implementation
 class NativeRunner : public Runner {
@@ -76,27 +99,55 @@ void RunnerManager::discoverRunners()
 
 #ifdef Q_OS_LINUX
     // Windows compatibility on Linux
-    registerRunner(std::make_unique<WineRunner>("/usr/bin/wine"));
+    const QString wine = findExe({"wine", "wine64"});
+    if (!wine.isEmpty()) {
+        registerRunner(std::make_unique<WineRunner>(wine));
+    }
 
     // Proton-GE (Steam compatibility tools)
     for (const auto& p : discoverProtonGE()) {
         registerRunner(std::make_unique<ProtonRunner>(p.name, p.protonDir));
     }
 
-    // ISA translators / wrappers (availability checked via executable existence)
-    registerRunner(std::make_unique<WrapperRunner>("Box64", "/usr/bin/box64", Platform::Linux,
-                                                  Architecture::ARM64, Architecture::X86_64, true));
-    registerRunner(std::make_unique<WrapperRunner>("FEX", "/usr/bin/FEXInterpreter", Platform::Linux,
-                                                  Architecture::ARM64, Architecture::X86_64, true));
-    registerRunner(std::make_unique<WrapperRunner>("QEMU", "/usr/bin/qemu-x86_64", Platform::Linux,
-                                                  Architecture::ARM64, Architecture::X86_64, true));
+    // ISA translators / wrappers (register only on ARM64 hosts for x86_64 translation)
+    const Architecture hostArch = hostArchitecture();
+    if (hostArch == Architecture::ARM64) {
+        LOG_INFO("ARM64 host detected, discovering ISA translators...");
+
+        const QString box64 = findExe({"box64"});
+        if (!box64.isEmpty()) {
+            LOG_INFO(QString("Found Box64: %1").arg(box64));
+            registerRunner(std::make_unique<WrapperRunner>("Box64", box64, Platform::Linux,
+                                                          Architecture::ARM64, Architecture::X86_64, true));
+        }
+
+        const QString fex = findExe({"FEXInterpreter", "FEXLoader"});
+        if (!fex.isEmpty()) {
+            LOG_INFO(QString("Found FEX-Emu: %1").arg(fex));
+            registerRunner(std::make_unique<WrapperRunner>("FEX", fex, Platform::Linux,
+                                                          Architecture::ARM64, Architecture::X86_64, true));
+        }
+
+        const QString qemu = findExe({"qemu-x86_64", "qemu-x86_64-static"});
+        if (!qemu.isEmpty()) {
+            LOG_INFO(QString("Found QEMU: %1").arg(qemu));
+            registerRunner(std::make_unique<WrapperRunner>("QEMU", qemu, Platform::Linux,
+                                                          Architecture::ARM64, Architecture::X86_64, true));
+        }
+    }
 #endif
 
 #ifdef Q_OS_MACOS
-    // Note: Rosetta 2 does not have a stable public wrapper executable;
-    // we expose it as a logical runner name and use /usr/bin/arch to request x86_64.
-    registerRunner(std::make_unique<WrapperRunner>("Rosetta2", "/usr/bin/arch", Platform::MacOS,
-                                                  Architecture::ARM64, Architecture::X86_64, true));
+    // Rosetta 2 on Apple Silicon (ARM64 only)
+    const Architecture hostArch = hostArchitecture();
+    if (hostArch == Architecture::ARM64) {
+        const QString arch = findExe({"arch"});
+        if (!arch.isEmpty()) {
+            LOG_INFO(QString("Found Rosetta2 (via arch): %1").arg(arch));
+            registerRunner(std::make_unique<WrapperRunner>("Rosetta2", arch, Platform::MacOS,
+                                                          Architecture::ARM64, Architecture::X86_64, true));
+        }
+    }
 #endif
 
     emit runnersDiscovered(static_cast<int>(runners_.size()));
@@ -113,12 +164,62 @@ std::vector<RunnerCapabilities> RunnerManager::availableRunners() const
 
 Runner* RunnerManager::findBestRunner(const LaunchConfig& config)
 {
+    Runner* best = nullptr;
+    int bestScore = -1000000;
+
     for (const auto& runner : runners_) {
-        if (runner->canRun(config) && runner->isAvailable()) {
-            return runner.get();
+        if (!runner->isAvailable()) continue;
+        if (!runner->canRun(config)) continue;
+
+        const auto caps = runner->capabilities();
+        int score = 0;
+
+        // Platform match is mandatory, but reward it anyway
+        if (caps.supportedPlatform == config.gamePlatform) {
+            score += 100;
+        }
+
+        // If the game arch is known, prefer exact target arch match
+        if (config.gameArch != Architecture::Unknown) {
+            if (caps.targetArch == config.gameArch) {
+                score += 50;
+            } else {
+                // Penalize non-matching target arch
+                score -= 50;
+            }
+
+            // Prefer not translating when unnecessary (native execution)
+            if (!caps.requiresISATranslation && caps.hostArch == config.gameArch) {
+                score += 10;
+            }
+            // Slight penalty for translation when not needed
+            if (caps.requiresISATranslation && caps.hostArch == config.gameArch) {
+                score -= 10;
+            }
+        }
+
+        // Preference among translators (typical performance: FEX > Box64 > QEMU)
+        if (caps.name == "FEX") score += 3;
+        if (caps.name == "Box64") score += 2;
+        if (caps.name == "QEMU") score += 1;
+
+        // Prefer Proton over Wine for Windows games (better compatibility)
+        if (config.gamePlatform == Platform::Windows) {
+            if (caps.name.contains("Proton")) score += 5;
+        }
+
+        if (score > bestScore) {
+            bestScore = score;
+            best = runner.get();
         }
     }
-    return nullptr;
+
+    if (best) {
+        LOG_INFO(QString("Auto-selected runner: %1 (score: %2)")
+                     .arg(best->name()).arg(bestScore));
+    }
+
+    return best;
 }
 
 Runner* RunnerManager::getRunner(const QString& name)

@@ -55,6 +55,10 @@ struct LaunchConfig {
     QMap<QString, QString> environment;
     Platform gamePlatform;
     Architecture gameArch;
+
+    // Optional per-game overrides (used by WrapperRunner / translators)
+    QString runnerExecutableOverride;   // e.g. /usr/local/bin/FEXInterpreter
+    QStringList runnerArguments;        // wrapper/translator args (NOT game args)
 };
 
 /**
@@ -80,8 +84,7 @@ public:
     virtual QStringList configOptions() const { return {}; }
     virtual void setConfigOption(const QString& key, const QString& value) { Q_UNUSED(key); Q_UNUSED(value); }
 
-protected:
-    // Helper to detect architecture from executable
+    // Helper to detect architecture and platform from executable
     static Architecture detectArchitecture(const QString& executablePath);
     static Platform detectPlatform(const QString& executablePath);
 };

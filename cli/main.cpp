@@ -150,8 +150,16 @@ public:
 
             runners::LaunchConfig config;
             config.gamePath = game.installPath;
-            config.gamePlatform = runners::Platform::Windows;
-            config.gameArch = runners::Architecture::X86_64;
+            config.workingDirectory = QFileInfo(game.installPath).absolutePath();
+            
+            // Detect platform and architecture from binary
+            config.gamePlatform = runners::Runner::detectPlatform(game.installPath);
+            config.gameArch = runners::Runner::detectArchitecture(game.installPath);
+            
+            // Use game-specific settings if available
+            config.runnerExecutableOverride = game.runnerExecutable.trimmed();
+            config.runnerArguments = game.runnerArguments; // Already a QStringList
+            config.arguments = {}; // Game arguments (can be extended later)
 
             auto* runner = runnerManager_->findBestRunner(config);
             if (!runner) {
