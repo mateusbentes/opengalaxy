@@ -37,6 +37,8 @@ private:
     void launchGame(const QString& gameId);
     void installGame(const QString& gameId);
     void cancelInstall(const QString& gameId);
+    void updateGame(const QString& gameId);
+    void checkForUpdate(const QString& gameId);
     void updateGridLayout();
 
     QGridLayout* gameGrid = nullptr;

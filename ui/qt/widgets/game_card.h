@@ -32,12 +32,15 @@ public:
     void setInstalled(bool installed);
     void setInstalling(bool installing);
     void setInstallProgress(int percent);
+    void setUpdateAvailable(bool available, const QString& newVersion = QString());
+    void setUpdating(bool updating);
 
 signals:
     void playRequested(const QString& gameId);
     void detailsRequested(const QString& gameId);
     void installRequested(const QString& gameId);
     void cancelInstallRequested(const QString& gameId);
+    void updateRequested(const QString& gameId);
 
 protected:
     void enterEvent(QEnterEvent* event) override;
@@ -54,12 +57,16 @@ private:
     bool installed_ = false;
     bool installing_ = false;
     int installProgress_ = 0;
+    bool updateAvailable_ = false;
+    bool updating_ = false;
+    QString newVersion_;
 
     QLabel* coverImage = nullptr;
     QLabel* gameTitle = nullptr;
     QLabel* platformLabel = nullptr;
 
     QPushButton* actionButton_ = nullptr;
+    QPushButton* updateButton_ = nullptr;
     QProgressBar* progressBar_ = nullptr;
 
     QGraphicsDropShadowEffect* shadowEffect = nullptr;

@@ -81,6 +81,27 @@ GameCard::GameCard(const QString& gameId,
     )");
     actionButton_->hide();
 
+    // Update button
+    updateButton_ = new QPushButton(coverContainer);
+    updateButton_->setFixedSize(160, 50);
+    updateButton_->setStyleSheet(R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #ff9800, stop:1 #f57c00);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #ffa726, stop:1 #fb8c00);
+        }
+    )");
+    updateButton_->setText("⬆ UPDATE");
+    updateButton_->hide();
+
     // Progress bar with animated gradient effect
     progressBar_ = new QProgressBar(coverContainer);
     progressBar_->setFixedSize(240, 14);
@@ -108,12 +129,14 @@ GameCard::GameCard(const QString& gameId,
 
     // Position overlay widgets
     actionButton_->move((coverContainer->width() - actionButton_->width()) / 2,
-                        (coverContainer->height() - actionButton_->height()) / 2);
+                        (coverContainer->height() - actionButton_->height()) / 2 - 30);
+    updateButton_->move((coverContainer->width() - updateButton_->width()) / 2,
+                        actionButton_->y() + actionButton_->height() + 10);
     progressBar_->move((coverContainer->width() - progressBar_->width()) / 2,
-                       actionButton_->y() + actionButton_->height() + 12);
+                       updateButton_->y() + updateButton_->height() + 12);
 
     connect(actionButton_, &QPushButton::clicked, this, [this]() {
-        if (installing_) {
+        if (installing_ || updating_) {
             emit cancelInstallRequested(gameId_);
             return;
         }
@@ -122,6 +145,10 @@ GameCard::GameCard(const QString& gameId,
         } else {
             emit installRequested(gameId_);
         }
+    });
+
+    connect(updateButton_, &QPushButton::clicked, this, [this]() {
+        emit updateRequested(gameId_);
     });
 
     mainLayout->addWidget(coverContainer);
@@ -209,15 +236,29 @@ void GameCard::setInstallProgress(int percent)
     
     installProgress_ = newProgress;
     
-    if (installing_) {
+    if (installing_ || updating_) {
         progressBar_->show();
     }
 }
 
+void GameCard::setUpdateAvailable(bool available, const QString& newVersion)
+{
+    updateAvailable_ = available;
+    newVersion_ = newVersion;
+    refreshButton();
+}
+
+void GameCard::setUpdating(bool updating)
+{
+    updating_ = updating;
+    refreshButton();
+}
+
 void GameCard::refreshButton()
 {
-    if (installing_) {
+    if (installing_ || updating_) {
         actionButton_->setText("CANCEL");
+        updateButton_->hide();
         progressBar_->show();
         return;
     }
@@ -226,8 +267,17 @@ void GameCard::refreshButton()
 
     if (installed_) {
         actionButton_->setText("▶ PLAY");
+        if (updateAvailable_) {
+            updateButton_->show();
+            if (!newVersion_.isEmpty()) {
+                updateButton_->setToolTip(tr("Update to version %1").arg(newVersion_));
+            }
+        } else {
+            updateButton_->hide();
+        }
     } else {
         actionButton_->setText("⬇ INSTALL");
+        updateButton_->hide();
     }
 }
 
@@ -262,7 +312,10 @@ void GameCard::enterEvent(QEnterEvent* event)
     shadowAnimation->start();
 
     actionButton_->show();
-    if (installing_) {
+    if (updateAvailable_ && installed_ && !installing_ && !updating_) {
+        updateButton_->show();
+    }
+    if (installing_ || updating_) {
         progressBar_->show();
     }
 
@@ -281,6 +334,7 @@ void GameCard::leaveEvent(QEvent* event)
     shadowAnimation->start();
 
     actionButton_->hide();
+    updateButton_->hide();
     progressBar_->hide();
 
     QWidget::leaveEvent(event);

@@ -181,8 +181,14 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
             connect(card, &GameCard::playRequested, this, &LibraryPage::launchGame);
             connect(card, &GameCard::installRequested, this, &LibraryPage::installGame);
             connect(card, &GameCard::cancelInstallRequested, this, &LibraryPage::cancelInstall);
+            connect(card, &GameCard::updateRequested, this, &LibraryPage::updateGame);
 
             cardsById_.insert(game.id, card);
+            
+            // Check for updates if game is installed
+            if (game.isInstalled) {
+                checkForUpdate(game.id);
+            }
         }
 
         qDebug() << "Created" << cardsById_.size() << "game cards";
@@ -365,9 +371,131 @@ void LibraryPage::cancelInstall(const QString& gameId)
     installService_.cancelInstallation(gameId);
     if (cardsById_.contains(gameId)) {
         cardsById_[gameId]->setInstalling(false);
+        cardsById_[gameId]->setUpdating(false);
         cardsById_[gameId]->setInstallProgress(0);
     }
     NotificationWidget::showToast("Install cancelled", this);
+}
+
+void LibraryPage::checkForUpdate(const QString& gameId)
+{
+    // Get current game info
+    libraryService_.getGame(gameId, [this, gameId](auto result) {
+        if (!result.isOk()) {
+            return;
+        }
+        
+        api::GameInfo currentGame = result.value();
+        
+        // Only check if game is installed and has a version
+        if (!currentGame.isInstalled || currentGame.version.isEmpty()) {
+            return;
+        }
+        
+        // Fetch latest download info from GOG
+        gogClient_.fetchGameDownloads(gameId, [this, gameId, currentGame](opengalaxy::util::Result<api::GameInfo> downloadResult) {
+            if (!downloadResult.isOk()) {
+                return;
+            }
+            
+            api::GameInfo latestInfo = downloadResult.value();
+            
+            // Find the latest version from downloads
+            QString latestVersion;
+            for (const auto& download : latestInfo.downloads) {
+                if (!download.version.isEmpty()) {
+                    // Compare versions (simple string comparison for now)
+                    if (latestVersion.isEmpty() || download.version > latestVersion) {
+                        latestVersion = download.version;
+                    }
+                }
+            }
+            
+            // Check if update is available
+            if (!latestVersion.isEmpty() && latestVersion != currentGame.version) {
+                qDebug() << "Update available for" << currentGame.title 
+                         << "- Current:" << currentGame.version 
+                         << "Latest:" << latestVersion;
+                
+                if (cardsById_.contains(gameId)) {
+                    cardsById_[gameId]->setUpdateAvailable(true, latestVersion);
+                }
+            }
+        });
+    });
+}
+
+void LibraryPage::updateGame(const QString& gameId)
+{
+    // Get current game info
+    libraryService_.getGame(gameId, [this, gameId](auto result) {
+        if (!result.isOk()) {
+            QMessageBox::warning(this, "Update Error", result.errorMessage());
+            return;
+        }
+        
+        api::GameInfo currentGame = result.value();
+        
+        if (!currentGame.isInstalled) {
+            QMessageBox::information(this, "Update", "Game is not installed.");
+            return;
+        }
+        
+        // Mark as updating
+        if (cardsById_.contains(gameId)) {
+            cardsById_[gameId]->setUpdating(true);
+            cardsById_[gameId]->setInstallProgress(0);
+        }
+        
+        NotificationWidget::showToast("Updating game...", this);
+        
+        // Use the existing install directory
+        QString installDir = QFileInfo(currentGame.installPath).absolutePath();
+        
+        // Fetch latest downloads
+        gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId, currentGame](opengalaxy::util::Result<api::GameInfo> result) {
+            if (!result.isOk()) {
+                if (cardsById_.contains(gameId)) {
+                    cardsById_[gameId]->setUpdating(false);
+                }
+                QMessageBox::warning(this, "Update Error", result.errorMessage());
+                return;
+            }
+            
+            api::GameInfo game = result.value();
+            
+            // Keep title/platform from current game
+            game.platform = currentGame.platform;
+            game.title = currentGame.title;
+            
+            // Set up progress callback
+            auto progressCallback = [this, gameId](const install::InstallService::InstallProgress& progress) {
+                if (cardsById_.contains(gameId)) {
+                    cardsById_[gameId]->setInstallProgress(progress.percentage);
+                }
+            };
+            
+            // Set up completion callback
+            auto completionCallback = [this, gameId](util::Result<QString> result) {
+                if (cardsById_.contains(gameId)) {
+                    cardsById_[gameId]->setUpdating(false);
+                    
+                    if (result.isOk()) {
+                        cardsById_[gameId]->setUpdateAvailable(false);
+                        NotificationWidget::showToast("Update completed", this);
+                        
+                        // Refresh game info to get new version
+                        checkForUpdate(gameId);
+                    } else {
+                        NotificationWidget::showToast("Update failed: " + result.errorMessage(), this);
+                    }
+                }
+            };
+            
+            // Use install service to download and install the update
+            installService_.installGame(game, installDir, progressCallback, completionCallback);
+        });
+    });
 }
 
 void LibraryPage::filterGames(const QString& searchText)
