@@ -124,13 +124,24 @@ void InstallService::installGame(const api::GameInfo& game,
         req.headers["Authorization"] = authHeader;
     }
 
-    http->request(req, [this, taskPtr, selected, http](util::Result<net::HttpClient::Response> result) mutable {
+    http->request(req, [this, gameId = game.id, selected, http](util::Result<net::HttpClient::Response> result) mutable {
+        // Check if task still exists (might have been cancelled)
+        QMutexLocker locker(&tasksMutex_);
+        auto it = activeTasks_.find(gameId);
+        if (it == activeTasks_.end()) {
+            // Task was cancelled, cleanup and return
+            http->deleteLater();
+            return;
+        }
+        InstallTask* taskPtr = it->second.get();
+        locker.unlock();
+        
         if (!result.isOk()) {
             emit installFailed(taskPtr->gameId, result.errorMessage());
             if (taskPtr->completionCallback) {
                 taskPtr->completionCallback(util::Result<QString>::error(result.errorMessage()));
             }
-            QMutexLocker locker(&tasksMutex_);
+            QMutexLocker locker2(&tasksMutex_);
             activeTasks_.erase(taskPtr->gameId);
             return;
         }
@@ -163,13 +174,22 @@ void InstallService::installGame(const api::GameInfo& game,
         if (taskPtr->progressCallback) taskPtr->progressCallback(prog);
 
         http->downloadFile(downlink, installerPath,
-                          [this, taskPtr, installerPath](util::Result<net::HttpClient::Response> dlRes) mutable {
+                          [this, gameId, installerPath](util::Result<net::HttpClient::Response> dlRes) mutable {
+                              // Check if task still exists
+                              QMutexLocker locker(&tasksMutex_);
+                              auto it = activeTasks_.find(gameId);
+                              if (it == activeTasks_.end()) {
+                                  return; // Cancelled
+                              }
+                              InstallTask* taskPtr = it->second.get();
+                              locker.unlock();
+                              
                               if (!dlRes.isOk()) {
                                   emit installFailed(taskPtr->gameId, dlRes.errorMessage());
                                   if (taskPtr->completionCallback) {
                                       taskPtr->completionCallback(util::Result<QString>::error(dlRes.errorMessage()));
                                   }
-                                  QMutexLocker locker(&tasksMutex_);
+                                  QMutexLocker locker2(&tasksMutex_);
                                   activeTasks_.erase(taskPtr->gameId);
                                   return;
                               }
@@ -193,8 +213,17 @@ void InstallService::installGame(const api::GameInfo& game,
                               proc->start();
 
                               connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                                      [this, taskPtr, installPath, proc](int exitCode, QProcess::ExitStatus status) mutable {
+                                      [this, gameId, installPath, proc](int exitCode, QProcess::ExitStatus status) mutable {
                                           proc->deleteLater();
+
+                                          // Check if task still exists
+                                          QMutexLocker locker(&tasksMutex_);
+                                          auto it = activeTasks_.find(gameId);
+                                          if (it == activeTasks_.end()) {
+                                              return; // Cancelled
+                                          }
+                                          InstallTask* taskPtr = it->second.get();
+                                          locker.unlock();
 
                                           if (status != QProcess::NormalExit || exitCode != 0) {
                                               const QString err = QString("Installer exited with code %1").arg(exitCode);
@@ -202,7 +231,7 @@ void InstallService::installGame(const api::GameInfo& game,
                                               if (taskPtr->completionCallback) {
                                                   taskPtr->completionCallback(util::Result<QString>::error(err));
                                               }
-                                              QMutexLocker locker(&tasksMutex_);
+                                              QMutexLocker locker2(&tasksMutex_);
                                               activeTasks_.erase(taskPtr->gameId);
                                               return;
                                           }
@@ -211,11 +240,19 @@ void InstallService::installGame(const api::GameInfo& game,
                                           if (taskPtr->completionCallback) {
                                               taskPtr->completionCallback(util::Result<QString>::success(installPath));
                                           }
-                                          QMutexLocker locker(&tasksMutex_);
+                                          QMutexLocker locker2(&tasksMutex_);
                                           activeTasks_.erase(taskPtr->gameId);
                                       });
                           },
-                          [this, taskPtr](qint64 received, qint64 total) {
+                          [this, gameId](qint64 received, qint64 total) {
+                              // Check if task still exists
+                              QMutexLocker locker(&tasksMutex_);
+                              auto it = activeTasks_.find(gameId);
+                              if (it == activeTasks_.end()) {
+                                  return; // Cancelled
+                              }
+                              InstallTask* taskPtr = it->second.get();
+                              
                               InstallProgress p;
                               p.gameId = taskPtr->gameId;
                               p.downloadedBytes = received;
@@ -224,8 +261,10 @@ void InstallService::installGame(const api::GameInfo& game,
                               if (total > 0) {
                                   p.percentage = static_cast<int>((received * 100) / total);
                               }
+                              locker.unlock();
+                              
                               if (taskPtr->progressCallback) taskPtr->progressCallback(p);
-                              emit installProgress(taskPtr->gameId, p.percentage);
+                              emit installProgress(gameId, p.percentage);
                           });
     });
 }
@@ -251,18 +290,27 @@ void InstallService::uninstallGame(const QString& gameId, const QString& install
 
 void InstallService::cancelInstallation(const QString& gameId)
 {
+    LOG_INFO(QString("Cancelling installation: %1").arg(gameId));
+    
     QMutexLocker locker(&tasksMutex_);
     
     auto it = activeTasks_.find(gameId);
     if (it == activeTasks_.end()) {
+        LOG_INFO(QString("Installation not found for cancellation: %1").arg(gameId));
         return;
     }
     
+    // Abort any ongoing network request
     if (it->second->reply) {
         it->second->reply->abort();
+        it->second->reply = nullptr;
     }
     
+    // Remove the task - this will trigger cleanup
+    // Note: The task's callbacks should check if task still exists before accessing it
     activeTasks_.erase(it);
+    
+    locker.unlock(); // Unlock before emitting signal
     
     LOG_INFO(QString("Installation cancelled: %1").arg(gameId));
     emit installCancelled(gameId);
