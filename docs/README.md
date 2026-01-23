@@ -18,6 +18,7 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 
 ### Developer Documentation
 - **[Architecture](ARCHITECTURE.md)** - System design and component overview
+- **[Testing Guide](TESTING.md)** - Unit tests and test coverage
 - **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
 - **[API Reference](API.md)** - Core library API documentation (coming soon)
 
@@ -71,8 +72,9 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 ### Developers
 1. [BUILD.md](BUILD.md) - Building the project
 2. [ARCHITECTURE.md](ARCHITECTURE.md) - System design
-3. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
-4. [API.md](API.md) - API reference (coming soon)
+3. [TESTING.md](TESTING.md) - Unit tests and coverage
+4. [../CONTRIBUTING.md](../CONTRIBUTING.md) - Contribution guidelines
+5. [API.md](API.md) - API reference (coming soon)
 
 ### Translators
 1. [MULTILINGUAL_GUIDE.md](MULTILINGUAL_GUIDE.md) - Translation system
