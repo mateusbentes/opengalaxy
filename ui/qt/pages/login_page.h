@@ -20,10 +20,6 @@ signals:
 
 private slots:
     void onLoginClicked();
-
-private:
-    QLineEdit* usernameEdit;
-    QLineEdit* passwordEdit;
 };
 
 } // namespace ui

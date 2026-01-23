@@ -229,8 +229,12 @@ void AppWindow::onLoginSuccess()
 void AppWindow::startOAuthLogin(const QString& username, const QString& password)
 {
 #ifdef HAVE_WEBENGINE
-    // Show OAuth login dialog with auto-fill
-    auto* dialog = new OAuthLoginDialog(username, password, this);
+    // Show OAuth login dialog
+    // If username/password provided (legacy), use auto-fill; otherwise let user login manually
+    auto* dialog = username.isEmpty() 
+        ? new OAuthLoginDialog(this)
+        : new OAuthLoginDialog(username, password, this);
+    
     connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
         // Exchange authorization code for tokens
         session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {

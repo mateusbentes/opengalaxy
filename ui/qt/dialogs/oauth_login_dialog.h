@@ -17,6 +17,7 @@ class OAuthLoginDialog : public QDialog
     Q_OBJECT
 
 public:
+    explicit OAuthLoginDialog(QWidget* parent = nullptr);
     explicit OAuthLoginDialog(const QString& username, const QString& password, QWidget* parent = nullptr);
     ~OAuthLoginDialog() override;
 

@@ -15,6 +15,14 @@
 namespace opengalaxy {
 namespace ui {
 
+OAuthLoginDialog::OAuthLoginDialog(QWidget* parent)
+    : QDialog(parent)
+    , username_("")
+    , password_("")
+{
+    setupUi();
+}
+
 OAuthLoginDialog::OAuthLoginDialog(const QString& username, const QString& password, QWidget* parent)
     : QDialog(parent)
     , username_(username)
@@ -56,9 +64,9 @@ void OAuthLoginDialog::setupUi()
     // Monitor URL changes to catch the redirect
     connect(webView_, &QWebEngineView::urlChanged, this, &OAuthLoginDialog::onUrlChanged);
     
-    // Auto-fill credentials when page loads
+    // Auto-fill credentials when page loads (only if provided)
     connect(webView_, &QWebEngineView::loadFinished, this, [this](bool ok) {
-        if (ok) {
+        if (ok && !username_.isEmpty() && !password_.isEmpty()) {
             autoFillCredentials();
         }
     });
@@ -66,7 +74,10 @@ void OAuthLoginDialog::setupUi()
     layout->addWidget(webView_);
     
     // Add info label
-    QLabel* infoLabel = new QLabel(tr("Logging in to GOG..."), this);
+    QString infoText = username_.isEmpty() 
+        ? tr("Please sign in with your GOG account")
+        : tr("Logging in to GOG...");
+    QLabel* infoLabel = new QLabel(infoText, this);
     infoLabel->setStyleSheet("padding: 10px; background: #f0f0f0; color: #333;");
     infoLabel->setAlignment(Qt::AlignCenter);
     layout->insertWidget(0, infoLabel);
