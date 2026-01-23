@@ -28,15 +28,15 @@ void Session::loginWithPassword(const QString& username, const QString& password
         const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
         const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
 
-        QJsonObject body;
-        body["client_id"] = CLIENT_ID;
-        body["client_secret"] = CLIENT_SECRET;
-        body["grant_type"] = "password";
-        body["username"] = username;
-        body["password"] = password;
+        // GOG API uses GET with URL parameters, not POST with JSON
+        QString url = QString("https://auth.gog.com/token?client_id=%1&client_secret=%2&grant_type=password&username=%3&password=%4")
+                          .arg(QString(QUrl::toPercentEncoding(CLIENT_ID)),
+                               QString(QUrl::toPercentEncoding(CLIENT_SECRET)),
+                               QString(QUrl::toPercentEncoding(username)),
+                               QString(QUrl::toPercentEncoding(password)));
 
         net::HttpClient* client = new net::HttpClient(this);
-        client->postJson("https://auth.gog.com/token", body,
+        client->get(url,
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
                          if (!result.isOk()) {
                              // Network-level error (connection failed, timeout, etc.)
@@ -131,15 +131,15 @@ void Session::refreshToken(AuthCallback callback) {
         const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
         const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
         
-        QJsonObject body;
-        body["client_id"] = CLIENT_ID;
-        body["client_secret"] = CLIENT_SECRET;
-        body["grant_type"] = "refresh_token";
-        body["refresh_token"] = tokens_.refreshToken;
+        // GOG API uses GET with URL parameters, not POST with JSON
+        QString url = QString("https://auth.gog.com/token?client_id=%1&client_secret=%2&grant_type=refresh_token&refresh_token=%3")
+                          .arg(QString(QUrl::toPercentEncoding(CLIENT_ID)),
+                               QString(QUrl::toPercentEncoding(CLIENT_SECRET)),
+                               QString(QUrl::toPercentEncoding(tokens_.refreshToken)));
 
         net::HttpClient* client = new net::HttpClient(this);
         connect(client, &net::HttpClient::destroyed, this, &QObject::deleteLater);
-        client->postJson("https://auth.gog.com/token", body, 
+        client->get(url, 
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
             if (result) {
                 auto json = QJsonDocument::fromJson(result.value().body).object();
