@@ -145,44 +145,54 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
         Response response;
         response.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         response.body = reply->readAll();
+        response.error = reply->errorString();
 
         // Extract headers
         for (const auto& header : reply->rawHeaderPairs()) {
             response.headers[QString::fromUtf8(header.first)] = QString::fromUtf8(header.second);
         }
 
-        // Check for errors
-        if (reply->error() != QNetworkReply::NoError) {
-            response.error = reply->errorString();
-            
-            // Retry on transient errors
-            bool shouldRetry = (reply->error() == QNetworkReply::TimeoutError ||
-                               reply->error() == QNetworkReply::TemporaryNetworkFailureError ||
-                               response.statusCode == 429 ||  // Rate limit
-                               response.statusCode == 503);   // Service unavailable
+        // Check for network-level errors (not HTTP errors)
+        bool hasNetworkError = (reply->error() != QNetworkReply::NoError && 
+                                reply->error() != QNetworkReply::ProtocolFailure &&
+                                reply->error() != QNetworkReply::ContentNotFoundError &&
+                                reply->error() != QNetworkReply::AuthenticationRequiredError &&
+                                reply->error() != QNetworkReply::ContentAccessDenied);
+        
+        // Retry on transient errors
+        bool shouldRetry = (reply->error() == QNetworkReply::TimeoutError ||
+                           reply->error() == QNetworkReply::TemporaryNetworkFailureError ||
+                           response.statusCode == 429 ||  // Rate limit
+                           response.statusCode == 503);   // Service unavailable
 
-            if (shouldRetry && retryCount < req.maxRetries) {
-                LOG_WARNING(QString("Request failed, retrying: %1").arg(req.url));
-                // Exponential backoff
-                int delayMs = 1000 * (1 << retryCount);
-                QTimer::singleShot(delayMs, [this, req, callback, retryCount]() {
-                    executeRequest(req, callback, retryCount + 1);
-                });
-                return;
-            }
+        if (shouldRetry && retryCount < req.maxRetries) {
+            LOG_WARNING(QString("Request failed, retrying: %1").arg(req.url));
+            // Exponential backoff
+            int delayMs = 1000 * (1 << retryCount);
+            QTimer::singleShot(delayMs, [this, req, callback, retryCount]() {
+                executeRequest(req, callback, retryCount + 1);
+            });
+            return;
+        }
 
-            LOG_ERROR(QString("HTTP request failed: %1 - %2").arg(req.url, response.error));
-            
-            // For authentication endpoints, pass the response body so caller can parse error details
-            if (response.statusCode >= 400 && response.statusCode < 500 && !response.body.isEmpty()) {
-                callback(util::Result<Response>::success(response));
-            } else {
-                callback(util::Result<Response>::error(response.error, response.statusCode));
-            }
+        // For HTTP 4xx/5xx errors with response body, treat as success so caller can parse error
+        // This is important for APIs that return error details in JSON
+        if (response.statusCode >= 400 && !response.body.isEmpty()) {
+            LOG_DEBUG(QString("HTTP %1 %2 -> %3 (with error body)").arg(req.method, req.url).arg(response.statusCode));
+            callback(util::Result<Response>::success(response));
             emit requestFinished(req.url, response.statusCode);
             return;
         }
 
+        // Network-level errors (connection failed, timeout, etc.)
+        if (hasNetworkError) {
+            LOG_ERROR(QString("HTTP request failed: %1 - %2").arg(req.url, response.error));
+            callback(util::Result<Response>::error(response.error, response.statusCode));
+            emit requestFinished(req.url, response.statusCode);
+            return;
+        }
+
+        // Success
         LOG_DEBUG(QString("HTTP %1 %2 -> %3").arg(req.method, req.url).arg(response.statusCode));
         callback(util::Result<Response>::success(response));
         emit requestFinished(req.url, response.statusCode);
