@@ -52,23 +52,29 @@ void OAuthLoginDialog::setupUi()
     titleLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(titleLabel);
 
-    // Info text
+    // Info text with instructions
     QLabel* infoLabel = new QLabel(
-        tr("Your default web browser will open with GOG's login page.\n\n"
-           "After logging in, you'll be redirected back to OpenGalaxy automatically."),
+        tr("Your browser will open with GOG's login page.\n\n"
+           "After logging in:\n"
+           "1. You'll see a success page\n"
+           "2. Copy the ENTIRE URL from your browser's address bar\n"
+           "3. Paste it here\n\n"
+           "The URL will look like:\n"
+           "https://embed.gog.com/on_login_success?code=..."),
         this
     );
     infoLabel->setWordWrap(true);
     infoLabel->setStyleSheet(R"(
         QLabel {
-            font-size: 14px;
+            font-size: 13px;
             color: #5a5855;
             padding: 20px;
             background: #f5f3f0;
             border-radius: 8px;
+            line-height: 1.5;
         }
     )");
-    infoLabel->setAlignment(Qt::AlignCenter);
+    infoLabel->setAlignment(Qt::AlignLeft);
     layout->addWidget(infoLabel);
 
     // Status label
@@ -121,28 +127,50 @@ void OAuthLoginDialog::startOAuthFlow()
         return;
     }
     
-    statusLabel_->setText(tr("After logging in, you'll see a code.\nPlease copy and paste it here."));
+    statusLabel_->setText(tr("Browser opened. After logging in, copy the URL and paste it here."));
     
-    // Show input dialog after a delay
-    QTimer::singleShot(2000, this, &OAuthLoginDialog::showCodeInputDialog);
+    // Show input dialog after a delay to give user time to see the instructions
+    QTimer::singleShot(3000, this, &OAuthLoginDialog::showCodeInputDialog);
 }
 
 void OAuthLoginDialog::showCodeInputDialog()
 {
     bool ok;
-    QString code = QInputDialog::getText(this, 
-        tr("Enter Authorization Code"),
-        tr("After logging in, GOG will show you a code.\nPlease copy and paste it here:"),
+    QString input = QInputDialog::getText(this, 
+        tr("Paste Login URL"),
+        tr("After logging in to GOG, copy the ENTIRE URL from your browser's address bar and paste it here.\n\n"
+           "It should look like:\n"
+           "https://embed.gog.com/on_login_success?code=XXXXX\n\n"
+           "Paste the URL:"),
         QLineEdit::Normal,
         "",
         &ok);
     
-    if (ok && !code.isEmpty()) {
-        authCode_ = code.trimmed();
-        success_ = true;
-        statusLabel_->setText(tr("Code received! Logging in..."));
-        emit authorizationReceived(authCode_);
-        accept();
+    if (ok && !input.isEmpty()) {
+        // Try to extract code from URL
+        QString trimmedInput = input.trimmed();
+        
+        // If it's a full URL, extract the code
+        if (trimmedInput.contains("code=")) {
+            QUrl url(trimmedInput);
+            authCode_ = extractCodeFromUrl(url);
+        } else {
+            // Maybe they just pasted the code directly
+            authCode_ = trimmedInput;
+        }
+        
+        if (!authCode_.isEmpty()) {
+            success_ = true;
+            statusLabel_->setText(tr("Code received! Logging in..."));
+            emit authorizationReceived(authCode_);
+            accept();
+        } else {
+            QMessageBox::warning(this, tr("Invalid Input"),
+                tr("Could not find authorization code in the URL.\n\n"
+                   "Please make sure you copied the entire URL from the browser's address bar."));
+            // Try again
+            QTimer::singleShot(500, this, &OAuthLoginDialog::showCodeInputDialog);
+        }
     } else {
         reject();
     }
