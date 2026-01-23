@@ -136,29 +136,47 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
         game.id = gameId;
         game.title = obj.value("title").toString();
 
+        // Debug: Print the entire response to see structure
+        qDebug() << "=== GOG API Response for game:" << gameId << "===";
+        qDebug() << "Response keys:" << obj.keys();
+        
         const QJsonObject downloads = obj.value("downloads").toObject();
+        qDebug() << "Downloads object keys:" << downloads.keys();
+        
         const QJsonArray installers = downloads.value("installers").toArray();
-
-        qDebug() << "Fetching downloads for game:" << gameId;
         qDebug() << "Found" << installers.size() << "installers";
+        
+        // If no installers, print the full downloads object for debugging
+        if (installers.isEmpty()) {
+            qDebug() << "Downloads object:" << QJsonDocument(downloads).toJson(QJsonDocument::Compact);
+        }
 
-        for (const auto& v : installers) {
-            const QJsonObject inst = v.toObject();
+        for (int i = 0; i < installers.size(); ++i) {
+            const QJsonObject inst = installers[i].toObject();
+            
+            qDebug() << "  Installer" << i << "keys:" << inst.keys();
+            qDebug() << "  OS:" << inst.value("os").toString();
+            qDebug() << "  Language:" << inst.value("language").toString();
             
             // Get the files array - this contains the actual download links
             const QJsonArray files = inst.value("files").toArray();
+            qDebug() << "  Files array size:" << files.size();
             
             if (files.isEmpty()) {
-                qDebug() << "  Installer has no files, skipping";
+                qDebug() << "  WARNING: Installer has no files, skipping";
+                qDebug() << "  Full installer object:" << QJsonDocument(inst).toJson(QJsonDocument::Compact);
                 continue;
             }
             
             // Use the first file's downlink URL
             const QJsonObject firstFile = files[0].toObject();
+            qDebug() << "  First file keys:" << firstFile.keys();
+            
             QString downlinkUrl = firstFile.value("downlink").toString();
             
             if (downlinkUrl.isEmpty()) {
-                qDebug() << "  No downlink URL found, skipping";
+                qDebug() << "  WARNING: No downlink URL found";
+                qDebug() << "  First file object:" << QJsonDocument(firstFile).toJson(QJsonDocument::Compact);
                 continue;
             }
             
@@ -169,9 +187,12 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
             link.url = downlinkUrl;
             link.size = firstFile.value("size").toVariant().toLongLong();
             
-            qDebug() << "  Installer:" << link.platform << link.language << link.version;
-            qDebug() << "  Downlink:" << link.url;
-            qDebug() << "  Size:" << link.size << "bytes";
+            qDebug() << "  ✓ Valid installer found:";
+            qDebug() << "    Platform:" << link.platform;
+            qDebug() << "    Language:" << link.language;
+            qDebug() << "    Version:" << link.version;
+            qDebug() << "    Downlink:" << link.url;
+            qDebug() << "    Size:" << link.size << "bytes";
             
             game.downloads.push_back(link);
         }
