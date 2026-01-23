@@ -6,4 +6,7 @@
     <qresource prefix="/i18n">
         <file>i18n/opengalaxy_en_US.qm</file>
     </qresource>
+    <qresource prefix="/data">
+        <file alias="opengalaxyicon.png">../../../data/opengalaxyicon.png</file>
+    </qresource>
 </RCC>

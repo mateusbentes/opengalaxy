@@ -84,11 +84,30 @@ else()
     message(STATUS "Qt WebEngine not found - OAuth web login disabled")
 endif()
 
-# Windows-specific settings
+# Platform-specific icon setup
+set(APP_ICON_RESOURCE "")
+
 if(WIN32)
+    # Windows: Use .ico file via .rc resource file
+    set(APP_ICON_RESOURCE "${CMAKE_SOURCE_DIR}/data/opengalaxy.rc")
     set_target_properties(opengalaxy PROPERTIES
         WIN32_EXECUTABLE TRUE
     )
+    # Add icon resource to executable
+    target_sources(opengalaxy PRIVATE ${APP_ICON_RESOURCE})
+elseif(APPLE)
+    # macOS: Use .icns file in app bundle
+    set(MACOSX_ICON_FILE "${CMAKE_SOURCE_DIR}/data/opengalaxyicon.icns")
+    if(EXISTS ${MACOSX_ICON_FILE})
+        set_target_properties(opengalaxy PROPERTIES
+            MACOSX_BUNDLE TRUE
+            MACOSX_BUNDLE_ICON_FILE opengalaxyicon.icns
+        )
+        set_source_files_properties(${MACOSX_ICON_FILE} PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources
+        )
+        target_sources(opengalaxy PRIVATE ${MACOSX_ICON_FILE})
+    endif()
 endif()
 
 # Installation
@@ -96,16 +115,33 @@ install(TARGETS opengalaxy
     RUNTIME DESTINATION bin
 )
 
-# Desktop file (Linux)
+# Desktop file and icon (Linux)
 if(UNIX AND NOT APPLE)
+    # Install .desktop file
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/opengalaxy.desktop)
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/opengalaxy.desktop
             DESTINATION share/applications
         )
     endif()
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/opengalaxy.png)
-        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/opengalaxy.png
+    
+    # Install icon to multiple sizes for better system integration
+    set(ICON_SOURCE "${CMAKE_SOURCE_DIR}/data/opengalaxyicon.png")
+    if(EXISTS ${ICON_SOURCE})
+        # Install to standard hicolor theme locations
+        # 256x256 is a good default size
+        install(FILES ${ICON_SOURCE}
             DESTINATION share/icons/hicolor/256x256/apps
+            RENAME opengalaxy.png
+        )
+        # Also install to scalable for high-DPI displays
+        install(FILES ${ICON_SOURCE}
+            DESTINATION share/icons/hicolor/scalable/apps
+            RENAME opengalaxy.png
+        )
+        # Install to pixmaps as fallback
+        install(FILES ${ICON_SOURCE}
+            DESTINATION share/pixmaps
+            RENAME opengalaxy.png
         )
     endif()
 endif()

@@ -28,6 +28,8 @@ private slots:
     void onInstallationFoldersClicked();
     void onLauncherOptionsClicked();
     void onLogoutClicked();
+    void onAboutClicked();
+    void onCheckForUpdates();
 
 private:
     opengalaxy::ui::TranslationManager* translationManager_ = nullptr;

@@ -12,6 +12,9 @@
 #include <QDialog>
 #include <QCheckBox>
 #include <QDir>
+#include <QSysInfo>
+#include <QDesktopServices>
+#include <QUrl>
 #include "i18n/translation_manager.h"
 
 SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager,
@@ -185,6 +188,19 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     contentLayout->addWidget(accountTitle);
     contentLayout->addWidget(accountSubtitle);
     contentLayout->addWidget(logoutBtn);
+
+    // About section
+    QLabel *aboutTitle = new QLabel(tr("About"), content);
+    aboutTitle->setObjectName("sectionTitle");
+    QLabel *aboutSubtitle = new QLabel(tr("Information about OpenGalaxy"), content);
+    aboutSubtitle->setObjectName("sectionSubtitle");
+    
+    QPushButton *aboutBtn = new QPushButton(tr("About OpenGalaxy"), content);
+    connect(aboutBtn, &QPushButton::clicked, this, &SettingsPage::onAboutClicked);
+    
+    contentLayout->addWidget(aboutTitle);
+    contentLayout->addWidget(aboutSubtitle);
+    contentLayout->addWidget(aboutBtn);
 
     contentLayout->addStretch();
 
@@ -407,4 +423,162 @@ void SettingsPage::onLogoutClicked()
         }
         emit logoutRequested();
     }
+}
+
+void SettingsPage::onAboutClicked()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("About OpenGalaxy"));
+    dialog.setMinimumSize(550, 550);
+    dialog.setStyleSheet(R"(
+        QDialog {
+            background: #ffffff;
+        }
+        QLabel {
+            color: #3c3a37;
+        }
+    )");
+    
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    layout->setContentsMargins(30, 30, 30, 30);
+    layout->setSpacing(15);
+    
+    // Icon
+    QLabel* iconLabel = new QLabel(&dialog);
+    QPixmap iconPixmap(":/data/opengalaxyicon.png");
+    iconLabel->setPixmap(iconPixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    iconLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(iconLabel);
+    
+    // App name
+    QLabel* nameLabel = new QLabel(tr("OpenGalaxy"), &dialog);
+    nameLabel->setStyleSheet("font-size: 24px; font-weight: bold;");
+    nameLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(nameLabel);
+    
+    // Version
+    QLabel* versionLabel = new QLabel(tr("Version 1.0.0"), &dialog);
+    versionLabel->setStyleSheet("font-size: 14px; color: #5a5855;");
+    versionLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(versionLabel);
+    
+    layout->addSpacing(10);
+    
+    // Description
+    QLabel* descLabel = new QLabel(
+        tr("OpenGalaxy is a free and open-source multiplatform GOG client.\n\n"
+           "It allows you to download, install, and play your GOG games on "
+           "Windows, macOS, and Linux with support for Wine, Proton, and native games.\n\n"
+           "Inspired by Minigalaxy, OpenGalaxy provides a modern and user-friendly "
+           "interface to manage your GOG library across all platforms."),
+        &dialog
+    );
+    descLabel->setWordWrap(true);
+    descLabel->setStyleSheet("font-size: 13px; line-height: 1.5;");
+    descLabel->setAlignment(Qt::AlignLeft);
+    layout->addWidget(descLabel);
+    
+    layout->addSpacing(10);
+    
+    // Links
+    QLabel* linksLabel = new QLabel(
+        tr("<b>Project:</b> <a href='https://github.com/mateusbentes/opengalaxy'>github.com/mateusbentes/opengalaxy</a><br>"
+           "<b>License:</b> Apache 2.0<br>"
+           "<b>Website:</b> <a href='https://www.gog.com'>GOG.com</a>"),
+        &dialog
+    );
+    linksLabel->setOpenExternalLinks(true);
+    linksLabel->setStyleSheet("font-size: 12px;");
+    linksLabel->setTextFormat(Qt::RichText);
+    layout->addWidget(linksLabel);
+    
+    layout->addSpacing(15);
+    
+    // System Information
+    QLabel* sysInfoTitle = new QLabel(tr("System Information"), &dialog);
+    sysInfoTitle->setStyleSheet("font-size: 14px; font-weight: 600; color: #3c3a37;");
+    layout->addWidget(sysInfoTitle);
+    
+    // Get system information
+    QString osInfo = QSysInfo::prettyProductName();
+    QString cpuArch = QSysInfo::currentCpuArchitecture();
+    QString qtVersion = QString("Qt %1").arg(QT_VERSION_STR);
+    QString kernelVersion = QSysInfo::kernelVersion();
+    
+    QString sysInfoText = QString(
+        "<b>OS:</b> %1 (%2)<br>"
+        "<b>Kernel:</b> %3<br>"
+        "<b>Qt Version:</b> %4"
+    ).arg(osInfo, cpuArch, kernelVersion, qtVersion);
+    
+    QLabel* sysInfoLabel = new QLabel(sysInfoText, &dialog);
+    sysInfoLabel->setStyleSheet("font-size: 11px; color: #5a5855; padding: 5px; background: #f5f5f5; border-radius: 5px;");
+    sysInfoLabel->setTextFormat(Qt::RichText);
+    sysInfoLabel->setWordWrap(true);
+    layout->addWidget(sysInfoLabel);
+    
+    layout->addSpacing(10);
+    
+    // Check for Updates button
+    QPushButton* updateButton = new QPushButton(tr("Check for Updates"), &dialog);
+    updateButton->setStyleSheet(R"(
+        QPushButton {
+            background: #3498db;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            color: white;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: #2980b9;
+        }
+        QPushButton:pressed {
+            background: #21618c;
+        }
+    )");
+    connect(updateButton, &QPushButton::clicked, this, &SettingsPage::onCheckForUpdates);
+    layout->addWidget(updateButton);
+    
+    layout->addStretch();
+    
+    // Close button
+    QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+    buttonBox->setStyleSheet(R"(
+        QPushButton {
+            background: #9b4dca;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 30px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: #8a3eb9;
+        }
+        QPushButton:pressed {
+            background: #7a2ea9;
+        }
+    )");
+    connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::accept);
+    layout->addWidget(buttonBox);
+    
+    dialog.exec();
+}
+
+void SettingsPage::onCheckForUpdates()
+{
+    // Open the GitHub releases page
+    QDesktopServices::openUrl(QUrl("https://github.com/mateusbentes/opengalaxy/releases"));
+    
+    // Show a message to the user
+    QMessageBox::information(
+        this,
+        tr("Check for Updates"),
+        tr("Opening the GitHub releases page in your browser.\n\n"
+           "Current version: 1.0.0\n\n"
+           "Please check if a newer version is available.")
+    );
 }

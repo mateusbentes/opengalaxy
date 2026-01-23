@@ -24,6 +24,7 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     , translationManager_(translationManager)
 {
     setWindowTitle(tr("OpenGalaxy"));
+    setWindowIcon(QIcon(":/data/opengalaxyicon.png"));
     setMinimumSize(1400, 900);
     resize(1600, 1000);
 
@@ -107,7 +108,13 @@ void AppWindow::setupTitleBar()
 
     QHBoxLayout* titleLayout = new QHBoxLayout(titleBar);
     titleLayout->setContentsMargins(15, 0, 0, 0);
-    titleLayout->setSpacing(0);
+    titleLayout->setSpacing(10);
+
+    // Add icon to title bar
+    QLabel* iconLabel = new QLabel(titleBar);
+    QPixmap iconPixmap(":/data/opengalaxyicon.png");
+    iconLabel->setPixmap(iconPixmap.scaled(24, 24, Qt::KeepAspectRatio, Qt::SmoothTransformation));
+    titleLayout->addWidget(iconLabel);
 
     QLabel* titleLabel = new QLabel(tr("OpenGalaxy"), titleBar);
     titleLabel->setObjectName("titleLabel");
