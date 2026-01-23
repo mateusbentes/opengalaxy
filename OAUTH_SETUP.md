@@ -1,5 +1,25 @@
 # OAuth Login Setup Guide
 
+## Quick Start (Ubuntu 24.04)
+
+```bash
+# 1. Install Qt WebEngine
+sudo apt install libqt6webenginewidgets6 qt6-webengine-dev qml6-module-qtwebengine
+
+# 2. Rebuild OpenGalaxy
+cd /home/mateus/opengalaxy
+rm -rf build && mkdir build && cd build
+cmake ..
+cmake --build . -j$(nproc)
+
+# 3. Run and login
+./ui/opengalaxy
+```
+
+You should see: `-- Qt WebEngine found - OAuth web login enabled` during cmake.
+
+---
+
 ## Overview
 
 OpenGalaxy uses OAuth 2.0 for secure authentication with GOG. This requires Qt WebEngine to display the GOG login page within the application.
@@ -15,9 +35,23 @@ This is why we need to implement OAuth with an embedded web view.
 
 ## Installing Qt WebEngine
 
-### Ubuntu/Debian
+### Ubuntu 24.04 / Debian
 ```bash
-sudo apt install qt6-webengine qt6-webengine-dev libqt6webenginewidgets6
+sudo apt install libqt6webenginewidgets6 qt6-webengine-dev qml6-module-qtwebengine
+```
+
+**Note**: The package name is different in Ubuntu 24.04. Use `libqt6webenginewidgets6` instead of `qt6-webengine`.
+
+**Verify installation**:
+```bash
+dpkg -l | grep qt6-webengine
+```
+
+You should see:
+```
+ii  libqt6webenginecore6        6.x.x  Qt 6 WebEngine Core library
+ii  libqt6webenginewidgets6     6.x.x  Qt 6 WebEngine Widgets library
+ii  qt6-webengine-dev           6.x.x  Qt 6 WebEngine development files
 ```
 
 ### Fedora
@@ -163,16 +197,37 @@ This file:
 
 **Problem**: CMake can't find Qt WebEngine
 
-**Solution**:
+**Solution for Ubuntu 24.04**:
 ```bash
-# Install Qt WebEngine
-sudo apt install qt6-webengine qt6-webengine-dev
+# Install Qt WebEngine (correct package names for Ubuntu 24.04)
+sudo apt install libqt6webenginewidgets6 qt6-webengine-dev qml6-module-qtwebengine
 
 # Verify installation
 dpkg -l | grep qt6-webengine
 
-# Rebuild
-cd build && cmake .. && cmake --build .
+# You should see packages installed
+# If not, try:
+apt-cache search qt6.*webengine
+
+# Rebuild from scratch
+cd /home/mateus/opengalaxy
+rm -rf build
+mkdir build && cd build
+cmake ..
+cmake --build . -j$(nproc)
+```
+
+**Expected output after cmake**:
+```
+-- Qt WebEngine found - OAuth web login enabled
+```
+
+If you still see "Qt WebEngine not found", check:
+```bash
+# Find Qt6 WebEngine CMake files
+find /usr -name "Qt6WebEngine*.cmake" 2>/dev/null
+
+# Should show files in /usr/lib/x86_64-linux-gnu/cmake/Qt6WebEngine*/
 ```
 
 ### "OAuth login requires Qt WebEngine"
