@@ -16,10 +16,10 @@
 namespace opengalaxy {
 namespace ui {
 
-LibraryPage::LibraryPage(QWidget* parent)
+LibraryPage::LibraryPage(api::Session* session, QWidget* parent)
     : QWidget(parent)
-    , session_(this)
-    , gogClient_(&session_, this)
+    , session_(session)
+    , gogClient_(session_, this)
     , libraryService_(&gogClient_, this)
     , runnerManager_(this)
     , installService_(this)
@@ -88,6 +88,16 @@ LibraryPage::LibraryPage(QWidget* parent)
                 stop:0 #1a0f2e, stop:1 #2d1b4e);
         }
     )");
+}
+
+LibraryPage::~LibraryPage() = default;
+
+void LibraryPage::refreshLibrary()
+{
+    // Only load if authenticated
+    if (!session_ || !session_->isAuthenticated()) {
+        return;
+    }
 
     // Load library
     libraryService_.fetchLibrary(false, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
@@ -161,8 +171,6 @@ LibraryPage::LibraryPage(QWidget* parent)
         NotificationWidget::showToast("Install failed: " + error, this);
     });
 }
-
-LibraryPage::~LibraryPage() = default;
 
 void LibraryPage::openGameDetails(const QString& gameId)
 {

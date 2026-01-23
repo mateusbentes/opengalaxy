@@ -8,10 +8,10 @@
 namespace opengalaxy {
 namespace ui {
 
-StorePage::StorePage(TranslationManager* translationManager, QWidget* parent)
+StorePage::StorePage(TranslationManager* translationManager, api::Session* session, QWidget* parent)
     : QWidget(parent)
-    , session_(this)
-    , gogClient_(&session_, this)
+    , session_(session)
+    , gogClient_(session_, this)
     , translationManager_(translationManager)
 {
     // Set GOG API locale based on current UI language

@@ -56,8 +56,8 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     session_ = new api::Session(this);
 
     loginPage = new LoginPage(this);
-    libraryPage = new LibraryPage(this);
-    storePage = new StorePage(translationManager_, this);
+    libraryPage = new LibraryPage(session_, this);
+    storePage = new StorePage(translationManager_, session_, this);
     friendsPage = new FriendsPage(this);
     settingsPage = new SettingsPage(translationManager_, this);
 
@@ -211,6 +211,9 @@ void AppWindow::onLoginSuccess()
 {
     sidebar->setVisible(true);
     stackedWidget->setCurrentWidget(libraryPage);
+    
+    // Load the library now that we're authenticated
+    libraryPage->refreshLibrary();
 }
 
 void AppWindow::startOAuthLogin(const QString& username, const QString& password)

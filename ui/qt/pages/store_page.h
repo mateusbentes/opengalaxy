@@ -18,7 +18,7 @@ class StorePage : public QWidget
     Q_OBJECT
 
 public:
-    explicit StorePage(TranslationManager* translationManager, QWidget *parent = nullptr);
+    explicit StorePage(TranslationManager* translationManager, api::Session* session, QWidget *parent = nullptr);
     ~StorePage();
 
 private:
@@ -28,7 +28,7 @@ private:
     QListView* storeView_ = nullptr;
     QStandardItemModel* model_ = nullptr;
 
-    api::Session session_;
+    api::Session* session_;
     api::GOGClient gogClient_;
     TranslationManager* translationManager_ = nullptr;
 };

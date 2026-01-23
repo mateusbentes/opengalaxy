@@ -21,8 +21,10 @@ class LibraryPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit LibraryPage(QWidget *parent = nullptr);
+    explicit LibraryPage(api::Session* session, QWidget *parent = nullptr);
     ~LibraryPage();
+
+    void refreshLibrary();
 
 private:
     void openGameDetails(const QString& gameId);
@@ -34,8 +36,8 @@ private:
 
     QMap<QString, GameCard*> cardsById_;
 
-    // Core services used by UI
-    api::Session session_;
+    // Core services used by UI (session is passed from AppWindow)
+    api::Session* session_;
     api::GOGClient gogClient_;
     library::LibraryService libraryService_;
     runners::RunnerManager runnerManager_;
