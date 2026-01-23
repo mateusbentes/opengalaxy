@@ -2,8 +2,11 @@
 #include "opengalaxy/api/gog_client.h"
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QJsonParseError>
 #include <QTimer>
 #include <QUrl>
+#include <QDebug>
+#include <QRegularExpression>
 #include "opengalaxy/net/http_client.h"
 
 namespace opengalaxy::api {
@@ -66,7 +69,23 @@ void GOGClient::fetchLibrary(GamesCallback callback)
                 GameInfo g;
                 g.id = QString::number(p.value("id").toVariant().toLongLong());
                 g.title = p.value("title").toString();
-                g.coverUrl = p.value("image").toString();
+                
+                // GOG API returns protocol-relative URLs (//images-X.gog.com/...)
+                // or full HTTPS URLs. Both need size suffix for CDN.
+                QString imageUrl = p.value("image").toString();
+                if (!imageUrl.isEmpty()) {
+                    // Add https: prefix if protocol-relative
+                    if (imageUrl.startsWith("//")) {
+                        imageUrl = "https:" + imageUrl;
+                    }
+                    // Add size suffix if not already present
+                    if (!imageUrl.contains(".jpg") && !imageUrl.contains(".png") && 
+                        !imageUrl.contains(".webp") && !imageUrl.contains(".gif")) {
+                        g.coverUrl = imageUrl + "_196.jpg";
+                    } else {
+                        g.coverUrl = imageUrl;
+                    }
+                }
 
                 const QJsonObject worksOn = p.value("worksOn").toObject();
                 if (worksOn.value("Linux").toBool()) g.platform = "linux";
@@ -153,14 +172,28 @@ void GOGClient::searchStore(
     const QString& query,
     std::function<void(util::Result<std::vector<StoreGameInfo>>)> callback)
 {
-    // Public endpoint used by many clients: api.gog.com product search
-    // Note: Pricing may not be present without additional locale/country context.
-    const QString url = QString("https://api.gog.com/products?search=%1&limit=30")
-                            .arg(QUrl::toPercentEncoding(query));
+    // Use the public search API endpoint (no auth required)
+    // This is what the GOG website uses for public searches
+    QString searchQuery = query.isEmpty() ? "*" : query;
+    
+    // Build search URL with proper parameters
+    const QString url = QString("https://embed.gog.com/en/games/ajax/filtered?"
+                                "mediaType=game&"
+                                "page=1&"
+                                "limit=30&"
+                                "search=%1")
+                            .arg(QString(QUrl::toPercentEncoding(searchQuery)));
+
+    qDebug() << "Store search URL:" << url;
 
     net::HttpClient::Request req;
     req.url = url;
     req.method = "GET";
+    req.headers["Accept"] = "application/json, text/javascript, */*; q=0.01";
+    req.headers["Accept-Language"] = "en-US,en;q=0.9";
+    req.headers["X-Requested-With"] = "XMLHttpRequest";
+    req.headers["Referer"] = "https://www.gog.com/";
+    req.headers["User-Agent"] = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36";
 
     httpClient_->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
         if (!result.isOk()) {
@@ -168,8 +201,38 @@ void GOGClient::searchStore(
             return;
         }
 
-        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
+        // Parse JSON response with error handling
+        QJsonParseError parseError;
+        QJsonDocument doc = QJsonDocument::fromJson(result.value().body, &parseError);
+        
+        if (parseError.error != QJsonParseError::NoError) {
+            QString errorMsg = QString("Failed to parse store response: %1").arg(parseError.errorString());
+            qDebug() << errorMsg;
+            qDebug() << "Response body:" << result.value().body.left(500);
+            callback(util::Result<std::vector<StoreGameInfo>>::error(errorMsg));
+            return;
+        }
+        
+        if (!doc.isObject()) {
+            qDebug() << "Store response is not a JSON object";
+            qDebug() << "Response body:" << result.value().body.left(500);
+            callback(util::Result<std::vector<StoreGameInfo>>::error("Invalid JSON response from store API"));
+            return;
+        }
+
+        const QJsonObject obj = doc.object();
+        qDebug() << "Store API response keys:" << obj.keys();
+        qDebug() << "Total results:" << obj.value("totalResults").toInt();
+        qDebug() << "Total games found:" << obj.value("totalGamesFound").toInt();
+        qDebug() << "Total pages:" << obj.value("totalPages").toInt();
+        
         const QJsonArray items = obj.value("products").toArray();
+        qDebug() << "Found" << items.size() << "products in response";
+        
+        // If products array is empty, log the full response for debugging
+        if (items.isEmpty()) {
+            qDebug() << "Empty products array. Full response:" << QString::fromUtf8(result.value().body);
+        }
 
         std::vector<StoreGameInfo> games;
         games.reserve(static_cast<size_t>(items.size()));
@@ -177,16 +240,53 @@ void GOGClient::searchStore(
         for (const auto& v : items) {
             const QJsonObject p = v.toObject();
             StoreGameInfo g;
+            
+            // Embed API uses numeric IDs
             g.id = QString::number(p.value("id").toVariant().toLongLong());
             g.title = p.value("title").toString();
-            g.coverUrl = p.value("image").toString();
+            
+            // Get cover image - embed API uses "image" field
+            QString imageUrl = p.value("image").toString();
+            
+            if (!imageUrl.isEmpty()) {
+                // Embed API returns protocol-relative URLs
+                if (imageUrl.startsWith("//")) {
+                    g.coverUrl = "https:" + imageUrl;
+                } else if (!imageUrl.startsWith("http")) {
+                    g.coverUrl = "https://" + imageUrl;
+                } else {
+                    g.coverUrl = imageUrl;
+                }
+                
+                // Add size suffix if needed
+                if (!g.coverUrl.contains(".jpg") && !g.coverUrl.contains(".png")) {
+                    g.coverUrl += "_196.jpg";
+                }
+            }
 
-            // pricing often absent; keep empty if not provided
+            // Get pricing information from embed API format
             if (p.contains("price") && p.value("price").isObject()) {
                 const auto priceObj = p.value("price").toObject();
-                g.price = priceObj.value("finalAmount").toString();
-                g.discountPrice = priceObj.value("baseAmount").toString();
-                g.discountPercent = priceObj.value("discountPercentage").toInt(0);
+                
+                // Embed API has "amount" and "baseAmount"
+                QString amount = priceObj.value("amount").toString();
+                QString baseAmount = priceObj.value("baseAmount").toString();
+                
+                if (!amount.isEmpty()) {
+                    g.price = amount;
+                }
+                
+                if (!baseAmount.isEmpty() && baseAmount != amount) {
+                    g.discountPrice = baseAmount;
+                    // Calculate discount percentage
+                    if (!amount.isEmpty()) {
+                        double finalPrice = amount.remove(QRegularExpression("[^0-9.]")).toDouble();
+                        double originalPrice = baseAmount.remove(QRegularExpression("[^0-9.]")).toDouble();
+                        if (originalPrice > 0) {
+                            g.discountPercent = qRound((1.0 - finalPrice / originalPrice) * 100);
+                        }
+                    }
+                }
             }
 
             games.push_back(std::move(g));

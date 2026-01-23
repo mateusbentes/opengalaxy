@@ -3,7 +3,10 @@
 
 #include <QWidget>
 #include <QGridLayout>
+#include <QLineEdit>
 #include <QMap>
+#include <QVector>
+#include <QSet>
 
 #include "opengalaxy/api/session.h"
 #include "opengalaxy/api/gog_client.h"
@@ -26,15 +29,22 @@ public:
 
     void refreshLibrary(bool forceRefresh = false);
 
+private slots:
+    void filterGames(const QString& searchText);
+
 private:
     void openGameDetails(const QString& gameId);
     void launchGame(const QString& gameId);
     void installGame(const QString& gameId);
     void cancelInstall(const QString& gameId);
+    void updateGridLayout();
 
     QGridLayout* gameGrid = nullptr;
+    QLineEdit* searchBox_ = nullptr;
 
     QMap<QString, GameCard*> cardsById_;
+    QVector<api::GameInfo> allGames_;  // Store all games for filtering
+    bool isLoading_ = false;  // Prevent double-loading
 
     // Core services used by UI (session is passed from AppWindow)
     api::Session* session_;

@@ -47,6 +47,7 @@ protected:
 private:
     void setupAnimations();
     void refreshButton();
+    void loadCoverImage(const QString& url);
 
     QString gameId_;
 

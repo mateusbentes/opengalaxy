@@ -57,8 +57,8 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
 
     loginPage = new LoginPage(this);
     libraryPage = new LibraryPage(session_, this);
-    storePage = new StorePage(translationManager_, session_, this);
-    friendsPage = new FriendsPage(this);
+    storePage = new StorePage(this);
+    friendsPage = new FriendsPage(session_, this);
     settingsPage = new SettingsPage(translationManager_, this);
 
     stackedWidget->addWidget(loginPage);
@@ -67,14 +67,23 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     stackedWidget->addWidget(friendsPage);
     stackedWidget->addWidget(settingsPage);
 
-    stackedWidget->setCurrentWidget(loginPage);
-    sidebar->setVisible(false);
-
     connect(loginPage, &LoginPage::loginRequested, this, &AppWindow::startOAuthLogin);
     connect(session_, &api::Session::authenticated, this, &AppWindow::onLoginSuccess);
     connect(session_, &api::Session::authenticationFailed, this, [this](const QString& err) {
         QMessageBox::warning(this, tr("Login failed"), err);
     });
+
+    // Check if user is already logged in from saved session
+    if (session_->isAuthenticated()) {
+        // User has a valid saved session, go directly to library
+        sidebar->setVisible(true);
+        stackedWidget->setCurrentWidget(libraryPage);
+        libraryPage->refreshLibrary(false); // Load from cache first
+    } else {
+        // No saved session, show login page
+        stackedWidget->setCurrentWidget(loginPage);
+        sidebar->setVisible(false);
+    }
 
     // Note: Shadow effect can cause clipping issues with frameless windows
     // Removed to ensure all content is visible
@@ -232,10 +241,14 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
     dialog->exec();
     dialog->deleteLater();
 #else
-    QMessageBox::warning(this, tr("OAuth Not Available"),
-                        tr("OAuth login requires Qt WebEngine.\n\n"
-                           "Please install: sudo apt install qt6-webengine\n\n"
-                           "Then rebuild the application."));
+    // Fallback to direct password authentication if WebEngine not available
+    session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
+        if (!result.isOk()) {
+            QMessageBox::warning(this, tr("Login Failed"), 
+                tr("Failed to login: %1\n\nPlease check your credentials and try again.").arg(result.errorMessage()));
+        }
+        // Success is handled by the authenticated() signal
+    });
 #endif
 }
 

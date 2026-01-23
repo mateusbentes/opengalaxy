@@ -44,26 +44,30 @@ LibraryPage::LibraryPage(api::Session* session, QWidget* parent)
 
     headerLayout->addStretch();
 
-    QLineEdit* searchBox = new QLineEdit(this);
-    searchBox->setPlaceholderText("Search games...");
-    searchBox->setFixedWidth(300);
-    searchBox->setStyleSheet(R"(
+    searchBox_ = new QLineEdit(this);
+    searchBox_->setPlaceholderText("Search games...");
+    searchBox_->setFixedWidth(300);
+    searchBox_->setStyleSheet(R"(
         QLineEdit {
-            background: rgba(255, 255, 255, 0.08);
-            border: 2px solid rgba(124, 77, 255, 0.3);
+            background: #ffffff;
+            border: 2px solid #d0cec9;
             border-radius: 8px;
             padding: 10px 16px;
-            color: #ffffff;
+            color: #3c3a37;
             font-size: 14px;
         }
         QLineEdit:focus {
-            border-color: #7c4dff;
+            border-color: #9b4dca;
+            background: #ffffff;
         }
         QLineEdit::placeholder {
-            color: rgba(255, 255, 255, 0.4);
+            color: #8a8884;
         }
     )");
-    headerLayout->addWidget(searchBox);
+    headerLayout->addWidget(searchBox_);
+
+    // Connect search box to filter function
+    connect(searchBox_, &QLineEdit::textChanged, this, &LibraryPage::filterGames);
 
     mainLayout->addLayout(headerLayout);
 
@@ -72,15 +76,16 @@ LibraryPage::LibraryPage(api::Session* session, QWidget* parent)
     scrollArea->setWidgetResizable(true);
     scrollArea->setFrameShape(QFrame::NoFrame);
     scrollArea->setStyleSheet("QScrollArea { background: transparent; border: none; }");
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
     QWidget* scrollWidget = new QWidget(scrollArea);
     gameGrid = new QGridLayout(scrollWidget);
-    gameGrid->setSpacing(20);
-    gameGrid->setContentsMargins(0, 0, 0, 0);
+    gameGrid->setSpacing(30);  // Spacing between cards
+    gameGrid->setContentsMargins(0, 0, 0, 20);  // Add bottom margin
+    gameGrid->setAlignment(Qt::AlignTop | Qt::AlignLeft);  // Align to top-left
 
     scrollArea->setWidget(scrollWidget);
-    mainLayout->addWidget(scrollArea);
-    mainLayout->addStretch(1);
+    mainLayout->addWidget(scrollArea, 1);  // Give scroll area stretch factor
 
     // Background
     setStyleSheet(R"(
@@ -101,10 +106,19 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
         return;
     }
 
+    // Prevent double-loading
+    if (isLoading_) {
+        qDebug() << "LibraryPage::refreshLibrary() - Already loading, skipping";
+        return;
+    }
+
     qDebug() << "LibraryPage::refreshLibrary() - Loading library (forceRefresh=" << forceRefresh << ")";
+    isLoading_ = true;
 
     // Load library
     libraryService_.fetchLibrary(forceRefresh, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
+        isLoading_ = false;  // Reset loading flag
+        
         if (!result.isOk()) {
             qDebug() << "LibraryPage - Failed to load library:" << result.errorMessage();
             QMessageBox::warning(this, "Library", result.errorMessage());
@@ -112,24 +126,54 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
         }
 
         qDebug() << "LibraryPage - Loaded" << result.value().size() << "games";
+        
+        // Store all games for filtering (deduplicate by ID)
+        allGames_.clear();
+        QSet<QString> seenIds;
+        
         for (const auto& game : result.value()) {
+            // Skip duplicates (same game ID)
+            if (seenIds.contains(game.id)) {
+                qDebug() << "  - Skipping duplicate:" << game.title << "(" << game.id << ")";
+                continue;
+            }
+            
+            seenIds.insert(game.id);
+            allGames_.append(game);
             qDebug() << "  -" << game.title << "(" << game.id << ")" << game.platform;
         }
 
-        // Clear grid
+        qDebug() << "LibraryPage - After deduplication:" << allGames_.size() << "unique games";
+
+        // Clear existing cards completely
+        qDebug() << "Clearing" << cardsById_.size() << "existing cards";
+        
+        // First, hide and remove all card widgets
+        for (auto it = cardsById_.begin(); it != cardsById_.end(); ++it) {
+            GameCard* card = it.value();
+            gameGrid->removeWidget(card);  // Remove from layout first
+            card->setVisible(false);       // Hide immediately
+            card->setParent(nullptr);      // Remove parent relationship
+            delete card;                   // Delete immediately
+        }
         cardsById_.clear();
+        
+        // Then clear any remaining layout items
         while (QLayoutItem* item = gameGrid->takeAt(0)) {
-            if (QWidget* w = item->widget()) w->deleteLater();
             delete item;
         }
+        
+        // Force layout update
+        gameGrid->update();
+        gameGrid->parentWidget()->update();
+        
+        qDebug() << "All cards cleared";
 
-        int row = 0;
-        int col = 0;
-        const int columns = 3;
-
-        for (const auto& game : result.value()) {
-            auto* card = new GameCard(game.id, game.title, game.platform, game.coverUrl, this);
+        // Create cards for all games
+        for (const auto& game : allGames_) {
+            auto* card = new GameCard(game.id, game.title, game.platform, game.coverUrl, gameGrid->parentWidget());
             card->setInstalled(game.isInstalled);
+            card->show();  // Explicitly show the card
 
             connect(card, &GameCard::detailsRequested, this, &LibraryPage::openGameDetails);
             connect(card, &GameCard::playRequested, this, &LibraryPage::launchGame);
@@ -137,16 +181,21 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
             connect(card, &GameCard::cancelInstallRequested, this, &LibraryPage::cancelInstall);
 
             cardsById_.insert(game.id, card);
-            gameGrid->addWidget(card, row, col);
-
-            col++;
-            if (col >= columns) {
-                col = 0;
-                row++;
-            }
         }
 
-        gameGrid->setRowStretch(row + 1, 1);
+        qDebug() << "Created" << cardsById_.size() << "game cards";
+
+        // Update grid layout with all cards
+        updateGridLayout();
+        
+        qDebug() << "Grid layout updated";
+        
+        // Apply current search filter if any
+        if (searchBox_ && !searchBox_->text().isEmpty()) {
+            filterGames(searchBox_->text());
+        } else {
+            qDebug() << "No search filter, showing all" << cardsById_.size() << "games";
+        }
     });
 
     // Install progress
@@ -274,6 +323,101 @@ void LibraryPage::cancelInstall(const QString& gameId)
         cardsById_[gameId]->setInstallProgress(0);
     }
     NotificationWidget::showToast("Install cancelled", this);
+}
+
+void LibraryPage::filterGames(const QString& searchText)
+{
+    QString search = searchText.trimmed().toLower();
+    
+    qDebug() << "Filtering games with search:" << search;
+    qDebug() << "Total cards:" << cardsById_.size();
+    
+    int visibleCount = 0;
+    
+    // Show/hide cards based on search
+    for (auto it = cardsById_.begin(); it != cardsById_.end(); ++it) {
+        GameCard* card = it.value();
+        
+        if (search.isEmpty()) {
+            // No search - show all cards
+            card->setVisible(true);
+            visibleCount++;
+        } else {
+            // Search - check if game title matches
+            bool matches = false;
+            QString gameTitle;
+            for (const auto& game : allGames_) {
+                if (game.id == it.key()) {
+                    gameTitle = game.title;
+                    matches = game.title.toLower().contains(search);
+                    break;
+                }
+            }
+            card->setVisible(matches);
+            if (matches) {
+                qDebug() << "  Match:" << gameTitle;
+                visibleCount++;
+            }
+        }
+    }
+    
+    qDebug() << "Visible cards after filter:" << visibleCount;
+    
+    // Update grid layout to reflow visible cards
+    updateGridLayout();
+}
+
+void LibraryPage::updateGridLayout()
+{
+    qDebug() << "updateGridLayout() called";
+    qDebug() << "Total games in allGames_:" << allGames_.size();
+    qDebug() << "Total cards in cardsById_:" << cardsById_.size();
+    
+    // Remove all widgets from grid (but don't delete them)
+    QList<GameCard*> visibleCards;
+    
+    // Collect visible cards in order
+    for (const auto& game : allGames_) {
+        if (cardsById_.contains(game.id)) {
+            GameCard* card = cardsById_[game.id];
+            if (card->isVisible()) {
+                visibleCards.append(card);
+            }
+        }
+    }
+    
+    qDebug() << "Visible cards to add to grid:" << visibleCards.size();
+    
+    // Remove all items from layout
+    while (QLayoutItem* item = gameGrid->takeAt(0)) {
+        delete item;  // Delete the layout item, not the widget
+    }
+    
+    // Clear all row/column stretches
+    for (int i = 0; i < 100; ++i) {
+        gameGrid->setRowStretch(i, 0);
+        gameGrid->setColumnStretch(i, 0);
+    }
+    
+    // Re-add visible cards to grid
+    int row = 0;
+    int col = 0;
+    const int columns = 3;  // 3 cards per row
+    
+    for (GameCard* card : visibleCards) {
+        gameGrid->addWidget(card, row, col, Qt::AlignTop | Qt::AlignLeft);
+        qDebug() << "  Added card at row" << row << "col" << col;
+        col++;
+        if (col >= columns) {
+            col = 0;
+            row++;
+        }
+    }
+    
+    qDebug() << "Grid now has" << (row * columns + col) << "cards in" << (row + 1) << "rows";
+    
+    // Add vertical stretch after last row to push cards to top
+    gameGrid->setRowStretch(row + 1, 1);
 }
 
 } // namespace ui

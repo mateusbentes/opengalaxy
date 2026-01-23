@@ -3,58 +3,122 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QMessageBox>
+#include <QPushButton>
+#include <QDesktopServices>
+#include <QUrl>
 
 namespace opengalaxy {
 namespace ui {
 
-StorePage::StorePage(TranslationManager* translationManager, api::Session* session, QWidget* parent)
+StorePage::StorePage(QWidget* parent)
     : QWidget(parent)
-    , session_(session)
-    , gogClient_(session_, this)
-    , translationManager_(translationManager)
 {
-    // Set GOG API locale based on current UI language
-    if (translationManager_) {
-        gogClient_.setLocale(translationManager_->gogApiLocale());
-    }
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(40, 30, 40, 40);  // Increased bottom margin to prevent cutoff
-    layout->setSpacing(16);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(0);
 
-    auto* header = new QHBoxLayout();
-    auto* title = new QLabel(tr("Store"), this);
-    title->setStyleSheet(R"(
-        QLabel { color: #3c3a37; font-size: 28px; font-weight: 700; }
-    )");
-    header->addWidget(title);
-    header->addStretch();
+    // Create centered content
+    QWidget* contentWidget = new QWidget(this);
+    contentWidget->setMaximumWidth(700);
+    
+    QVBoxLayout* contentLayout = new QVBoxLayout(contentWidget);
+    contentLayout->setContentsMargins(40, 60, 40, 40);
+    contentLayout->setSpacing(30);
 
-    searchEdit_ = new QLineEdit(this);
-    searchEdit_->setPlaceholderText(tr("Search on GOG..."));
-    searchEdit_->setFixedWidth(360);
-    searchEdit_->setStyleSheet(R"(
-        QLineEdit {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 8px;
-            padding: 10px 16px;
+    // Icon/Emoji
+    QLabel* iconLabel = new QLabel("🛒", contentWidget);
+    iconLabel->setAlignment(Qt::AlignCenter);
+    iconLabel->setStyleSheet("font-size: 80px;");
+    contentLayout->addWidget(iconLabel);
+
+    // Title
+    QLabel* titleLabel = new QLabel(tr("GOG Store"), contentWidget);
+    titleLabel->setAlignment(Qt::AlignCenter);
+    titleLabel->setStyleSheet(R"(
+        QLabel {
             color: #3c3a37;
-            font-size: 14px;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
         }
-        QLineEdit:focus { border-color: #9b4dca; }
-        QLineEdit::placeholder { color: #8a8884; }
     )");
-    header->addWidget(searchEdit_);
+    contentLayout->addWidget(titleLabel);
 
-    layout->addLayout(header);
+    // Description
+    QLabel* descLabel = new QLabel(
+        tr("Browse and purchase games directly on the GOG website.\n"
+           "Your purchases will automatically appear in your library."),
+        contentWidget
+    );
+    descLabel->setAlignment(Qt::AlignCenter);
+    descLabel->setWordWrap(true);
+    descLabel->setStyleSheet(R"(
+        QLabel {
+            color: #5a5855;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+    )");
+    contentLayout->addWidget(descLabel);
 
-    storeView_ = new QListView(this);
-    storeView_->setStyleSheet("QListView { background: transparent; border: none; color: #3c3a37; }");
-    model_ = new QStandardItemModel(this);
-    storeView_->setModel(model_);
+    contentLayout->addSpacing(20);
 
-    layout->addWidget(storeView_);
+    // Open GOG Store button
+    QPushButton* openStoreBtn = new QPushButton(tr("Open GOG Store in Browser"), contentWidget);
+    openStoreBtn->setMinimumHeight(56);
+    openStoreBtn->setCursor(Qt::PointingHandCursor);
+    openStoreBtn->setStyleSheet(R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #9b4dca, stop:1 #8b3dba);
+            border: none;
+            border-radius: 12px;
+            padding: 16px 40px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #ab5dda, stop:1 #9b4dca);
+        }
+        QPushButton:pressed {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #8b3dba, stop:1 #7b2daa);
+        }
+    )");
+    contentLayout->addWidget(openStoreBtn);
+
+    // Info text
+    QLabel* infoLabel = new QLabel(
+        tr("💡 Tip: After purchasing games on GOG.com, restart OpenGalaxy to see them in your library."),
+        contentWidget
+    );
+    infoLabel->setAlignment(Qt::AlignCenter);
+    infoLabel->setWordWrap(true);
+    infoLabel->setStyleSheet(R"(
+        QLabel {
+            color: #8a8884;
+            font-size: 14px;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(155, 77, 202, 0.1);
+            border-radius: 8px;
+        }
+    )");
+    contentLayout->addWidget(infoLabel);
+
+    contentLayout->addStretch();
+
+    // Center the content widget
+    QHBoxLayout* centerLayout = new QHBoxLayout();
+    centerLayout->addStretch();
+    centerLayout->addWidget(contentWidget);
+    centerLayout->addStretch();
+
+    layout->addStretch();
+    layout->addLayout(centerLayout);
+    layout->addStretch();
 
     setStyleSheet(R"(
         StorePage {
@@ -62,35 +126,13 @@ StorePage::StorePage(TranslationManager* translationManager, api::Session* sessi
         }
     )");
 
-    connect(searchEdit_, &QLineEdit::returnPressed, this, &StorePage::doSearch);
+    // Connect button to open browser
+    connect(openStoreBtn, &QPushButton::clicked, this, []() {
+        QDesktopServices::openUrl(QUrl("https://www.gog.com/games"));
+    });
 }
 
 StorePage::~StorePage() = default;
-
-void StorePage::doSearch()
-{
-    const QString query = searchEdit_->text().trimmed();
-    if (query.isEmpty()) return;
-
-    model_->clear();
-
-    gogClient_.searchStore(query, [this](opengalaxy::util::Result<std::vector<api::StoreGameInfo>> result) {
-        if (!result.isOk()) {
-            QMessageBox::warning(this, tr("Store"), result.errorMessage());
-            return;
-        }
-
-        for (const auto& g : result.value()) {
-            QString line = g.title;
-            if (!g.price.isEmpty()) {
-                line += QString("  —  %1").arg(g.price);
-            }
-            auto* item = new QStandardItem(line);
-            item->setEditable(false);
-            model_->appendRow(item);
-        }
-    });
-}
 
 } // namespace ui
 } // namespace opengalaxy

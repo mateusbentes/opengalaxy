@@ -19,6 +19,8 @@ public:
 
 private slots:
     void onLanguageChanged(int index);
+    void onInstallationFoldersClicked();
+    void onLauncherOptionsClicked();
 
 private:
     opengalaxy::ui::TranslationManager* translationManager_ = nullptr;

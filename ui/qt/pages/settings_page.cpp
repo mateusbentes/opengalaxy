@@ -6,6 +6,12 @@
 #include <QScrollArea>
 #include <QComboBox>
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QListWidget>
+#include <QDialogButtonBox>
+#include <QDialog>
+#include <QCheckBox>
+#include <QDir>
 #include "i18n/translation_manager.h"
 
 SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager, QWidget *parent)
@@ -136,6 +142,9 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     QPushButton *installsBtn = new QPushButton(tr("Installation Folders"), content);
     QPushButton *launcherBtn = new QPushButton(tr("Default Launcher Options"), content);
     
+    connect(installsBtn, &QPushButton::clicked, this, &SettingsPage::onInstallationFoldersClicked);
+    connect(launcherBtn, &QPushButton::clicked, this, &SettingsPage::onLauncherOptionsClicked);
+    
     contentLayout->addWidget(gameTitle);
     contentLayout->addWidget(gameSubtitle);
     contentLayout->addWidget(installsBtn);
@@ -167,4 +176,182 @@ void SettingsPage::onLanguageChanged(int index)
     QMessageBox::information(this,
         tr("Restart Required"),
         tr("Please restart the application for the language change to take effect."));
+}
+
+void SettingsPage::onInstallationFoldersClicked()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Installation Folders"));
+    dialog.setMinimumSize(600, 400);
+    
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    
+    QLabel* infoLabel = new QLabel(tr("Manage folders where games can be installed:"), &dialog);
+    layout->addWidget(infoLabel);
+    
+    QListWidget* folderList = new QListWidget(&dialog);
+    folderList->setStyleSheet(R"(
+        QListWidget {
+            background: #ffffff;
+            border: 2px solid #d0cec9;
+            border-radius: 8px;
+            padding: 8px;
+            color: #3c3a37;
+        }
+    )");
+    
+    // TODO: Load saved installation folders from settings
+    // For now, show default location
+    QString defaultPath = QDir::homePath() + "/Games/OpenGalaxy";
+    folderList->addItem(defaultPath);
+    
+    layout->addWidget(folderList);
+    
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    
+    QPushButton* addBtn = new QPushButton(tr("Add Folder"), &dialog);
+    addBtn->setStyleSheet(R"(
+        QPushButton {
+            background: #9b4dca;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: #8b3dba;
+        }
+    )");
+    
+    connect(addBtn, &QPushButton::clicked, [&]() {
+        QString dir = QFileDialog::getExistingDirectory(
+            &dialog,
+            tr("Select Installation Folder"),
+            QDir::homePath(),
+            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+        );
+        
+        if (!dir.isEmpty()) {
+            folderList->addItem(dir);
+            // TODO: Save to settings
+        }
+    });
+    
+    QPushButton* removeBtn = new QPushButton(tr("Remove Selected"), &dialog);
+    removeBtn->setStyleSheet(R"(
+        QPushButton {
+            background: #e74c3c;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: white;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+    )");
+    
+    connect(removeBtn, &QPushButton::clicked, [&]() {
+        QListWidgetItem* item = folderList->currentItem();
+        if (item) {
+            delete item;
+            // TODO: Save to settings
+        }
+    });
+    
+    buttonLayout->addWidget(addBtn);
+    buttonLayout->addWidget(removeBtn);
+    buttonLayout->addStretch();
+    
+    layout->addLayout(buttonLayout);
+    
+    QDialogButtonBox* dialogButtons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
+    connect(dialogButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::accept);
+    layout->addWidget(dialogButtons);
+    
+    dialog.exec();
+}
+
+void SettingsPage::onLauncherOptionsClicked()
+{
+    QDialog dialog(this);
+    dialog.setWindowTitle(tr("Default Launcher Options"));
+    dialog.setMinimumSize(500, 350);
+    
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    
+    QLabel* infoLabel = new QLabel(tr("Select default runner for launching games:"), &dialog);
+    layout->addWidget(infoLabel);
+    
+    // Runner selection
+    QLabel* runnerLabel = new QLabel(tr("Default Runner:"), &dialog);
+    runnerLabel->setStyleSheet("font-weight: 600; margin-top: 10px;");
+    layout->addWidget(runnerLabel);
+    
+    QComboBox* runnerCombo = new QComboBox(&dialog);
+    runnerCombo->setStyleSheet(R"(
+        QComboBox {
+            background: #ffffff;
+            border: 2px solid #d0cec9;
+            border-radius: 8px;
+            padding: 10px 16px;
+            color: #3c3a37;
+            font-size: 14px;
+        }
+        QComboBox:hover {
+            border-color: #9b4dca;
+        }
+    )");
+    
+    // Add runner options
+    runnerCombo->addItem(tr("Native (Linux)"), "native");
+    runnerCombo->addItem(tr("Wine"), "wine");
+    runnerCombo->addItem(tr("Proton"), "proton");
+    
+    // TODO: Load saved default from settings
+    runnerCombo->setCurrentIndex(0);
+    
+    layout->addWidget(runnerCombo);
+    
+    // Additional options
+    QLabel* optionsLabel = new QLabel(tr("Additional Options:"), &dialog);
+    optionsLabel->setStyleSheet("font-weight: 600; margin-top: 20px;");
+    layout->addWidget(optionsLabel);
+    
+    QCheckBox* fullscreenCheck = new QCheckBox(tr("Launch games in fullscreen by default"), &dialog);
+    QCheckBox* cloudSavesCheck = new QCheckBox(tr("Enable cloud saves synchronization"), &dialog);
+    
+    fullscreenCheck->setStyleSheet("color: #3c3a37; padding: 5px;");
+    cloudSavesCheck->setStyleSheet("color: #3c3a37; padding: 5px;");
+    
+    // TODO: Load from settings
+    cloudSavesCheck->setChecked(true);
+    
+    layout->addWidget(fullscreenCheck);
+    layout->addWidget(cloudSavesCheck);
+    
+    layout->addStretch();
+    
+    QDialogButtonBox* dialogButtons = new QDialogButtonBox(
+        QDialogButtonBox::Save | QDialogButtonBox::Cancel, &dialog);
+    
+    connect(dialogButtons, &QDialogButtonBox::accepted, [&]() {
+        // TODO: Save settings
+        QString selectedRunner = runnerCombo->currentData().toString();
+        bool fullscreen = fullscreenCheck->isChecked();
+        bool cloudSaves = cloudSavesCheck->isChecked();
+        
+        QMessageBox::information(&dialog, tr("Settings Saved"),
+            tr("Launcher options have been saved successfully."));
+        
+        dialog.accept();
+    });
+    
+    connect(dialogButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    
+    layout->addWidget(dialogButtons);
+    
+    dialog.exec();
 }

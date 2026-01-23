@@ -256,9 +256,38 @@ void Session::loadSession() {
         tokens_.accessToken = obj["accessToken"].toString();
         tokens_.refreshToken = obj["refreshToken"].toString();
         tokens_.expiresAt = QDateTime::fromString(obj["expiresAt"].toString(), Qt::ISODate);
-        if (tokens_.isValid()) {
-            authenticated_ = true;
-            refreshToken([this](util::Result<AuthTokens>){});
+        
+        if (!tokens_.accessToken.isEmpty() && !tokens_.refreshToken.isEmpty()) {
+            // We have tokens, check if they're still valid
+            if (tokens_.isValid()) {
+                // Token not expired yet, use it directly
+                authenticated_ = true;
+                // Fetch user info to complete authentication
+                fetchUserInfo([this](util::Result<UserInfo> result) {
+                    if (result.isOk()) {
+                        user_ = result.value();
+                        emit authenticated(user_);
+                    } else {
+                        // Token might be invalid, try refresh
+                        refreshToken([this](util::Result<AuthTokens> refreshResult) {
+                            if (!refreshResult.isOk()) {
+                                // Refresh failed, user needs to login again
+                                authenticated_ = false;
+                                tokens_ = {};
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Token expired, try to refresh it
+                refreshToken([this](util::Result<AuthTokens> result) {
+                    if (!result.isOk()) {
+                        // Refresh failed, user needs to login again
+                        authenticated_ = false;
+                        tokens_ = {};
+                    }
+                });
+            }
         }
     }
 }

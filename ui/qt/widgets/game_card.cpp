@@ -2,6 +2,12 @@
 
 #include <QVBoxLayout>
 #include <QMouseEvent>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QPixmap>
+#include <QUrl>
+#include <QDebug>
 #include <algorithm>
 
 namespace opengalaxy {
@@ -15,9 +21,7 @@ GameCard::GameCard(const QString& gameId,
     : QWidget(parent)
     , gameId_(gameId)
 {
-    Q_UNUSED(coverUrl);
-
-    setFixedSize(280, 400);
+    setFixedSize(420, 310);
     setCursor(Qt::PointingHandCursor);
 
     auto* mainLayout = new QVBoxLayout(this);
@@ -26,7 +30,7 @@ GameCard::GameCard(const QString& gameId,
 
     // Cover
     auto* coverContainer = new QWidget(this);
-    coverContainer->setFixedSize(280, 320);
+    coverContainer->setFixedSize(420, 220);
     coverContainer->setStyleSheet(R"(
         QWidget {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
@@ -43,16 +47,23 @@ GameCard::GameCard(const QString& gameId,
     coverImage->setText("🎮");
     coverImage->setStyleSheet(R"(
         QLabel {
-            font-size: 64px;
+            font-size: 72px;
             color: rgba(255, 255, 255, 0.3);
             background: transparent;
         }
     )");
+    coverImage->setScaledContents(false);  // Don't stretch, maintain aspect ratio
+    coverImage->setFixedSize(420, 220);
     coverLayout->addWidget(coverImage);
+
+    // Load cover image if URL is provided
+    if (!coverUrl.isEmpty()) {
+        loadCoverImage(coverUrl);
+    }
 
     // Action button
     actionButton_ = new QPushButton(coverContainer);
-    actionButton_->setFixedSize(140, 45);
+    actionButton_->setFixedSize(160, 50);
     actionButton_->setStyleSheet(R"(
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -60,7 +71,7 @@ GameCard::GameCard(const QString& gameId,
             border: none;
             border-radius: 8px;
             color: white;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 700;
         }
         QPushButton:hover {
@@ -72,7 +83,7 @@ GameCard::GameCard(const QString& gameId,
 
     // Progress
     progressBar_ = new QProgressBar(coverContainer);
-    progressBar_->setFixedSize(220, 10);
+    progressBar_->setFixedSize(240, 12);
     progressBar_->setRange(0, 100);
     progressBar_->setValue(0);
     progressBar_->setTextVisible(false);
@@ -111,7 +122,7 @@ GameCard::GameCard(const QString& gameId,
 
     // Info
     auto* infoContainer = new QWidget(this);
-    infoContainer->setFixedHeight(80);
+    infoContainer->setFixedHeight(90);
     infoContainer->setStyleSheet(R"(
         QWidget {
             background: rgba(45, 27, 78, 0.6);
@@ -128,20 +139,20 @@ GameCard::GameCard(const QString& gameId,
     gameTitle->setStyleSheet(R"(
         QLabel {
             color: #ffffff;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: 600;
             background: transparent;
         }
     )");
     gameTitle->setWordWrap(true);
-    gameTitle->setMaximumHeight(40);
+    gameTitle->setMaximumHeight(50);
     infoLayout->addWidget(gameTitle);
 
     platformLabel = new QLabel(platform, infoContainer);
     platformLabel->setStyleSheet(R"(
         QLabel {
             color: #b8b8d1;
-            font-size: 12px;
+            font-size: 14px;
             background: transparent;
         }
     )");
@@ -253,6 +264,54 @@ void GameCard::leaveEvent(QEvent* event)
     progressBar_->hide();
 
     QWidget::leaveEvent(event);
+}
+
+void GameCard::loadCoverImage(const QString& url)
+{
+    // Don't attempt to load if URL is empty or invalid
+    if (url.isEmpty() || url.trimmed().isEmpty()) {
+        return;
+    }
+
+    // Validate URL has a protocol
+    QUrl qurl(url);
+    if (!qurl.isValid() || qurl.scheme().isEmpty()) {
+        qDebug() << "Invalid cover URL (no protocol):" << url;
+        return;
+    }
+
+    // Create network manager
+    QNetworkAccessManager* manager = new QNetworkAccessManager(this);
+    
+    // Make request
+    QNetworkRequest request(qurl);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    
+    QNetworkReply* reply = manager->get(request);
+    
+    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+        reply->deleteLater();
+        
+        if (reply->error() != QNetworkReply::NoError) {
+            // Only log if it's not an empty URL issue
+            if (reply->error() != QNetworkReply::ProtocolUnknownError) {
+                qDebug() << "Failed to load cover image:" << reply->errorString();
+            }
+            return;
+        }
+        
+        QByteArray imageData = reply->readAll();
+        QPixmap pixmap;
+        
+        if (pixmap.loadFromData(imageData)) {
+            // Scale to fit within the cover container while maintaining aspect ratio
+            QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            coverImage->setPixmap(scaled);
+            coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
+        } else {
+            qDebug() << "Failed to parse cover image data";
+        }
+    });
 }
 
 } // namespace ui
