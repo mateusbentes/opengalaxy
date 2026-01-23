@@ -33,7 +33,7 @@ protected:
 
 private slots:
     void onLoginSuccess();
-    void startPasswordLogin(const QString& username, const QString& password);
+    void startOAuthLogin();
     void onMinimizeClicked();
     void onMaximizeClicked();
     void onCloseClicked();

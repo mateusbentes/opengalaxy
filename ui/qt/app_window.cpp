@@ -14,6 +14,7 @@
 #include "widgets/game_card.h"
 #include "pages/store_page.h"
 #include "pages/friends_page.h"
+#include "dialogs/oauth_login_dialog.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -69,7 +70,7 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     stackedWidget->setCurrentWidget(loginPage);
     sidebar->setVisible(false);
 
-    connect(loginPage, &LoginPage::loginRequested, this, &AppWindow::startPasswordLogin);
+    connect(loginPage, &LoginPage::oauthLoginRequested, this, &AppWindow::startOAuthLogin);
     connect(session_, &api::Session::authenticated, this, &AppWindow::onLoginSuccess);
     connect(session_, &api::Session::authenticationFailed, this, [this](const QString& err) {
         QMessageBox::warning(this, tr("Login failed"), err);
@@ -212,13 +213,27 @@ void AppWindow::onLoginSuccess()
     stackedWidget->setCurrentWidget(libraryPage);
 }
 
-void AppWindow::startPasswordLogin(const QString& username, const QString& password)
+void AppWindow::startOAuthLogin()
 {
-    session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
-        if (!result.isOk()) {
-            QMessageBox::warning(this, tr("Login failed"), result.errorMessage());
-        }
+#ifdef HAVE_WEBENGINE
+    // Show OAuth login dialog
+    auto* dialog = new OAuthLoginDialog(this);
+    connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
+        // Exchange authorization code for tokens
+        session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {
+            if (!result.isOk()) {
+                QMessageBox::warning(this, tr("Login failed"), result.errorMessage());
+            }
+        });
     });
+    dialog->exec();
+    dialog->deleteLater();
+#else
+    QMessageBox::warning(this, tr("OAuth Not Available"),
+                        tr("OAuth login requires Qt WebEngine.\n\n"
+                           "Please install: sudo apt install qt6-webengine\n\n"
+                           "Then rebuild the application."));
+#endif
 }
 
 void AppWindow::mousePressEvent(QMouseEvent* event)

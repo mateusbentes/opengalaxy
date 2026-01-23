@@ -107,10 +107,80 @@ void Session::loginWithPassword(const QString& username, const QString& password
 
 void Session::loginWithOAuth(AuthCallback callback)
 {
-    // Minimal, non-embedded implementation: use the already-working password flow disabled in UI,
-    // and require external tooling for now. We return a clear error until we implement PKCE + redirect.
+    // This is called from UI - the UI will show OAuth dialog and call loginWithAuthCode
     QTimer::singleShot(0, this, [callback = std::move(callback)]() mutable {
-        callback(util::Result<AuthTokens>::error("OAuth web login not implemented yet (PKCE + local redirect server pending)."));
+        callback(util::Result<AuthTokens>::error("OAuth dialog should be shown by UI layer"));
+    });
+}
+
+void Session::loginWithAuthCode(const QString& authCode, AuthCallback callback)
+{
+    QTimer::singleShot(100, this, [this, authCode, callback = std::move(callback)]() mutable {
+        const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "46899977096215655");
+        const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85c43b1482497dbbce61f6e4aa173a433796eeae2ca8c5f6129f2dc4de46d9");
+        const QString REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
+
+        // Exchange authorization code for tokens
+        QString url = QString("https://auth.gog.com/token?client_id=%1&client_secret=%2&grant_type=authorization_code&code=%3&redirect_uri=%4")
+                          .arg(QString(QUrl::toPercentEncoding(CLIENT_ID)),
+                               QString(QUrl::toPercentEncoding(CLIENT_SECRET)),
+                               QString(QUrl::toPercentEncoding(authCode)),
+                               QString(QUrl::toPercentEncoding(REDIRECT_URI)));
+
+        net::HttpClient* client = new net::HttpClient(this);
+        client->get(url,
+                     [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+                         if (!result.isOk()) {
+                             QString errorMsg = result.errorMessage();
+                             
+                             if (errorMsg.contains("timeout") || errorMsg.toLower().contains("timed out")) {
+                                 callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
+                             } else if (errorMsg.contains("network") || errorMsg.contains("connection") || 
+                                        errorMsg.contains("host") || errorMsg.contains("resolve")) {
+                                 callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
+                             } else {
+                                 callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
+                             }
+                             return;
+                         }
+                         
+                         const auto& response = result.value();
+                         auto json = QJsonDocument::fromJson(response.body).object();
+                         
+                         // Check for GOG API error response
+                         if (json.contains("error")) {
+                             QString errorCode = json["error"].toString();
+                             QString errorDesc = json["error_description"].toString();
+                             
+                             if (errorCode == "invalid_grant" || errorCode == "invalid_client") {
+                                 callback(util::Result<AuthTokens>::error("Authorization failed. Please try logging in again."));
+                             } else if (!errorDesc.isEmpty()) {
+                                 callback(util::Result<AuthTokens>::error(errorDesc));
+                             } else {
+                                 callback(util::Result<AuthTokens>::error("Authorization failed"));
+                             }
+                             return;
+                         }
+                         
+                         if (response.statusCode >= 400) {
+                             callback(util::Result<AuthTokens>::error("Authorization failed. Please try again."));
+                             return;
+                         }
+                         
+                         // Success - extract tokens
+                         AuthTokens tokens;
+                         tokens.accessToken = json["access_token"].toString();
+                         tokens.refreshToken = json["refresh_token"].toString();
+                         tokens.expiresAt = QDateTime::currentDateTime().addSecs(json["expires_in"].toInt());
+                         
+                         if (tokens.accessToken.isEmpty()) {
+                             callback(util::Result<AuthTokens>::error("Invalid response from server"));
+                             return;
+                         }
+                         
+                         setTokens(tokens);
+                         callback(util::Result<AuthTokens>::success(tokens));
+                     });
     });
 }
 

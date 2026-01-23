@@ -16,14 +16,13 @@ public:
     ~LoginPage();
 
 signals:
-    void loginRequested(const QString& username, const QString& password);
+    void oauthLoginRequested();
 
 private slots:
     void onLoginClicked();
-    void onOAuthClicked();
+
 private:
-    QLineEdit* usernameEdit;
-    QLineEdit* passwordEdit;
+    // Password login removed - OAuth only
 };
 
 } // namespace ui

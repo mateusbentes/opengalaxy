@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.21)
 
-# Find Qt6 LinguistTools for translations
+# Find Qt6 components
 find_package(Qt6 COMPONENTS LinguistTools QUIET)
+find_package(Qt6 COMPONENTS WebEngineWidgets QUIET)
 
 set(UI_SOURCES
     qt/main.cpp
@@ -16,6 +17,7 @@ set(UI_SOURCES
     qt/widgets/notification_widget.cpp
     qt/dialogs/game_details_dialog.cpp
     qt/dialogs/cloud_saves_dialog.cpp
+    qt/dialogs/oauth_login_dialog.cpp
     qt/i18n/translation_manager.cpp
 )
 
@@ -31,6 +33,7 @@ set(UI_HEADERS
     qt/widgets/notification_widget.h
     qt/dialogs/game_details_dialog.h
     qt/dialogs/cloud_saves_dialog.h
+    qt/dialogs/oauth_login_dialog.h
     qt/i18n/translation_manager.h
 )
 
@@ -71,6 +74,15 @@ target_link_libraries(opengalaxy
         Qt6::Gui
         Qt6::Network
 )
+
+# Add WebEngine if available (for OAuth login)
+if(Qt6WebEngineWidgets_FOUND)
+    target_link_libraries(opengalaxy PRIVATE Qt6::WebEngineWidgets)
+    target_compile_definitions(opengalaxy PRIVATE HAVE_WEBENGINE)
+    message(STATUS "Qt WebEngine found - OAuth web login enabled")
+else()
+    message(STATUS "Qt WebEngine not found - OAuth web login disabled")
+endif()
 
 # Windows-specific settings
 if(WIN32)

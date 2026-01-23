@@ -25,6 +25,7 @@ public:
     // Authentication methods
     void loginWithPassword(const QString& username, const QString& password, AuthCallback callback);
     void loginWithOAuth(AuthCallback callback);  // Opens browser for OAuth flow
+    void loginWithAuthCode(const QString& authCode, AuthCallback callback);  // Exchange auth code for tokens
     void logout();
     void refreshToken(AuthCallback callback);
 

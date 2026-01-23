@@ -41,7 +41,7 @@ LoginPage::LoginPage(QWidget *parent)
     containerLayout->addWidget(titleLabel);
     
     // Subtitle
-    QLabel* subtitleLabel = new QLabel(tr("Sign in to access your library"), container);
+    QLabel* subtitleLabel = new QLabel(tr("Sign in with your GOG account"), container);
     subtitleLabel->setStyleSheet(R"(
         QLabel {
             color: #5a5855;
@@ -52,41 +52,25 @@ LoginPage::LoginPage(QWidget *parent)
     subtitleLabel->setAlignment(Qt::AlignCenter);
     containerLayout->addWidget(subtitleLabel);
     
-    // Username field
-    usernameEdit = new QLineEdit(container);
-    usernameEdit->setPlaceholderText(tr("Email or Username"));
-    usernameEdit->setStyleSheet(R"(
-        QLineEdit {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 12px;
-            padding: 16px 20px;
-            color: #3c3a37;
-            font-size: 16px;
-        }
-        QLineEdit:focus {
-            border-color: #9b4dca;
-            background: #ffffff;
-        }
-        QLineEdit::placeholder {
-            color: #8a8884;
+    // Info label
+    QLabel* infoLabel = new QLabel(tr("Click the button below to sign in through GOG's secure login page"), container);
+    infoLabel->setStyleSheet(R"(
+        QLabel {
+            color: #5a5855;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
     )");
-    containerLayout->addWidget(usernameEdit);
-    
-    // Password field
-    passwordEdit = new QLineEdit(container);
-    passwordEdit->setPlaceholderText(tr("Password"));
-    passwordEdit->setEchoMode(QLineEdit::Password);
-    passwordEdit->setStyleSheet(usernameEdit->styleSheet());
-    containerLayout->addWidget(passwordEdit);
+    infoLabel->setAlignment(Qt::AlignCenter);
+    infoLabel->setWordWrap(true);
+    containerLayout->addWidget(infoLabel);
     
     // Add spacing before button
-    containerLayout->addSpacing(10);
+    containerLayout->addSpacing(20);
     
     // Login button
-    QPushButton* loginButton = new QPushButton(tr("Sign In"), container);
-    loginButton->setMinimumHeight(56);  // Ensure button has minimum height
+    QPushButton* loginButton = new QPushButton(tr("Sign In with GOG"), container);
+    loginButton->setMinimumHeight(56);
     loginButton->setStyleSheet(R"(
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -110,7 +94,7 @@ LoginPage::LoginPage(QWidget *parent)
     )");
     containerLayout->addWidget(loginButton);
     
-    // Add spacing after button to prevent cutoff
+    // Add spacing after button
     containerLayout->addSpacing(20);
 
     // Add container to main layout with centering
@@ -131,7 +115,6 @@ LoginPage::LoginPage(QWidget *parent)
 
     // Connect signals
     connect(loginButton, &QPushButton::clicked, this, &LoginPage::onLoginClicked);
-    connect(passwordEdit, &QLineEdit::returnPressed, this, &LoginPage::onLoginClicked);
 }
 
 LoginPage::~LoginPage()
@@ -140,20 +123,7 @@ LoginPage::~LoginPage()
 
 void LoginPage::onLoginClicked()
 {
-    const QString username = usernameEdit->text().trimmed();
-    const QString password = passwordEdit->text();
-
-    if (username.isEmpty() || password.isEmpty()) {
-        QMessageBox::warning(this, tr("Login Error"), tr("Please enter both username and password."));
-        return;
-    }
-
-    emit loginRequested(username, password);
-}
-
-void LoginPage::onOAuthClicked()
-{
-    // Removed (password login only)
+    emit oauthLoginRequested();
 }
 
 } // namespace ui
