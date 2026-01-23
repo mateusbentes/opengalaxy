@@ -9,6 +9,7 @@
 #ifdef HAVE_WEBENGINE
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
+#include <QWebEngineCookieStore>
 #endif
 
 namespace opengalaxy {
