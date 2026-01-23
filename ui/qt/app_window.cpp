@@ -24,8 +24,8 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     , translationManager_(translationManager)
 {
     setWindowTitle(tr("OpenGalaxy"));
-    setMinimumSize(1280, 720);
-    resize(1400, 800);
+    setMinimumSize(1400, 900);
+    resize(1600, 1000);
 
     setWindowFlags(Qt::FramelessWindowHint);
     // Remove translucent background for solid color
@@ -212,8 +212,8 @@ void AppWindow::onLoginSuccess()
     sidebar->setVisible(true);
     stackedWidget->setCurrentWidget(libraryPage);
     
-    // Load the library now that we're authenticated
-    libraryPage->refreshLibrary();
+    // Force refresh library from GOG (not cache) after login
+    libraryPage->refreshLibrary(true);
 }
 
 void AppWindow::startOAuthLogin(const QString& username, const QString& password)

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QFileInfo>
 #include <QFileDialog>
+#include <QDebug>
 
 #include "../widgets/game_card.h"
 #include "../widgets/notification_widget.h"
@@ -92,18 +93,27 @@ LibraryPage::LibraryPage(api::Session* session, QWidget* parent)
 
 LibraryPage::~LibraryPage() = default;
 
-void LibraryPage::refreshLibrary()
+void LibraryPage::refreshLibrary(bool forceRefresh)
 {
     // Only load if authenticated
     if (!session_ || !session_->isAuthenticated()) {
+        qDebug() << "LibraryPage::refreshLibrary() - Session not authenticated";
         return;
     }
 
+    qDebug() << "LibraryPage::refreshLibrary() - Loading library (forceRefresh=" << forceRefresh << ")";
+
     // Load library
-    libraryService_.fetchLibrary(false, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
+    libraryService_.fetchLibrary(forceRefresh, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
         if (!result.isOk()) {
+            qDebug() << "LibraryPage - Failed to load library:" << result.errorMessage();
             QMessageBox::warning(this, "Library", result.errorMessage());
             return;
+        }
+
+        qDebug() << "LibraryPage - Loaded" << result.value().size() << "games";
+        for (const auto& game : result.value()) {
+            qDebug() << "  -" << game.title << "(" << game.id << ")" << game.platform;
         }
 
         // Clear grid

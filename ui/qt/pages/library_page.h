@@ -24,7 +24,7 @@ public:
     explicit LibraryPage(api::Session* session, QWidget *parent = nullptr);
     ~LibraryPage();
 
-    void refreshLibrary();
+    void refreshLibrary(bool forceRefresh = false);
 
 private:
     void openGameDetails(const QString& gameId);
