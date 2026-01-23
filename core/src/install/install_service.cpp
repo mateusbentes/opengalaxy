@@ -42,12 +42,16 @@ void InstallService::installGame(const api::GameInfo& game,
     LOG_INFO(QString("Installing game: %1").arg(game.title));
 
     if (isInstalling(game.id)) {
-        completionCallback(util::Result<QString>::error("Game is already being installed"));
+        if (completionCallback) {
+            completionCallback(util::Result<QString>::error("Game is already being installed"));
+        }
         return;
     }
 
     if (game.downloads.empty()) {
-        completionCallback(util::Result<QString>::error("No downloads available for this game"));
+        if (completionCallback) {
+            completionCallback(util::Result<QString>::error("No downloads available for this game"));
+        }
         return;
     }
 
@@ -81,7 +85,9 @@ void InstallService::installGame(const api::GameInfo& game,
     if (selected.url.isEmpty()) {
         const QString err = "No valid download URL available for this game";
         emit installFailed(game.id, err);
-        completionCallback(util::Result<QString>::error(err));
+        if (completionCallback) {
+            completionCallback(util::Result<QString>::error(err));
+        }
         QMutexLocker locker(&tasksMutex_);
         activeTasks_.erase(game.id);
         return;
@@ -103,7 +109,9 @@ void InstallService::installGame(const api::GameInfo& game,
     http->request(req, [this, taskPtr, selected, http](util::Result<net::HttpClient::Response> result) mutable {
         if (!result.isOk()) {
             emit installFailed(taskPtr->gameId, result.errorMessage());
-            taskPtr->completionCallback(util::Result<QString>::error(result.errorMessage()));
+            if (taskPtr->completionCallback) {
+                taskPtr->completionCallback(util::Result<QString>::error(result.errorMessage()));
+            }
             QMutexLocker locker(&tasksMutex_);
             activeTasks_.erase(taskPtr->gameId);
             return;
@@ -114,7 +122,9 @@ void InstallService::installGame(const api::GameInfo& game,
         if (downlink.isEmpty()) {
             const QString err = "Missing downlink in download response";
             emit installFailed(taskPtr->gameId, err);
-            taskPtr->completionCallback(util::Result<QString>::error(err));
+            if (taskPtr->completionCallback) {
+                taskPtr->completionCallback(util::Result<QString>::error(err));
+            }
             QMutexLocker locker(&tasksMutex_);
             activeTasks_.erase(taskPtr->gameId);
             return;
@@ -138,7 +148,9 @@ void InstallService::installGame(const api::GameInfo& game,
                           [this, taskPtr, installerPath](util::Result<net::HttpClient::Response> dlRes) mutable {
                               if (!dlRes.isOk()) {
                                   emit installFailed(taskPtr->gameId, dlRes.errorMessage());
-                                  taskPtr->completionCallback(util::Result<QString>::error(dlRes.errorMessage()));
+                                  if (taskPtr->completionCallback) {
+                                      taskPtr->completionCallback(util::Result<QString>::error(dlRes.errorMessage()));
+                                  }
                                   QMutexLocker locker(&tasksMutex_);
                                   activeTasks_.erase(taskPtr->gameId);
                                   return;
@@ -169,14 +181,18 @@ void InstallService::installGame(const api::GameInfo& game,
                                           if (status != QProcess::NormalExit || exitCode != 0) {
                                               const QString err = QString("Installer exited with code %1").arg(exitCode);
                                               emit installFailed(taskPtr->gameId, err);
-                                              taskPtr->completionCallback(util::Result<QString>::error(err));
+                                              if (taskPtr->completionCallback) {
+                                                  taskPtr->completionCallback(util::Result<QString>::error(err));
+                                              }
                                               QMutexLocker locker(&tasksMutex_);
                                               activeTasks_.erase(taskPtr->gameId);
                                               return;
                                           }
 
                                           emit installCompleted(taskPtr->gameId, installPath);
-                                          taskPtr->completionCallback(util::Result<QString>::success(installPath));
+                                          if (taskPtr->completionCallback) {
+                                              taskPtr->completionCallback(util::Result<QString>::success(installPath));
+                                          }
                                           QMutexLocker locker(&tasksMutex_);
                                           activeTasks_.erase(taskPtr->gameId);
                                       });

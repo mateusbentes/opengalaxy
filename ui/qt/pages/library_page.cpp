@@ -300,8 +300,19 @@ void LibraryPage::launchGame(const QString& gameId)
 
 void LibraryPage::installGame(const QString& gameId)
 {
-    const QString installDir = QFileDialog::getExistingDirectory(this, "Choose install folder");
-    if (installDir.isEmpty()) return;
+    QString baseDir = QFileDialog::getExistingDirectory(this, "Choose install folder");
+    if (baseDir.isEmpty()) return;
+
+    // Create Games/OpenGalaxy directory if it doesn't exist
+    QDir dir(baseDir);
+    if (!dir.exists("Games")) {
+        dir.mkdir("Games");
+    }
+    dir.cd("Games");
+    if (!dir.exists("OpenGalaxy")) {
+        dir.mkdir("OpenGalaxy");
+    }
+    const QString installDir = dir.absoluteFilePath("OpenGalaxy");
 
     gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId](opengalaxy::util::Result<api::GameInfo> result) {
         if (!result.isOk()) {
@@ -312,12 +323,26 @@ void LibraryPage::installGame(const QString& gameId)
         api::GameInfo game = result.value();
 
         // Keep title/platform from cached library row
-        libraryService_.getGame(gameId, [this, installDir, game](auto cached) mutable {
+        libraryService_.getGame(gameId, [this, installDir, game, gameId](auto cached) mutable {
             if (cached.isOk()) {
                 game.platform = cached.value().platform;
                 game.title = cached.value().title;
             }
-            installService_.installGame(game, installDir, nullptr, [](util::Result<QString>) {});
+
+            // Set up progress callback
+            auto progressCallback = [this, gameId](const install::InstallService::InstallProgress& progress) {
+                if (cardsById_.contains(gameId)) {
+                    cardsById_[gameId]->setInstallProgress(progress.percentage);
+                }
+            };
+
+            // Set up completion callback (signals handle the rest)
+            auto completionCallback = [](util::Result<QString> result) {
+                // Signals installCompleted/installFailed are already emitted by InstallService
+                Q_UNUSED(result);
+            };
+
+            installService_.installGame(game, installDir, progressCallback, completionCallback);
         });
     });
 }
