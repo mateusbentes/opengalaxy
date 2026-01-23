@@ -10,6 +10,7 @@
 #include "opengalaxy/install/install_service.h"
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
+#include "opengalaxy/util/config.h"
 // main.moc is included by CMake's AUTOGEN; do not include it manually in a .cpp
 
 using namespace opengalaxy;
@@ -243,6 +244,10 @@ private:
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
+    
+    // Initialize configuration system
+    util::Config::initialize();
+    
     QCoreApplication::setApplicationName("OpenGalaxy CLI");
     QCoreApplication::setApplicationVersion("1.0.0");
 
@@ -293,7 +298,8 @@ int main(int argc, char *argv[])
         }
         QString installDir = parser.value(installDirOption);
         if (installDir.isEmpty()) {
-            installDir = QDir::homePath() + "/Games";
+            // Use configured games directory
+            installDir = util::Config::instance().gamesDirectory();
         }
         cli.installGame(parser.value(gameIdOption), installDir);
     }

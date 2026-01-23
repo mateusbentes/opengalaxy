@@ -5,6 +5,7 @@
 #include <QLocale>
 #include <QDir>
 #include <QDebug>
+#include "opengalaxy/util/config.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -101,9 +102,8 @@ void TranslationManager::setLocale(const QString& locale)
 
     currentLocale_ = locale;
 
-    // Save to settings
-    QSettings settings;
-    settings.setValue("ui/locale", locale);
+    // Save to settings using Config
+    opengalaxy::util::Config::instance().setLanguage(locale);
 
     // Load translator (will take effect after restart)
     loadTranslator(locale);
@@ -115,8 +115,7 @@ void TranslationManager::setLocale(const QString& locale)
 
 void TranslationManager::loadFromSettings()
 {
-    QSettings settings;
-    QString savedLocale = settings.value("ui/locale", "").toString();
+    QString savedLocale = opengalaxy::util::Config::instance().language();
 
     if (!savedLocale.isEmpty()) {
         // Use saved locale
@@ -139,7 +138,7 @@ void TranslationManager::loadFromSettings()
         }
 
         // Save the detected/fallback locale
-        settings.setValue("ui/locale", currentLocale_);
+        opengalaxy::util::Config::instance().setLanguage(currentLocale_);
     }
 
     // Load the translator

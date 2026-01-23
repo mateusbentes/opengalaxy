@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.21)
 # Core library sources
 set(CORE_SOURCES
     src/util/log.cpp
+    src/util/config.cpp
     src/net/http_client.cpp
     src/api/session.cpp
     src/api/gog_client.cpp
@@ -19,6 +20,7 @@ set(CORE_SOURCES
 set(CORE_HEADERS
     include/opengalaxy/util/result.h
     include/opengalaxy/util/log.h
+    include/opengalaxy/util/config.h
     include/opengalaxy/net/http_client.h
     include/opengalaxy/api/models.h
     include/opengalaxy/api/session.h

@@ -10,6 +10,7 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 - **[Build Instructions](BUILD.md)** - Build from source for all platforms
 
 ### User Guides
+- **[Configuration Guide](CONFIGURATION.md)** - Cross-platform settings and paths
 - **[Compatibility Guide](COMPATIBILITY_GUIDE.md)** - Running games on different architectures (Wine, Proton, ISA translation)
 - **[Multilingual Guide](MULTILINGUAL_GUIDE.md)** - Language support and translation
 - **[Data Locations](DATA_LOCATIONS.md)** - Where OpenGalaxy stores your data
@@ -36,6 +37,9 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 **Build from source**
 → [BUILD.md](BUILD.md) - Detailed build instructions for all platforms
 
+**Configure settings and paths**
+→ [CONFIGURATION.md](CONFIGURATION.md) - Cross-platform configuration
+
 **Run Windows games on Linux**
 → [COMPATIBILITY_GUIDE.md](COMPATIBILITY_GUIDE.md) - Wine, Proton, and ISA translation setup
 
@@ -59,9 +63,10 @@ Complete documentation for OpenGalaxy - the open-source GOG Galaxy alternative.
 ### End Users
 1. [INSTALL.md](INSTALL.md) - Installation
 2. [QUICKSTART.md](QUICKSTART.md) - First steps
-3. [COMPATIBILITY_GUIDE.md](COMPATIBILITY_GUIDE.md) - Game compatibility
-4. [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Problem solving
-5. [DATA_LOCATIONS.md](DATA_LOCATIONS.md) - Data management
+3. [CONFIGURATION.md](CONFIGURATION.md) - Settings and paths
+4. [COMPATIBILITY_GUIDE.md](COMPATIBILITY_GUIDE.md) - Game compatibility
+5. [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Problem solving
+6. [DATA_LOCATIONS.md](DATA_LOCATIONS.md) - Data management
 
 ### Developers
 1. [BUILD.md](BUILD.md) - Building the project

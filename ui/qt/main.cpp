@@ -6,12 +6,16 @@
 
 #include "app_window.h"
 #include "i18n/translation_manager.h"
+#include "opengalaxy/util/config.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
     
-    // Application metadata
+    // Initialize configuration system (must be done early)
+    opengalaxy::util::Config::initialize();
+    
+    // Application metadata (already set by Config::initialize, but kept for clarity)
     app.setApplicationName("OpenGalaxy");
     app.setApplicationVersion("1.0.0");
     app.setOrganizationName("OpenGalaxy");

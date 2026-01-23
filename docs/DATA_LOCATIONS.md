@@ -2,19 +2,21 @@
 
 ## Overview
 
-OpenGalaxy stores different types of data in different locations following platform conventions.
+OpenGalaxy stores different types of data in different locations following platform conventions. The application uses Qt's `QStandardPaths` to ensure proper cross-platform compatibility.
 
 ## 📁 Data Directory Structure
 
-### Linux (Your System)
+### Linux
 ```
-~/.local/share/opengalaxy/
-├── session.json          # Login session (access tokens)
-├── library.db            # Game library database (SQLite)
-├── opengalaxy.log        # Application logs
-└── settings.conf         # Application settings (Qt format)
+~/.local/share/opengalaxy/     # Data directory (AppDataLocation)
+├── session.json               # Login session (access tokens)
+├── library.db                 # Game library database (SQLite)
+└── opengalaxy.log             # Application logs
 
-~/Games/                  # Default game installation directory
+~/.config/OpenGalaxy/          # Config directory (ConfigLocation)
+└── OpenGalaxy.ini             # Application settings
+
+~/Games/                       # Default game installation directory
 ├── Game Title 1/
 ├── Game Title 2/
 └── ...
@@ -22,24 +24,28 @@ OpenGalaxy stores different types of data in different locations following platf
 
 ### macOS
 ```
-~/Library/Application Support/opengalaxy/
+~/Library/Application Support/opengalaxy/  # Data directory
 ├── session.json
 ├── library.db
-├── opengalaxy.log
-└── settings.conf
+└── opengalaxy.log
 
-~/Games/                  # Default game installation directory
+~/Library/Preferences/OpenGalaxy/          # Config directory
+└── OpenGalaxy.ini
+
+~/Games/                                   # Default game installation directory
 ```
 
 ### Windows
 ```
-%APPDATA%\opengalaxy\
+%APPDATA%\opengalaxy\          # Data directory (same as config)
 ├── session.json
 ├── library.db
-├── opengalaxy.log
-└── settings.conf
+└── opengalaxy.log
 
-C:\Users\YourName\Games\  # Default game installation directory
+%APPDATA%\OpenGalaxy\          # Config directory
+└── OpenGalaxy.ini
+
+%USERPROFILE%\Games\           # Default game installation directory
 ```
 
 ## 📄 File Details
@@ -132,9 +138,12 @@ C:\Users\YourName\Games\  # Default game installation directory
 
 ---
 
-### 4. Application Settings (`settings.conf`)
+### 4. Application Settings (`OpenGalaxy.ini`)
 
-**Location**: `~/.local/share/opengalaxy/settings.conf`
+**Location**: 
+- Linux: `~/.config/OpenGalaxy/OpenGalaxy.ini`
+- macOS: `~/Library/Preferences/OpenGalaxy/OpenGalaxy.ini`
+- Windows: `%APPDATA%\OpenGalaxy\OpenGalaxy.ini`
 
 **Contains**:
 - UI language preference
@@ -149,16 +158,27 @@ C:\Users\YourName\Games\  # Default game installation directory
 locale=en_US
 
 [install]
-defaultPath=/home/mateus/Games
+gamesDirectory=/home/mateus/Games
 
 [runners]
-protonEnabled=true
-protonVersion=GE-Proton8-25
+preferred=Proton
+
+[library]
+autoRefresh=true
+
+[features]
+cloudSaves=false
+
+[window]
+geometry=...
+state=...
 ```
 
 **When Created**: First time settings are saved
 
 **When Updated**: When user changes settings
+
+**Cross-Platform**: Automatically uses the correct location for each platform
 
 ---
 

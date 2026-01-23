@@ -10,6 +10,7 @@
 #include <QTimer>
 #include "opengalaxy/net/http_client.h"
 #include "opengalaxy/util/result.h"
+#include "opengalaxy/util/config.h"
 
 namespace opengalaxy::api {
 
@@ -332,7 +333,7 @@ void Session::fetchUserInfo(UserCallback callback)
 
 QString Session::getSecureStoragePath() const
 {
-    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/session.json";
+    return util::Config::instance().sessionFilePath();
 }
 
 } // namespace opengalaxy::api
