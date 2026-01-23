@@ -11,6 +11,8 @@
 #include <QDir>
 #include <QTimer>
 #include <QMutexLocker>
+#include <QStandardPaths>
+#include <QProcessEnvironment>
 #include <map>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -206,11 +208,65 @@ void InstallService::installGame(const api::GameInfo& game,
                               const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
                               QDir().mkpath(installPath);
 
+                              // Find Wine executable
+                              QString wineExe;
+                              QStringList winePaths = {
+                                  "/usr/bin/wine",
+                                  "/usr/local/bin/wine",
+                                  "/opt/wine/bin/wine",
+                                  QStandardPaths::findExecutable("wine")
+                              };
+                              
+                              for (const QString& path : winePaths) {
+                                  if (!path.isEmpty() && QFile::exists(path)) {
+                                      wineExe = path;
+                                      break;
+                                  }
+                              }
+                              
+                              if (wineExe.isEmpty()) {
+                                  const QString err = "Wine not found. Please install Wine to run Windows installers.\n"
+                                                     "Ubuntu/Debian: sudo apt install wine\n"
+                                                     "Fedora: sudo dnf install wine\n"
+                                                     "Arch: sudo pacman -S wine";
+                                  LOG_ERROR(err);
+                                  emit installFailed(taskPtr->gameId, err);
+                                  if (taskPtr->completionCallback) {
+                                      taskPtr->completionCallback(util::Result<QString>::error(err));
+                                  }
+                                  QMutexLocker locker2(&tasksMutex_);
+                                  activeTasks_.erase(taskPtr->gameId);
+                                  return;
+                              }
+
+                              LOG_INFO(QString("Running installer with Wine: %1 %2").arg(wineExe, installerPath));
+
                               auto* proc = new QProcess(this);
-                              proc->setProgram("/usr/bin/wine");
+                              proc->setProgram(wineExe);
                               proc->setArguments({installerPath});
                               proc->setWorkingDirectory(installPath);
+                              
+                              // Set environment for Wine
+                              QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+                              env.insert("WINEPREFIX", installPath + "/.wine");
+                              proc->setProcessEnvironment(env);
+                              
                               proc->start();
+                              
+                              if (!proc->waitForStarted(5000)) {
+                                  const QString err = QString("Failed to start Wine installer: %1").arg(proc->errorString());
+                                  LOG_ERROR(err);
+                                  emit installFailed(taskPtr->gameId, err);
+                                  if (taskPtr->completionCallback) {
+                                      taskPtr->completionCallback(util::Result<QString>::error(err));
+                                  }
+                                  proc->deleteLater();
+                                  QMutexLocker locker2(&tasksMutex_);
+                                  activeTasks_.erase(taskPtr->gameId);
+                                  return;
+                              }
+                              
+                              LOG_INFO(QString("Wine installer started for: %1").arg(taskPtr->game.title));
 
                               connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
                                       [this, gameId, installPath, proc](int exitCode, QProcess::ExitStatus status) mutable {
