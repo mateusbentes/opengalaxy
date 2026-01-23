@@ -29,14 +29,14 @@ void Session::loginWithPassword(const QString& username, const QString& password
         const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
 
         QJsonObject body;
-        body["login"] = username;
-        body["password"] = password;
         body["client_id"] = CLIENT_ID;
         body["client_secret"] = CLIENT_SECRET;
         body["grant_type"] = "password";
+        body["username"] = username;
+        body["password"] = password;
 
         net::HttpClient* client = new net::HttpClient(this);
-        client->post("https://auth.gog.com/token", QJsonDocument(body).toJson(),
+        client->postJson("https://auth.gog.com/token", body,
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
                          if (!result.isOk()) {
                              // Network-level error (connection failed, timeout, etc.)
@@ -132,14 +132,14 @@ void Session::refreshToken(AuthCallback callback) {
         const QString CLIENT_SECRET = qEnvironmentVariable("GOG_CLIENT_SECRET", "9d85bc8330b3df6d97c98e309705a47ddbd299ca");
         
         QJsonObject body;
-        body["refresh_token"] = tokens_.refreshToken;
         body["client_id"] = CLIENT_ID;
         body["client_secret"] = CLIENT_SECRET;
         body["grant_type"] = "refresh_token";
+        body["refresh_token"] = tokens_.refreshToken;
 
         net::HttpClient* client = new net::HttpClient(this);
         connect(client, &net::HttpClient::destroyed, this, &QObject::deleteLater);
-        client->post("https://auth.gog.com/token", QJsonDocument(body).toJson(), 
+        client->postJson("https://auth.gog.com/token", body, 
                      [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
             if (result) {
                 auto json = QJsonDocument::fromJson(result.value().body).object();
