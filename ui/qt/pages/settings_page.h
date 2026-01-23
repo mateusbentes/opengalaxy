@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QComboBox>
+#include "opengalaxy/api/session.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -15,15 +16,22 @@ class SettingsPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit SettingsPage(opengalaxy::ui::TranslationManager* translationManager, QWidget *parent = nullptr);
+    explicit SettingsPage(opengalaxy::ui::TranslationManager* translationManager, 
+                         opengalaxy::api::Session* session,
+                         QWidget *parent = nullptr);
+
+signals:
+    void logoutRequested();
 
 private slots:
     void onLanguageChanged(int index);
     void onInstallationFoldersClicked();
     void onLauncherOptionsClicked();
+    void onLogoutClicked();
 
 private:
     opengalaxy::ui::TranslationManager* translationManager_ = nullptr;
+    opengalaxy::api::Session* session_ = nullptr;
     QComboBox* languageCombo_ = nullptr;
 };
 

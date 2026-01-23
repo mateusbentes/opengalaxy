@@ -14,9 +14,12 @@
 #include <QDir>
 #include "i18n/translation_manager.h"
 
-SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager, QWidget *parent)
+SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager,
+                           opengalaxy::api::Session* session,
+                           QWidget *parent)
     : QWidget(parent)
     , translationManager_(translationManager)
+    , session_(session)
 {
     setStyleSheet(
         R"(
@@ -149,6 +152,39 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     contentLayout->addWidget(gameSubtitle);
     contentLayout->addWidget(installsBtn);
     contentLayout->addWidget(launcherBtn);
+
+    // Account section
+    QLabel *accountTitle = new QLabel(tr("Account"), content);
+    accountTitle->setObjectName("sectionTitle");
+    QLabel *accountSubtitle = new QLabel(tr("Manage your GOG account"), content);
+    accountSubtitle->setObjectName("sectionSubtitle");
+    
+    QPushButton *logoutBtn = new QPushButton(tr("Logout"), content);
+    logoutBtn->setStyleSheet(R"(
+        QPushButton {
+            background: #e74c3c;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 25px;
+            color: white;
+            font-size: 15px;
+            min-width: 200px;
+            margin: 5px 60px;
+            font-weight: 600;
+        }
+        QPushButton:hover {
+            background: #c0392b;
+        }
+        QPushButton:pressed {
+            background: #a93226;
+        }
+    )");
+    
+    connect(logoutBtn, &QPushButton::clicked, this, &SettingsPage::onLogoutClicked);
+    
+    contentLayout->addWidget(accountTitle);
+    contentLayout->addWidget(accountSubtitle);
+    contentLayout->addWidget(logoutBtn);
 
     contentLayout->addStretch();
 
@@ -354,4 +390,21 @@ void SettingsPage::onLauncherOptionsClicked()
     layout->addWidget(dialogButtons);
     
     dialog.exec();
+}
+
+void SettingsPage::onLogoutClicked()
+{
+    QMessageBox::StandardButton reply = QMessageBox::question(
+        this,
+        tr("Logout"),
+        tr("Are you sure you want to logout?\n\nYou will need to login again next time."),
+        QMessageBox::Yes | QMessageBox::No
+    );
+    
+    if (reply == QMessageBox::Yes) {
+        if (session_) {
+            session_->logout();
+        }
+        emit logoutRequested();
+    }
 }

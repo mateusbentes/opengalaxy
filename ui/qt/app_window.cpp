@@ -59,7 +59,7 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     libraryPage = new LibraryPage(session_, this);
     storePage = new StorePage(this);
     friendsPage = new FriendsPage(session_, this);
-    settingsPage = new SettingsPage(translationManager_, this);
+    settingsPage = new SettingsPage(translationManager_, session_, this);
 
     stackedWidget->addWidget(loginPage);
     stackedWidget->addWidget(libraryPage);
@@ -72,6 +72,7 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     connect(session_, &api::Session::authenticationFailed, this, [this](const QString& err) {
         QMessageBox::warning(this, tr("Login failed"), err);
     });
+    connect(settingsPage, &SettingsPage::logoutRequested, this, &AppWindow::onLogout);
 
     // Check if user is already logged in from saved session
     if (session_->isAuthenticated()) {
@@ -335,6 +336,16 @@ void AppWindow::onMaximizeClicked()
 void AppWindow::onCloseClicked()
 {
     close();
+}
+
+void AppWindow::onLogout()
+{
+    // Hide sidebar and show login page
+    sidebar->setVisible(false);
+    stackedWidget->setCurrentWidget(loginPage);
+    
+    // Clear library
+    libraryPage->refreshLibrary(false);
 }
 
 } // namespace ui
