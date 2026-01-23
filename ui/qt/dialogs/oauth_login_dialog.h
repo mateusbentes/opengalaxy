@@ -3,11 +3,8 @@
 
 #include <QDialog>
 #include <QString>
-
-#ifdef HAVE_WEBENGINE
-#include <QWebEngineView>
-#include <QWebEnginePage>
-#endif
+#include <QTcpServer>
+#include <QLabel>
 
 namespace opengalaxy {
 namespace ui {
@@ -28,24 +25,25 @@ signals:
     void authorizationReceived(const QString& code);
 
 private slots:
-    void onUrlChanged(const QUrl& url);
+    void onIncomingConnection();
+    void onReadyRead();
 
 private:
     void setupUi();
-    void autoFillCredentials();
+    void startOAuthFlow();
     QString extractCodeFromUrl(const QUrl& url);
 
-#ifdef HAVE_WEBENGINE
-    QWebEngineView* webView_ = nullptr;
-#endif
+    QTcpServer* localServer_ = nullptr;
+    QLabel* statusLabel_ = nullptr;
     QString authCode_;
     bool success_ = false;
     QString username_;
     QString password_;
+    int localPort_ = 0;
 
     // GOG OAuth parameters
     static constexpr const char* CLIENT_ID = "46899977096215655";
-    static constexpr const char* REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
+    static constexpr const char* REDIRECT_URI_BASE = "http://localhost";
 };
 
 } // namespace ui

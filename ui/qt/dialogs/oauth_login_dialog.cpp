@@ -5,12 +5,10 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include <QUrlQuery>
-
-#ifdef HAVE_WEBENGINE
-#include <QWebEngineProfile>
-#include <QWebEngineSettings>
-#include <QWebEngineCookieStore>
-#endif
+#include <QDesktopServices>
+#include <QTcpSocket>
+#include <QTimer>
+#include <QRegularExpression>
 
 namespace opengalaxy {
 namespace ui {
@@ -36,86 +34,196 @@ OAuthLoginDialog::~OAuthLoginDialog() = default;
 void OAuthLoginDialog::setupUi()
 {
     setWindowTitle(tr("GOG Login"));
-    setMinimumSize(800, 600);
-    resize(900, 700);
+    setMinimumSize(500, 300);
+    resize(600, 400);
 
     QVBoxLayout* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(40, 40, 40, 40);
+    layout->setSpacing(20);
 
-#ifdef HAVE_WEBENGINE
-    // Create web view
-    webView_ = new QWebEngineView(this);
-    
-    // Configure web engine settings
-    QWebEngineSettings* settings = webView_->settings();
-    settings->setAttribute(QWebEngineSettings::JavascriptEnabled, true);
-    settings->setAttribute(QWebEngineSettings::LocalStorageEnabled, true);
-    
-    // Clear cookies for fresh login
-    QWebEngineProfile::defaultProfile()->cookieStore()->deleteAllCookies();
-    
-    // Build OAuth URL
-    QString authUrl = QString("https://auth.gog.com/auth?client_id=%1&redirect_uri=%2&response_type=code&layout=client2")
-                          .arg(CLIENT_ID, REDIRECT_URI);
-    
-    // Load the login page
-    webView_->load(QUrl(authUrl));
-    
-    // Monitor URL changes to catch the redirect
-    connect(webView_, &QWebEngineView::urlChanged, this, &OAuthLoginDialog::onUrlChanged);
-    
-    // Auto-fill credentials when page loads (only if provided)
-    connect(webView_, &QWebEngineView::loadFinished, this, [this](bool ok) {
-        if (ok && !username_.isEmpty() && !password_.isEmpty()) {
-            autoFillCredentials();
+    // Title
+    QLabel* titleLabel = new QLabel(tr("Sign in with GOG"), this);
+    titleLabel->setStyleSheet(R"(
+        QLabel {
+            font-size: 24px;
+            font-weight: bold;
+            color: #3c3a37;
         }
-    });
-    
-    layout->addWidget(webView_);
-    
-    // Add info label
-    QString infoText = username_.isEmpty() 
-        ? tr("Please sign in with your GOG account")
-        : tr("Logging in to GOG...");
-    QLabel* infoLabel = new QLabel(infoText, this);
-    infoLabel->setStyleSheet("padding: 10px; background: #f0f0f0; color: #333;");
-    infoLabel->setAlignment(Qt::AlignCenter);
-    layout->insertWidget(0, infoLabel);
-    
-#else
-    // WebEngine not available - show error
-    QLabel* errorLabel = new QLabel(
-        tr("OAuth login requires Qt WebEngine which is not available.\n\n"
-           "Please install qt6-webengine package:\n"
-           "  sudo apt install qt6-webengine\n\n"
-           "Or use the command-line tool for authentication."),
+    )");
+    titleLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(titleLabel);
+
+    // Info text
+    QLabel* infoLabel = new QLabel(
+        tr("Your default web browser will open with GOG's login page.\n\n"
+           "After logging in, you'll be redirected back to OpenGalaxy automatically."),
         this
     );
-    errorLabel->setWordWrap(true);
-    errorLabel->setStyleSheet("padding: 20px; color: #d32f2f;");
-    layout->addWidget(errorLabel);
-    
-    QPushButton* closeBtn = new QPushButton(tr("Close"), this);
-    connect(closeBtn, &QPushButton::clicked, this, &QDialog::reject);
-    layout->addWidget(closeBtn);
-#endif
+    infoLabel->setWordWrap(true);
+    infoLabel->setStyleSheet(R"(
+        QLabel {
+            font-size: 14px;
+            color: #5a5855;
+            padding: 20px;
+            background: #f5f3f0;
+            border-radius: 8px;
+        }
+    )");
+    infoLabel->setAlignment(Qt::AlignCenter);
+    layout->addWidget(infoLabel);
+
+    // Status label
+    statusLabel_ = new QLabel(tr("Waiting for login..."), this);
+    statusLabel_->setStyleSheet(R"(
+        QLabel {
+            font-size: 12px;
+            color: #8a8884;
+            padding: 10px;
+        }
+    )");
+    statusLabel_->setAlignment(Qt::AlignCenter);
+    layout->addWidget(statusLabel_);
+
+    layout->addStretch();
+
+    // Cancel button
+    QPushButton* cancelBtn = new QPushButton(tr("Cancel"), this);
+    cancelBtn->setStyleSheet(R"(
+        QPushButton {
+            background: #e0e0e0;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 14px;
+            color: #3c3a37;
+        }
+        QPushButton:hover {
+            background: #d0d0d0;
+        }
+    )");
+    connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
+    layout->addWidget(cancelBtn, 0, Qt::AlignCenter);
+
+    // Start OAuth flow automatically
+    QTimer::singleShot(500, this, &OAuthLoginDialog::startOAuthFlow);
 }
 
-void OAuthLoginDialog::onUrlChanged(const QUrl& url)
+void OAuthLoginDialog::startOAuthFlow()
 {
-    // Check if we've been redirected to the success URL
-    if (url.toString().startsWith(REDIRECT_URI)) {
+    // Start local server to receive OAuth callback
+    localServer_ = new QTcpServer(this);
+    
+    // Try to listen on a random port
+    if (!localServer_->listen(QHostAddress::LocalHost, 0)) {
+        QMessageBox::critical(this, tr("Error"), 
+            tr("Failed to start local server for OAuth callback.\n\n%1")
+            .arg(localServer_->errorString()));
+        reject();
+        return;
+    }
+    
+    localPort_ = localServer_->serverPort();
+    connect(localServer_, &QTcpServer::newConnection, this, &OAuthLoginDialog::onIncomingConnection);
+    
+    // Build OAuth URL with local redirect
+    QString redirectUri = QString("%1:%2").arg(REDIRECT_URI_BASE).arg(localPort_);
+    QString authUrl = QString("https://auth.gog.com/auth?client_id=%1&redirect_uri=%2&response_type=code&layout=client2")
+                          .arg(CLIENT_ID, QUrl::toPercentEncoding(redirectUri));
+    
+    // Open in default browser
+    if (!QDesktopServices::openUrl(QUrl(authUrl))) {
+        QMessageBox::critical(this, tr("Error"), 
+            tr("Failed to open web browser.\n\nPlease open this URL manually:\n%1").arg(authUrl));
+        reject();
+        return;
+    }
+    
+    statusLabel_->setText(tr("Browser opened. Please sign in with GOG..."));
+}
+
+void OAuthLoginDialog::onIncomingConnection()
+{
+    QTcpSocket* socket = localServer_->nextPendingConnection();
+    connect(socket, &QTcpSocket::readyRead, this, &OAuthLoginDialog::onReadyRead);
+    connect(socket, &QTcpSocket::disconnected, socket, &QTcpSocket::deleteLater);
+}
+
+void OAuthLoginDialog::onReadyRead()
+{
+    QTcpSocket* socket = qobject_cast<QTcpSocket*>(sender());
+    if (!socket) return;
+    
+    QString request = QString::fromUtf8(socket->readAll());
+    
+    // Extract the URL from the HTTP request
+    QRegularExpression re("GET\\s+([^\\s]+)");
+    QRegularExpressionMatch match = re.match(request);
+    
+    if (match.hasMatch()) {
+        QString path = match.captured(1);
+        QUrl url("http://localhost" + path);
+        
         authCode_ = extractCodeFromUrl(url);
         
+        // Send response to browser
+        QString response;
         if (!authCode_.isEmpty()) {
+            response = R"(HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Successful</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f3f0; }
+        .success { color: #4caf50; font-size: 24px; margin-bottom: 20px; }
+        .message { color: #5a5855; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="success">✓ Login Successful!</div>
+    <div class="message">You can close this window and return to OpenGalaxy.</div>
+    <script>setTimeout(function(){ window.close(); }, 2000);</script>
+</body>
+</html>)";
             success_ = true;
-            emit authorizationReceived(authCode_);
-            accept();
+            statusLabel_->setText(tr("Login successful! Closing..."));
         } else {
-            QMessageBox::warning(this, tr("Login Error"), 
-                               tr("Failed to extract authorization code from redirect URL."));
-            reject();
+            response = R"(HTTP/1.1 400 Bad Request
+Content-Type: text/html; charset=utf-8
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Failed</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f5f3f0; }
+        .error { color: #f44336; font-size: 24px; margin-bottom: 20px; }
+        .message { color: #5a5855; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="error">✗ Login Failed</div>
+    <div class="message">No authorization code received. Please try again.</div>
+</body>
+</html>)";
+            statusLabel_->setText(tr("Login failed. Please try again."));
         }
+        
+        socket->write(response.toUtf8());
+        socket->flush();
+        socket->disconnectFromHost();
+        
+        // Close dialog after a short delay
+        QTimer::singleShot(1000, this, [this]() {
+            if (success_) {
+                emit authorizationReceived(authCode_);
+                accept();
+            } else {
+                reject();
+            }
+        });
     }
 }
 
@@ -123,64 +231,6 @@ QString OAuthLoginDialog::extractCodeFromUrl(const QUrl& url)
 {
     QUrlQuery query(url);
     return query.queryItemValue("code");
-}
-
-void OAuthLoginDialog::autoFillCredentials()
-{
-#ifdef HAVE_WEBENGINE
-    // JavaScript to auto-fill the login form
-    QString js = QString(R"(
-        (function() {
-            // Wait for form to be ready
-            var checkForm = setInterval(function() {
-                var usernameField = document.getElementById('login_username') || 
-                                  document.querySelector('input[name="login[username]"]') ||
-                                  document.querySelector('input[type="email"]');
-                var passwordField = document.getElementById('login_password') || 
-                                  document.querySelector('input[name="login[password]"]') ||
-                                  document.querySelector('input[type="password"]');
-                var submitButton = document.getElementById('login_submit') ||
-                                 document.querySelector('button[type="submit"]') ||
-                                 document.querySelector('input[type="submit"]');
-                
-                if (usernameField && passwordField) {
-                    clearInterval(checkForm);
-                    
-                    // Fill in credentials
-                    usernameField.value = '%1';
-                    passwordField.value = '%2';
-                    
-                    // Trigger input events (some forms need this)
-                    usernameField.dispatchEvent(new Event('input', { bubbles: true }));
-                    passwordField.dispatchEvent(new Event('input', { bubbles: true }));
-                    usernameField.dispatchEvent(new Event('change', { bubbles: true }));
-                    passwordField.dispatchEvent(new Event('change', { bubbles: true }));
-                    
-                    // Auto-submit after a short delay
-                    setTimeout(function() {
-                        if (submitButton) {
-                            submitButton.click();
-                        } else {
-                            // Try form submit
-                            var form = usernameField.closest('form');
-                            if (form) {
-                                form.submit();
-                            }
-                        }
-                    }, 500);
-                }
-            }, 100);
-            
-            // Stop checking after 10 seconds
-            setTimeout(function() {
-                clearInterval(checkForm);
-            }, 10000);
-        })();
-    )").arg(username_.replace("'", "\\'"), 
-            password_.replace("'", "\\'"));
-    
-    webView_->page()->runJavaScript(js);
-#endif
 }
 
 } // namespace ui
