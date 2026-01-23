@@ -9,7 +9,7 @@
 
 OpenGalaxy is a feature-rich game launcher and library manager for GOG games, built with Qt6 and C++20. It provides a user-friendly interface for managing your GOG library, installing games, and launching them with the appropriate runners (Wine, Proton, DOSBox, ISA translators).
 
-**✅ Status**: Production-ready, bug-free, fully tested (see [BUGS_FIXED_STATUS.md](BUGS_FIXED_STATUS.md))
+**✅ Status**: Production-ready, fully tested and documented
 
 ## ✨ Features
 
@@ -39,9 +39,25 @@ OpenGalaxy is a feature-rich game launcher and library manager for GOG games, bu
 - 🧪 **Unit Tests**: Full test coverage
 - 🔒 **Secure Storage**: Encrypted token storage
 
+## 📚 Documentation
+
+- **[Installation Guide](docs/INSTALL.md)** - Install pre-built binaries
+- **[Quick Start](docs/QUICKSTART.md)** - Get started in 5 minutes
+- **[Build Instructions](docs/BUILD.md)** - Build from source
+- **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Compatibility Guide](docs/COMPATIBILITY_GUIDE.md)** - Wine, Proton, ISA translation
+- **[Architecture](docs/ARCHITECTURE.md)** - System design overview
+- **[Full Documentation Index](docs/)** - Complete documentation
+
 ## 🚀 Quick Start
 
-### Prerequisites
+### Installation
+
+See [docs/INSTALL.md](docs/INSTALL.md) for detailed installation instructions.
+
+### Building from Source
+
+#### Prerequisites
 
 **Linux:**
 ```bash
@@ -183,6 +199,10 @@ Configuration is stored in:
 - Theme selection
 - Language override
 - Cloud save settings
+
+## 🐛 Troubleshooting
+
+Having issues? Check the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) for common problems and solutions.
 
 ## 🤝 Contributing
 
