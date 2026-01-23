@@ -17,7 +17,7 @@ class OAuthLoginDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit OAuthLoginDialog(QWidget* parent = nullptr);
+    explicit OAuthLoginDialog(const QString& username, const QString& password, QWidget* parent = nullptr);
     ~OAuthLoginDialog() override;
 
     QString authorizationCode() const { return authCode_; }
@@ -31,6 +31,7 @@ private slots:
 
 private:
     void setupUi();
+    void autoFillCredentials();
     QString extractCodeFromUrl(const QUrl& url);
 
 #ifdef HAVE_WEBENGINE
@@ -38,6 +39,8 @@ private:
 #endif
     QString authCode_;
     bool success_ = false;
+    QString username_;
+    QString password_;
 
     // GOG OAuth parameters
     static constexpr const char* CLIENT_ID = "46899977096215655";

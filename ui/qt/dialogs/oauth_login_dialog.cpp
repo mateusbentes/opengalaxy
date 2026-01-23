@@ -14,8 +14,10 @@
 namespace opengalaxy {
 namespace ui {
 
-OAuthLoginDialog::OAuthLoginDialog(QWidget* parent)
+OAuthLoginDialog::OAuthLoginDialog(const QString& username, const QString& password, QWidget* parent)
     : QDialog(parent)
+    , username_(username)
+    , password_(password)
 {
     setupUi();
 }
@@ -53,10 +55,17 @@ void OAuthLoginDialog::setupUi()
     // Monitor URL changes to catch the redirect
     connect(webView_, &QWebEngineView::urlChanged, this, &OAuthLoginDialog::onUrlChanged);
     
+    // Auto-fill credentials when page loads
+    connect(webView_, &QWebEngineView::loadFinished, this, [this](bool ok) {
+        if (ok) {
+            autoFillCredentials();
+        }
+    });
+    
     layout->addWidget(webView_);
     
     // Add info label
-    QLabel* infoLabel = new QLabel(tr("Please log in with your GOG account"), this);
+    QLabel* infoLabel = new QLabel(tr("Logging in to GOG..."), this);
     infoLabel->setStyleSheet("padding: 10px; background: #f0f0f0; color: #333;");
     infoLabel->setAlignment(Qt::AlignCenter);
     layout->insertWidget(0, infoLabel);
@@ -102,6 +111,64 @@ QString OAuthLoginDialog::extractCodeFromUrl(const QUrl& url)
 {
     QUrlQuery query(url);
     return query.queryItemValue("code");
+}
+
+void OAuthLoginDialog::autoFillCredentials()
+{
+#ifdef HAVE_WEBENGINE
+    // JavaScript to auto-fill the login form
+    QString js = QString(R"(
+        (function() {
+            // Wait for form to be ready
+            var checkForm = setInterval(function() {
+                var usernameField = document.getElementById('login_username') || 
+                                  document.querySelector('input[name="login[username]"]') ||
+                                  document.querySelector('input[type="email"]');
+                var passwordField = document.getElementById('login_password') || 
+                                  document.querySelector('input[name="login[password]"]') ||
+                                  document.querySelector('input[type="password"]');
+                var submitButton = document.getElementById('login_submit') ||
+                                 document.querySelector('button[type="submit"]') ||
+                                 document.querySelector('input[type="submit"]');
+                
+                if (usernameField && passwordField) {
+                    clearInterval(checkForm);
+                    
+                    // Fill in credentials
+                    usernameField.value = '%1';
+                    passwordField.value = '%2';
+                    
+                    // Trigger input events (some forms need this)
+                    usernameField.dispatchEvent(new Event('input', { bubbles: true }));
+                    passwordField.dispatchEvent(new Event('input', { bubbles: true }));
+                    usernameField.dispatchEvent(new Event('change', { bubbles: true }));
+                    passwordField.dispatchEvent(new Event('change', { bubbles: true }));
+                    
+                    // Auto-submit after a short delay
+                    setTimeout(function() {
+                        if (submitButton) {
+                            submitButton.click();
+                        } else {
+                            // Try form submit
+                            var form = usernameField.closest('form');
+                            if (form) {
+                                form.submit();
+                            }
+                        }
+                    }, 500);
+                }
+            }, 100);
+            
+            // Stop checking after 10 seconds
+            setTimeout(function() {
+                clearInterval(checkForm);
+            }, 10000);
+        })();
+    )").arg(username_.replace("'", "\\'"), 
+            password_.replace("'", "\\'"));
+    
+    webView_->page()->runJavaScript(js);
+#endif
 }
 
 } // namespace ui

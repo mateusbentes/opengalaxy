@@ -70,7 +70,7 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     stackedWidget->setCurrentWidget(loginPage);
     sidebar->setVisible(false);
 
-    connect(loginPage, &LoginPage::oauthLoginRequested, this, &AppWindow::startOAuthLogin);
+    connect(loginPage, &LoginPage::loginRequested, this, &AppWindow::startOAuthLogin);
     connect(session_, &api::Session::authenticated, this, &AppWindow::onLoginSuccess);
     connect(session_, &api::Session::authenticationFailed, this, [this](const QString& err) {
         QMessageBox::warning(this, tr("Login failed"), err);
@@ -213,11 +213,11 @@ void AppWindow::onLoginSuccess()
     stackedWidget->setCurrentWidget(libraryPage);
 }
 
-void AppWindow::startOAuthLogin()
+void AppWindow::startOAuthLogin(const QString& username, const QString& password)
 {
 #ifdef HAVE_WEBENGINE
-    // Show OAuth login dialog
-    auto* dialog = new OAuthLoginDialog(this);
+    // Show OAuth login dialog with auto-fill
+    auto* dialog = new OAuthLoginDialog(username, password, this);
     connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
         // Exchange authorization code for tokens
         session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {
