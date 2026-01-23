@@ -81,20 +81,26 @@ GameCard::GameCard(const QString& gameId,
     )");
     actionButton_->hide();
 
-    // Progress
+    // Progress bar with animated gradient effect
     progressBar_ = new QProgressBar(coverContainer);
-    progressBar_->setFixedSize(240, 12);
+    progressBar_->setFixedSize(240, 14);
     progressBar_->setRange(0, 100);
     progressBar_->setValue(0);
-    progressBar_->setTextVisible(false);
+    progressBar_->setTextVisible(true);
+    progressBar_->setFormat("%p%");
     progressBar_->setStyleSheet(R"(
         QProgressBar {
-            background: rgba(0,0,0,0.35);
-            border: none;
-            border-radius: 5px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid rgba(124, 77, 255, 0.3);
+            border-radius: 7px;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            text-align: center;
         }
         QProgressBar::chunk {
-            background: #00e676;
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #00e676, stop:0.5 #00c853, stop:1 #00e676);
             border-radius: 5px;
         }
     )");
@@ -187,8 +193,22 @@ void GameCard::setInstalling(bool installing)
 
 void GameCard::setInstallProgress(int percent)
 {
-    installProgress_ = std::clamp(percent, 0, 100);
-    progressBar_->setValue(installProgress_);
+    int newProgress = std::clamp(percent, 0, 100);
+    
+    // Animate progress bar smoothly
+    if (!progressAnimation) {
+        progressAnimation = new QPropertyAnimation(progressBar_, "value", this);
+        progressAnimation->setDuration(300); // 300ms smooth transition
+        progressAnimation->setEasingCurve(QEasingCurve::OutCubic);
+    }
+    
+    progressAnimation->stop();
+    progressAnimation->setStartValue(progressBar_->value());
+    progressAnimation->setEndValue(newProgress);
+    progressAnimation->start();
+    
+    installProgress_ = newProgress;
+    
     if (installing_) {
         progressBar_->show();
     }

@@ -65,6 +65,7 @@ private:
     QGraphicsDropShadowEffect* shadowEffect = nullptr;
     QPropertyAnimation* hoverAnimation = nullptr;
     QPropertyAnimation* shadowAnimation = nullptr;
+    QPropertyAnimation* progressAnimation = nullptr;
 };
 
 } // namespace ui

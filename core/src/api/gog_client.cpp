@@ -139,14 +139,37 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
         const QJsonObject downloads = obj.value("downloads").toObject();
         const QJsonArray installers = downloads.value("installers").toArray();
 
+        qDebug() << "Fetching downloads for game:" << gameId;
+        qDebug() << "Found" << installers.size() << "installers";
+
         for (const auto& v : installers) {
             const QJsonObject inst = v.toObject();
             GameInfo::DownloadLink link;
             link.platform = inst.value("os").toString();
             link.language = inst.value("language").toString();
             link.version = inst.value("version").toString();
-            link.url = inst.value("link").toString();
-            game.downloads.push_back(link);
+            
+            // The "link" field is actually a URL to get the real download link
+            QString linkUrl = inst.value("link").toString();
+            if (linkUrl.isEmpty()) {
+                // Try "manualUrl" as fallback
+                linkUrl = inst.value("manualUrl").toString();
+            }
+            
+            link.url = linkUrl;
+            
+            qDebug() << "  Installer:" << link.platform << link.language << link.version;
+            qDebug() << "  Link:" << link.url;
+            
+            if (!link.url.isEmpty()) {
+                game.downloads.push_back(link);
+            }
+        }
+
+        if (game.downloads.empty()) {
+            qDebug() << "WARNING: No valid downloads found for game" << gameId;
+            callback(util::Result<GameInfo>::error("No downloads available for this game. The game may not have installers yet."));
+            return;
         }
 
         callback(util::Result<GameInfo>::success(game));
