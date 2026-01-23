@@ -384,9 +384,17 @@ void GameCard::loadCoverImage(const QString& url)
         if (reply->error() != QNetworkReply::NoError) {
             // Silently ignore connection errors for cover images
             // They're not critical and will just show the placeholder
+            // Common errors that are safe to ignore:
+            // - ProtocolUnknownError: Invalid URL
+            // - RemoteHostClosedError: Server closed connection
+            // - OperationCanceledError: Request was cancelled
+            // - ContentNotFoundError: 404 errors
+            // - UnknownContentError: Server replied with error
             if (reply->error() != QNetworkReply::ProtocolUnknownError &&
                 reply->error() != QNetworkReply::RemoteHostClosedError &&
-                reply->error() != QNetworkReply::OperationCanceledError) {
+                reply->error() != QNetworkReply::OperationCanceledError &&
+                reply->error() != QNetworkReply::ContentNotFoundError &&
+                reply->error() != QNetworkReply::UnknownContentError) {
                 qDebug() << "Failed to load cover image for" << gameId_ << ":" << reply->errorString();
             }
             return;

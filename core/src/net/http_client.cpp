@@ -15,6 +15,10 @@ HttpClient::HttpClient(QObject* parent)
 {
     // Set default User-Agent
     setDefaultHeader("User-Agent", "OpenGalaxy/1.0");
+    
+    // Enable connection keep-alive to prevent "Connection closed" errors
+    setDefaultHeader("Connection", "keep-alive");
+    setDefaultHeader("Accept", "*/*");
 }
 
 HttpClient::~HttpClient() = default;
@@ -162,6 +166,8 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
         // Retry on transient errors
         bool shouldRetry = (reply->error() == QNetworkReply::TimeoutError ||
                            reply->error() == QNetworkReply::TemporaryNetworkFailureError ||
+                           reply->error() == QNetworkReply::RemoteHostClosedError ||  // Connection closed
+                           reply->error() == QNetworkReply::ConnectionRefusedError ||
                            response.statusCode == 429 ||  // Rate limit
                            response.statusCode == 503);   // Service unavailable
 
