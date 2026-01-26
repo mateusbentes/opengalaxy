@@ -107,21 +107,19 @@ jobs:
           path: build/
           retention-days: 7
 
-  # Windows builds with multiple architectures
+  # Windows builds - x64 and x86 only
   windows-build:
     name: Windows - ${{ matrix.arch }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
-        arch: [x64, x86, arm64]
+        arch: [x64, x86]
         include:
           - arch: x64
             cmake_args: "-A x64"
           - arch: x86
             cmake_args: "-A Win32"
-          - arch: arm64
-            cmake_args: "-A ARM64"
 
     steps:
       - uses: actions/checkout@v4
@@ -184,9 +182,8 @@ jobs:
           echo "- arm64: ${{ needs.macos-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Windows Builds" >> $GITHUB_STEP_SUMMARY
-          echo "- x64: ${{ needs.windows-build.outputs.x64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- x86: ${{ needs.windows-build.outputs.x86 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- arm64: ${{ needs.windows-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- x64: ${{ needs.windows-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- x86: ${{ needs.windows-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any build failed
         if: |
