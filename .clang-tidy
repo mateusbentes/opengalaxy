@@ -17,13 +17,17 @@ Checks: >
   -cppcoreguidelines-pro-type-reinterpret-cast,
   -cppcoreguidelines-pro-type-cstyle-cast,
   -cppcoreguidelines-avoid-magic-numbers,
+  -cppcoreguidelines-pro-type-member-init,
   -readability-magic-numbers,
   -readability-function-cognitive-complexity,
   -readability-identifier-length,
   -bugprone-easily-swappable-parameters,
   -misc-non-private-member-variables-in-classes,
   -modernize-use-trailing-return-type,
-  -performance-unnecessary-value-param
+  -modernize-use-auto,
+  -modernize-avoid-bind,
+  -performance-unnecessary-value-param,
+  -performance-no-automatic-move
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 AnalyzeTemporaryDtors: false
