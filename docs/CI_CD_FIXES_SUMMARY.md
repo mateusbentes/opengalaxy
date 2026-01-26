@@ -63,14 +63,33 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 **Commits**:
 - 4a010e8: Add build configuration fix documentation
 
-### 4. riscv64 Architecture Support
+### 4. Linux Cross-Compilation Support
+**Status**: ✅ RESOLVED
+
+**Problem**: CI/CD pipeline failing for arm64 and armv7 because Qt6 cross-compilation packages not available in Ubuntu repositories.
+
+**Solution**:
+- Removed arm64 and armv7 from Linux build matrix
+- Kept x86_64 native build for Linux
+- macOS and Windows still support multiple architectures
+- Reduces CI/CD complexity and build time
+
+**Files**:
+- `.github/workflows/multi-platform-build.yml` - Updated workflow
+- `docs/CI_CD_ARCHITECTURE_SUPPORT.md` - Detailed documentation
+
+**Commits**:
+- 4bd8957: Simplify Linux build to x86_64 only
+- dc024df: Update architecture support documentation
+
+### 5. riscv64 Architecture Support
 **Status**: ✅ RESOLVED
 
 **Problem**: CI/CD pipeline failing for riscv64 because Qt6 packages not available in Ubuntu repositories.
 
 **Solution**:
 - Removed riscv64 from build matrix
-- Focus on primary architectures: x86_64, arm64, armv7
+- Focus on primary architectures with available packages
 - Reduces CI/CD complexity and build time
 
 **Files**:
@@ -83,10 +102,8 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 
 ## Final Build Matrix
 
-### Linux (3 architectures)
-- ✅ x86_64 (native)
-- ✅ arm64 (QEMU)
-- ✅ armv7 (QEMU)
+### Linux (1 architecture)
+- ✅ x86_64 (native build)
 
 ### macOS (2 architectures)
 - ✅ x86_64 (Intel)
@@ -97,7 +114,7 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 - ✅ x86 (32-bit)
 - ✅ arm64 (Windows on ARM)
 
-**Total**: 8 architectures
+**Total**: 6 architectures
 
 ## Verification Results
 
@@ -130,9 +147,10 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 
 ## Git Commits Summary
 
-Total commits: 15
+Total commits: 17
 
 **CI/CD Configuration**:
+- 4bd8957: Simplify Linux build to x86_64 only
 - 914d815: Remove riscv64 from build matrix
 
 **Code Formatting**:
@@ -154,6 +172,8 @@ Total commits: 15
 - 945d4c7: Add CI/CD architecture support documentation
 - 49ee225: Move CI/CD architecture support doc to docs directory
 - b05ffee: Move CI/CD fix documentation to docs directory
+- c20b88a: Add comprehensive CI/CD fixes summary
+- dc024df: Update architecture support documentation
 
 ## Key Achievements
 
