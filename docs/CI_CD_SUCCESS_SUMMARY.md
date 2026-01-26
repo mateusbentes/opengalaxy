@@ -57,14 +57,17 @@ The OpenGalaxy CI/CD pipeline is now **fully operational and ready for productio
 
 ## Future Enhancements
 
-### Phase 2: Additional Linux Architectures
+### Phase 2: Linux arm64 (64-bit ARM)
 
 **Planned for future implementation**:
 
-1. **Linux armv7** (32-bit ARM)
-   - Common on older ARM devices
+1. **Linux arm64** (64-bit ARM)
+   - Modern ARM architecture
+   - Common on ARM servers and devices
    - Requires Qt6 cross-compilation packages
    - Status: To be added when packages available
+
+### Phase 3: Linux riscv64 (RISC-V 64-bit)
 
 2. **Linux riscv64** (RISC-V 64-bit)
    - Emerging architecture
@@ -150,7 +153,7 @@ Comprehensive documentation created:
 4. Re-enable Windows builds when solution found
 
 ### For Future Architecture Support
-1. Monitor Qt6 package availability for armv7 and riscv64
+1. Monitor Qt6 package availability for arm64 and riscv64
 2. Test cross-compilation setup locally
 3. Document cross-compilation process
 4. Add to CI/CD when ready
@@ -171,6 +174,6 @@ The pipeline is:
 
 **Status**: ✅ COMPLETE AND OPERATIONAL  
 **Date**: 2026-01-26  
-**Next Phase**: Add Linux armv7 and riscv64 support when Qt packages available
+**Next Phase**: Add Linux arm64 and riscv64 support when Qt packages available
 
 ## 🚀 Ready for Production!
