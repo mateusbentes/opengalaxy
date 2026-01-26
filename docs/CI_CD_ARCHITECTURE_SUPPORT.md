@@ -39,20 +39,29 @@ E: Unable to locate package libqt6widgets6:riscv64
 | **arm64** | ✅ Supported | Apple Silicon Macs (current standard) |
 | ~~x86_64~~ | ❌ Removed | Legacy Intel Macs (no longer supported) |
 
-### Windows Builds (3 architectures)
+### Windows Builds (2 architectures)
 
 | Architecture | Status | Notes |
 |---|---|---|
-| **x64** | ✅ Supported | 64-bit Windows |
-| **x86** | ✅ Supported | 32-bit Windows |
-| **arm64** | ✅ Supported | Windows on ARM |
+| **x64** | ✅ Supported | 64-bit Windows (primary) |
+| **x86** | ✅ Supported | 32-bit Windows (legacy support) |
+| ~~arm64~~ | ❌ Removed | Windows on ARM (not practical) |
 
 ## Total Build Matrix
 
 - **Linux**: 1 architecture (x86_64 only)
 - **macOS**: 1 architecture (arm64 only)
-- **Windows**: 3 architectures
-- **Total**: 5 architectures
+- **Windows**: 2 architectures (x64, x86)
+- **Total**: 4 architectures
+
+## Why Windows arm64 Was Removed
+
+### Windows on ARM
+- Windows on ARM is not practical for desktop applications
+- Very limited market adoption
+- Primarily used on mobile/embedded devices
+- Not a viable target for game launcher
+- Reduces CI/CD complexity
 
 ## Why macOS x86_64 Was Removed
 
