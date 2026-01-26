@@ -101,7 +101,28 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 - 6cba7aa: Remove macOS x86_64 build, keep arm64 only
 - ed29f32: Update architecture support for macOS arm64 only
 
-### 6. riscv64 Architecture Support
+### 6. Windows arm64 Support and Translation File Issue
+**Status**: ✅ RESOLVED
+
+**Problems**:
+1. Windows arm64 not practical for desktop applications
+2. Translation file reference in resources.qrc causing build failures
+
+**Solutions**:
+1. Removed arm64 from Windows build matrix
+2. Removed translation file reference from resources.qrc
+3. Translations disabled by default (Qt Linguist tools not available in CI)
+
+**Files**:
+- `.github/workflows/multi-platform-build.yml` - Updated workflow
+- `ui/qt/resources/resources.qrc` - Removed translation reference
+- `docs/CI_CD_ARCHITECTURE_SUPPORT.md` - Detailed documentation
+
+**Commits**:
+- 77fc8db: Remove Windows arm64 and fix translation file issue
+- a324cff: Update architecture support for Windows x64/x86 only
+
+### 7. riscv64 Architecture Support
 **Status**: ✅ RESOLVED
 
 **Problem**: CI/CD pipeline failing for riscv64 because Qt6 packages not available in Ubuntu repositories.
@@ -127,12 +148,11 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 ### macOS (1 architecture)
 - ✅ arm64 (Apple Silicon)
 
-### Windows (3 architectures)
-- ✅ x64 (64-bit)
-- ✅ x86 (32-bit)
-- ✅ arm64 (Windows on ARM)
+### Windows (2 architectures)
+- ✅ x64 (64-bit, primary)
+- ✅ x86 (32-bit, legacy support)
 
-**Total**: 5 architectures
+**Total**: 4 architectures
 
 ## Verification Results
 
@@ -165,9 +185,10 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 
 ## Git Commits Summary
 
-Total commits: 19
+Total commits: 21
 
 **CI/CD Configuration**:
+- 77fc8db: Remove Windows arm64 and fix translation file issue
 - 6cba7aa: Remove macOS x86_64 build, keep arm64 only
 - 4bd8957: Simplify Linux build to x86_64 only
 - 914d815: Remove riscv64 from build matrix
@@ -194,6 +215,7 @@ Total commits: 19
 - c20b88a: Add comprehensive CI/CD fixes summary
 - dc024df: Update architecture support documentation
 - ed29f32: Update architecture support for macOS arm64 only
+- a324cff: Update architecture support for Windows x64/x86 only
 
 ## Key Achievements
 
