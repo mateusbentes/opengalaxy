@@ -32,12 +32,12 @@ E: Unable to locate package libqt6widgets6:riscv64
 | ~~armv7~~ | ❌ Removed | Qt6 cross-compilation packages not available |
 | ~~riscv64~~ | ❌ Removed | Qt6 packages not available |
 
-### macOS Builds (2 architectures)
+### macOS Builds (1 architecture)
 
 | Architecture | Status | Notes |
 |---|---|---|
-| **x86_64** | ✅ Supported | Intel Macs |
-| **arm64** | ✅ Supported | Apple Silicon Macs |
+| **arm64** | ✅ Supported | Apple Silicon Macs (current standard) |
+| ~~x86_64~~ | ❌ Removed | Legacy Intel Macs (no longer supported) |
 
 ### Windows Builds (3 architectures)
 
@@ -50,9 +50,18 @@ E: Unable to locate package libqt6widgets6:riscv64
 ## Total Build Matrix
 
 - **Linux**: 1 architecture (x86_64 only)
-- **macOS**: 2 architectures
+- **macOS**: 1 architecture (arm64 only)
 - **Windows**: 3 architectures
-- **Total**: 6 architectures
+- **Total**: 5 architectures
+
+## Why macOS x86_64 Was Removed
+
+### Legacy Intel Macs
+- Apple has transitioned to Apple Silicon (arm64)
+- Intel Macs are no longer the standard
+- Modern Macs are arm64 only
+- Reduces CI/CD complexity and build time
+- Focuses on current macOS architecture
 
 ## Why Linux Cross-Compilation Was Removed
 
