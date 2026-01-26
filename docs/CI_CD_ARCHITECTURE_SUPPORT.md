@@ -23,13 +23,13 @@ E: Unable to locate package libqt6widgets6:riscv64
 
 ## Supported Architectures
 
-### Linux Builds (3 architectures)
+### Linux Builds (1 architecture)
 
 | Architecture | Status | Notes |
 |---|---|---|
 | **x86_64** | ✅ Supported | Primary architecture, native build |
-| **arm64** | ✅ Supported | Common on modern ARM servers and devices |
-| **armv7** | ✅ Supported | 32-bit ARM, common on older devices |
+| ~~arm64~~ | ❌ Removed | Qt6 cross-compilation packages not available |
+| ~~armv7~~ | ❌ Removed | Qt6 cross-compilation packages not available |
 | ~~riscv64~~ | ❌ Removed | Qt6 packages not available |
 
 ### macOS Builds (2 architectures)
@@ -49,10 +49,23 @@ E: Unable to locate package libqt6widgets6:riscv64
 
 ## Total Build Matrix
 
-- **Linux**: 3 architectures
+- **Linux**: 1 architecture (x86_64 only)
 - **macOS**: 2 architectures
 - **Windows**: 3 architectures
-- **Total**: 8 architectures
+- **Total**: 6 architectures
+
+## Why Linux Cross-Compilation Was Removed
+
+### arm64 and armv7 Cross-Compilation
+- Qt6 cross-compilation packages not available in Ubuntu repositories
+- Would require building Qt6 from source for each architecture
+- Not practical for CI/CD pipeline
+- Cross-compilation adds significant complexity
+
+### riscv64 Architecture
+- Qt6 packages not available in Ubuntu repositories
+- Emerging architecture with limited desktop application support
+- Not practical for CI/CD pipeline
 
 ## Why riscv64 Was Removed
 
