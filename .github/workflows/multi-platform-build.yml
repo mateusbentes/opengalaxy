@@ -68,7 +68,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew update
-          brew install cmake ninja qt6
+          brew install cmake ninja qt@6
 
       - name: Create build directory
         run: mkdir -p build
@@ -108,7 +108,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: '6.7.0'
+          version: '6.6.3'
           arch: x64
 
       - name: Create build directory
