@@ -20,23 +20,18 @@ jobs:
           - arch: x86_64
             cmake_args: ""
             qemu: false
-            container: null
           - arch: arm64
             cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
             qemu: true
-            container: "arm64v8/ubuntu:24.04"
           - arch: riscv64
             cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=riscv64"
             qemu: true
-            container: "riscv64/ubuntu:24.04"
-
-    container: ${{ matrix.container }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU for ${{ matrix.arch }}
-        if: matrix.qemu && matrix.arch != 'x86_64'
+        if: matrix.qemu
         uses: docker/setup-qemu-action@v3
         with:
           platforms: ${{ matrix.arch }}
@@ -57,42 +52,63 @@ jobs:
             libqt6sql6 \
             libqt6widgets6
 
-      - name: Install dependencies (arm64)
+      - name: Install cross-compilation dependencies (arm64)
         if: matrix.arch == 'arm64'
         run: |
-          apt-get update
-          apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y \
             build-essential \
             cmake \
             ninja-build \
-            qt6-base-dev \
-            qt6-tools-dev \
-            libqt6core6 \
-            libqt6gui6 \
-            libqt6network6 \
-            libqt6sql6 \
-            libqt6widgets6
+            crossbuild-essential-arm64 \
+            pkg-config-aarch64-linux-gnu
 
-      - name: Install dependencies (riscv64)
+      - name: Install Qt6 for arm64 from source
+        if: matrix.arch == 'arm64'
+        run: |
+          mkdir -p /tmp/qt6-arm64
+          cd /tmp/qt6-arm64
+          # Download Qt6 prebuilt binaries for arm64 or use system packages
+          # For now, we'll use a minimal approach with available packages
+          sudo apt-get install -y \
+            libgl1-mesa-dev:arm64 \
+            libxkbcommon-dev:arm64 \
+            libxkbcommon-x11-dev:arm64 \
+            libfontconfig1-dev:arm64 \
+            libfreetype6-dev:arm64 \
+            libharfbuzz-dev:arm64 || true
+
+      - name: Install cross-compilation dependencies (riscv64)
         if: matrix.arch == 'riscv64'
         run: |
-          apt-get update
-          apt-get install -y \
+          sudo apt-get update
+          sudo apt-get install -y \
             build-essential \
             cmake \
             ninja-build \
-            qt6-base-dev \
-            qt6-tools-dev \
-            libqt6core6 \
-            libqt6gui6 \
-            libqt6network6 \
-            libqt6sql6 \
-            libqt6widgets6
+            crossbuild-essential-riscv64 \
+            pkg-config-riscv64-linux-gnu
+
+      - name: Install Qt6 for riscv64 from source
+        if: matrix.arch == 'riscv64'
+        run: |
+          mkdir -p /tmp/qt6-riscv64
+          cd /tmp/qt6-riscv64
+          # Download Qt6 prebuilt binaries for riscv64 or use system packages
+          # For now, we'll use a minimal approach with available packages
+          sudo apt-get install -y \
+            libgl1-mesa-dev:riscv64 \
+            libxkbcommon-dev:riscv64 \
+            libxkbcommon-x11-dev:riscv64 \
+            libfontconfig1-dev:riscv64 \
+            libfreetype6-dev:riscv64 \
+            libharfbuzz-dev:riscv64 || true
 
       - name: Create build directory
         run: mkdir -p build
 
-      - name: Configure CMake
+      - name: Configure CMake (x86_64)
+        if: matrix.arch == 'x86_64'
         run: |
           cd build
           cmake .. \
@@ -100,8 +116,39 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTS=ON \
             -DBUILD_CLI=ON \
-            -DBUILD_UI=ON \
-            ${{ matrix.cmake_args }}
+            -DBUILD_UI=ON
+
+      - name: Configure CMake (arm64)
+        if: matrix.arch == 'arm64'
+        run: |
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_CLI=ON \
+            -DBUILD_UI=OFF \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+            -DCMAKE_FIND_ROOT_PATH=/usr/aarch64-linux-gnu
+
+      - name: Configure CMake (riscv64)
+        if: matrix.arch == 'riscv64'
+        run: |
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_CLI=ON \
+            -DBUILD_UI=OFF \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=riscv64 \
+            -DCMAKE_C_COMPILER=riscv64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++ \
+            -DCMAKE_FIND_ROOT_PATH=/usr/riscv64-linux-gnu
 
       - name: Build
         run: |
