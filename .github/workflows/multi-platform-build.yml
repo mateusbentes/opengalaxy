@@ -129,7 +129,6 @@ jobs:
         with:
           version: '6.7.0'
           arch: ${{ matrix.arch }}
-          modules: 'qtbase qttools'
 
       - name: Create build directory
         run: mkdir -p build
