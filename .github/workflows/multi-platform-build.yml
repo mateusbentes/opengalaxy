@@ -10,34 +10,13 @@ on:
 jobs:
   # Linux builds with multiple architectures
   linux-build:
-    name: Linux - ${{ matrix.arch }}
+    name: Linux - x86_64
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64, arm64, armv7]
-        include:
-          - arch: x86_64
-            cmake_args: ""
-            qemu: false
-          - arch: arm64
-            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
-            qemu: true
-          - arch: armv7
-            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=armv7l"
-            qemu: true
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU for ${{ matrix.arch }}
-        if: matrix.qemu
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: ${{ matrix.arch }}
-
-      - name: Install dependencies (x86_64)
-        if: matrix.arch == 'x86_64'
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -52,23 +31,6 @@ jobs:
             libqt6sql6 \
             libqt6widgets6
 
-      - name: Install dependencies (cross-compile)
-        if: matrix.arch != 'x86_64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            ninja-build \
-            crossbuild-essential-${{ matrix.arch }} \
-            qt6-base-dev:${{ matrix.arch }} \
-            qt6-tools-dev:${{ matrix.arch }} \
-            libqt6core6:${{ matrix.arch }} \
-            libqt6gui6:${{ matrix.arch }} \
-            libqt6network6:${{ matrix.arch }} \
-            libqt6sql6:${{ matrix.arch }} \
-            libqt6widgets6:${{ matrix.arch }}
-
       - name: Create build directory
         run: mkdir -p build
 
@@ -80,8 +42,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_TESTS=ON \
             -DBUILD_CLI=ON \
-            -DBUILD_UI=ON \
-            ${{ matrix.cmake_args }}
+            -DBUILD_UI=ON
 
       - name: Build
         run: |
@@ -89,7 +50,6 @@ jobs:
           ninja -j$(nproc)
 
       - name: Run tests
-        if: matrix.arch == 'x86_64'
         run: |
           cd build
           ctest --output-on-failure
@@ -98,7 +58,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ matrix.arch }}-build
+          name: linux-x86_64-build
           path: build/
           retention-days: 7
 
@@ -228,9 +188,7 @@ jobs:
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Linux Builds" >> $GITHUB_STEP_SUMMARY
-          echo "- x86_64: ${{ needs.linux-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- arm64: ${{ needs.linux-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- armv7: ${{ needs.linux-build.outputs.armv7 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- x86_64: ${{ needs.linux-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### macOS Builds" >> $GITHUB_STEP_SUMMARY
           echo "- x86_64: ${{ needs.macos-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
