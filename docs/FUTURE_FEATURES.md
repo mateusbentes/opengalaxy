@@ -112,15 +112,28 @@ The Game Information Dialog currently displays:
 
 #### 4. Cloud Saves Integration
 
-**What it would show**:
-- Cloud save status
-- Last sync date
-- Save file size
-- Sync conflicts (if any)
+**Current Status (2026-01-26)**: ⏳ UI Toggle Implemented, Sync Pending SDK
+
+**What's Implemented**:
+- ✅ Per-game "Enable Cloud Saves" toggle in Properties dialog
+- ✅ Toggle state persisted in database
+- ✅ UI ready for sync functionality
+
+**What's Pending**:
+- Cloud save status display
+- Last sync date and file sizes
+- Sync conflicts detection
 - Manual sync button
 - Sync history
 
-**UI Design**:
+**UI Design** (Current - Toggle Only):
+```
+Game Tweaks Section:
+☑ Enable Cloud Saves
+  (Tooltip: Sync saves to GOG Cloud - requires GOG SDK)
+```
+
+**UI Design** (Future - Full Implementation):
 ```
 ┌─ Cloud Saves ───────────────────────┐
 │                                     │
@@ -145,7 +158,7 @@ The Game Information Dialog currently displays:
 - Save file management
 - Conflict resolution system
 
-**Status**: ⏳ Waiting for GOG SDK
+**Status**: ⏳ Waiting for GOG SDK (UI toggle ready)
 
 ---
 

@@ -12,13 +12,14 @@ This document tracks features that are commonly found in similar game launchers 
 
 ### Game Tweaks Section (Implemented 2026-01-26)
 
-All 5 toggle switches have been implemented in the Properties dialog under "Game Tweaks" section:
+All 4 toggle switches have been implemented in the Properties dialog under "Game Tweaks" section:
 
 1. ✅ **Hide game from library** - Hides game from library view
 2. ✅ **Show FPS in game** - Sets DXVK_HUD=fps environment variable
 3. ✅ **Use MangoHud** - Sets MANGOHUD=1 environment variable
 4. ✅ **Use GameMode** - Sets GAMEMODE=1 environment variable
-5. ✅ **Enable Cloud Saves** - Per-game toggle (UI ready, SDK pending)
+
+**Note**: "Enable Cloud Saves" toggle is UI-ready but documented in FUTURE_FEATURES.md (pending GOG SDK)
 
 ### Additional Features (Implemented 2026-01-26)
 
