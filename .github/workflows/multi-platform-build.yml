@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64, arm64, armv7, riscv64]
+        arch: [x86_64, arm64, armv7]
         include:
           - arch: x86_64
             cmake_args: ""
@@ -25,9 +25,6 @@ jobs:
             qemu: true
           - arch: armv7
             cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=armv7l"
-            qemu: true
-          - arch: riscv64
-            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=riscv64"
             qemu: true
 
     steps:
@@ -234,7 +231,6 @@ jobs:
           echo "- x86_64: ${{ needs.linux-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "- arm64: ${{ needs.linux-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "- armv7: ${{ needs.linux-build.outputs.armv7 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- riscv64: ${{ needs.linux-build.outputs.riscv64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### macOS Builds" >> $GITHUB_STEP_SUMMARY
           echo "- x86_64: ${{ needs.macos-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
