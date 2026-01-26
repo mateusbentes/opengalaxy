@@ -55,6 +55,7 @@ jobs:
       - name: Install dependencies (arm64)
         if: matrix.arch == 'arm64'
         run: |
+          sudo dpkg --add-architecture arm64
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
@@ -67,11 +68,17 @@ jobs:
             libqt6gui6:arm64 \
             libqt6network6:arm64 \
             libqt6sql6:arm64 \
-            libqt6widgets6:arm64
+            libqt6widgets6:arm64 \
+            libqt6core6-dev:arm64 \
+            libqt6gui-dev:arm64 \
+            libqt6network-dev:arm64 \
+            libqt6sql-dev:arm64 \
+            libqt6widgets-dev:arm64
 
       - name: Install dependencies (riscv64)
         if: matrix.arch == 'riscv64'
         run: |
+          sudo dpkg --add-architecture riscv64
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
@@ -84,8 +91,12 @@ jobs:
             libqt6gui6:riscv64 \
             libqt6network6:riscv64 \
             libqt6sql6:riscv64 \
-            libqt6widgets6:riscv64
-
+            libqt6widgets6:riscv64 \
+            libqt6core6-dev:riscv64 \
+            libqt6gui-dev:riscv64 \
+            libqt6network-dev:riscv64 \
+            libqt6sql-dev:riscv64 \
+            libqt6widgets-dev:riscv64
       - name: Create build directory
         run: mkdir -p build
 

@@ -59,7 +59,7 @@ The OpenGalaxy CI/CD pipeline is now **fully operational and ready for productio
 
 ## Future Enhancements
 
-### Phase 4: Windows x64 (64-bit Windows)
+### Phase 1: Windows x64 (64-bit Windows)
 
 **Planned for future implementation**:
 

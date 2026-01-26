@@ -450,23 +450,7 @@ If you want to help implement these features:
 
 ## CI/CD Pipeline Roadmap
 
-### Phase 1 (✅ Complete)
-- ✅ Linux x86_64 builds
-- ✅ macOS arm64 builds
-- ✅ Code quality checks (formatting, static analysis)
-- ✅ Automated testing framework
-
-### Phase 2 (✅ Complete)
-- ✅ Linux arm64 (64-bit ARM) builds
-  - Qt6 cross-compilation packages available in Ubuntu 24.04
-  - Status: IMPLEMENTED
-
-### Phase 3 (✅ Complete)
-- ✅ Linux riscv64 (RISC-V 64-bit) builds
-  - Qt6 RISC-V support available in Ubuntu 24.04
-  - Status: IMPLEMENTED
-
-### Phase 4 (Planned)
+### Phase 1 (Planned)
 - [ ] Windows x64 builds (re-enable)
   - Requires Qt installation method resolution
   - Status: Investigating alternative approaches
