@@ -36,6 +36,7 @@ private slots:
     void launchWinetricks();
     void launchRegedit();
     void openInstallFolder();
+    void updateGame();
     void verifyGameFiles();
     void repairGame();
 

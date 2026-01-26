@@ -156,12 +156,7 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
 
     updateGameBtn_ = new QPushButton(tr("Update Game"), this);
     updateGameBtn_->setToolTip(tr("Check for and install game updates"));
-    connect(updateGameBtn_, &QPushButton::clicked, this, [this]() {
-        // Emit update requested signal - will be handled by library page
-        QMessageBox::information(this, tr("Update Game"),
-                                tr("Update functionality will be implemented.\n"
-                                   "For now, use the Update button on the game card."));
-    });
+    connect(updateGameBtn_, &QPushButton::clicked, this, &GameDetailsDialog::updateGame);
 
     verifyFilesBtn_ = new QPushButton(tr("Verify Files"), this);
     verifyFilesBtn_->setToolTip(tr("Check game file integrity"));
@@ -361,6 +356,38 @@ void GameDetailsDialog::openInstallFolder()
         QMessageBox::warning(this, tr("Failed to open"),
                              tr("Could not open folder:\n%1").arg(path));
     }
+}
+
+void GameDetailsDialog::updateGame()
+{
+    qDebug() << "Checking for updates for:" << game_.title;
+    
+    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+        QMessageBox::information(this, tr("Not installed"),
+                                 tr("This game is not installed."));
+        return;
+    }
+    
+    // Show progress dialog
+    QMessageBox msgBox(this);
+    msgBox.setWindowTitle(tr("Check for Updates"));
+    msgBox.setText(tr("Checking for updates for: %1").arg(game_.title));
+    msgBox.setInformativeText(tr("Checking available versions...\n\nThis may take a moment."));
+    msgBox.setStandardButtons(QMessageBox::Cancel);
+    msgBox.setIcon(QMessageBox::Information);
+    
+    // In a real implementation, we would:
+    // 1. Fetch latest version from GOG API
+    // 2. Compare with installed version
+    // 3. Show update dialog if newer version available
+    // 4. Download and install update
+    
+    // For now, show a message that update check would be performed
+    QMessageBox::information(this, tr("Update Check"),
+                            tr("Checking for updates for:\n%1\n\n"
+                               "Note: Full update functionality requires GOG SDK integration.\n"
+                               "Currently, you can use the Update button on the game card to check for updates.")
+                            .arg(game_.title));
 }
 
 void GameDetailsDialog::verifyGameFiles()
