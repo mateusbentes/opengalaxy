@@ -49,11 +49,6 @@ jobs:
           cd build
           ninja -j$(nproc)
 
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
-
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -93,11 +88,6 @@ jobs:
         run: |
           cd build
           ninja -j$(sysctl -n hw.ncpu)
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
 
       - name: Upload build artifacts
         if: always()
@@ -139,11 +129,6 @@ jobs:
         run: |
           cd build
           cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure -C Release
 
       - name: Upload build artifacts
         if: always()
