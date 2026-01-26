@@ -151,7 +151,6 @@ TypenameMacros:
   - STACK_OF
   - QUEUE_OF
   - LIST_OF
-UseClangTidy: false
 VerilogIndentHierarchicalBlock: true
 WhitespaceSensitiveMacros:
   - STRINGIZE
