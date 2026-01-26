@@ -158,18 +158,18 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
 
         // Check for network-level errors (not HTTP errors)
         bool hasNetworkError = (reply->error() != QNetworkReply::NoError &&
-                                reply->error() != QNetworkReply::ProtocolFailure &&
-                                reply->error() != QNetworkReply::ContentNotFoundError &&
-                                reply->error() != QNetworkReply::AuthenticationRequiredError &&
-                                reply->error() != QNetworkReply::ContentAccessDenied);
+            reply->error() != QNetworkReply::ProtocolFailure &&
+            reply->error() != QNetworkReply::ContentNotFoundError &&
+            reply->error() != QNetworkReply::AuthenticationRequiredError &&
+            reply->error() != QNetworkReply::ContentAccessDenied);
 
         // Retry on transient errors
         bool shouldRetry = (reply->error() == QNetworkReply::TimeoutError ||
-                           reply->error() == QNetworkReply::TemporaryNetworkFailureError ||
-                           reply->error() == QNetworkReply::RemoteHostClosedError ||  // Connection closed
-                           reply->error() == QNetworkReply::ConnectionRefusedError ||
-                           response.statusCode == 429 ||  // Rate limit
-                           response.statusCode == 503);   // Service unavailable
+            reply->error() == QNetworkReply::TemporaryNetworkFailureError ||
+            reply->error() == QNetworkReply::RemoteHostClosedError ||  // Connection closed
+            reply->error() == QNetworkReply::ConnectionRefusedError ||
+            response.statusCode == 429 ||  // Rate limit
+            response.statusCode == 503);   // Service unavailable
 
         if (shouldRetry && retryCount < req.maxRetries) {
             LOG_WARNING(QString("Request failed, retrying: %1").arg(req.url));
@@ -181,10 +181,12 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
             return;
         }
 
-        // For HTTP 4xx/5xx errors with response body, treat as success so caller can parse error
-        // This is important for APIs that return error details in JSON
+        // For HTTP 4xx/5xx errors with response body, treat as success so caller can
+        // parse error. This is important for APIs that return error details in JSON
         if (response.statusCode >= 400 && !response.body.isEmpty()) {
-            LOG_DEBUG(QString("HTTP %1 %2 -> %3 (with error body)").arg(req.method, req.url).arg(response.statusCode));
+            LOG_DEBUG(QString("HTTP %1 %2 -> %3 (with error body)")
+                          .arg(req.method, req.url)
+                          .arg(response.statusCode));
             callback(util::Result<Response>::success(response));
             emit requestFinished(req.url, response.statusCode);
             return;

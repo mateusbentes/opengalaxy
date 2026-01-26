@@ -39,7 +39,8 @@ struct LibraryAccumulator {
 void GOGClient::fetchLibrary(GamesCallback callback)
 {
     if (!session_->isAuthenticated()) {
-        callback(util::Result<std::vector<GameInfo>>::error("Not authenticated"));
+        callback(
+            util::Result<std::vector<GameInfo>>::error("Not authenticated"));
         return;
     }
 
@@ -81,7 +82,8 @@ void GOGClient::fetchLibrary(GamesCallback callback)
                     }
                     // Add size suffix if not already present
                     if (!imageUrl.contains(".jpg") && !imageUrl.contains(".png") &&
-                        !imageUrl.contains(".webp") && !imageUrl.contains(".gif")) {
+                        !imageUrl.contains(".webp") &&
+                        !imageUrl.contains(".gif")) {
                         g.coverUrl = imageUrl + "_196.jpg";
                     } else {
                         g.coverUrl = imageUrl;
@@ -117,9 +119,10 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
     }
 
     // Uses api.gog.com product details (MiniGalaxy-style) to get installer entries.
-    const QString url = QString("https://api.gog.com/products/%1?locale=%2&expand=downloads")
-                            .arg(QString(QUrl::toPercentEncoding(gameId)),
-                                 QString(QUrl::toPercentEncoding(locale_)));
+    const QString url =
+        QString("https://api.gog.com/products/%1?locale=%2&expand=downloads")
+            .arg(QString(QUrl::toPercentEncoding(gameId)),
+                 QString(QUrl::toPercentEncoding(locale_)));
 
     net::HttpClient::Request req;
     req.url = url;
@@ -132,7 +135,8 @@ void GOGClient::fetchGameDownloads(const QString& gameId, GameCallback callback)
             return;
         }
 
-        const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
+        const QJsonObject obj =
+            QJsonDocument::fromJson(result.value().body).object();
         GameInfo game;
         game.id = gameId;
         game.title = obj.value("title").toString();

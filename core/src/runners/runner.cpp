@@ -28,7 +28,7 @@ Architecture Runner::detectArchitecture(const QString& executablePath)
 
         // Machine type: header[18-19] (little-endian)
         unsigned short machine = (static_cast<unsigned char>(header[19]) << 8) |
-                                 static_cast<unsigned char>(header[18]);
+            static_cast<unsigned char>(header[18]);
 
         // Common machine types:
         // 0x03 = x86 (32-bit)
@@ -65,17 +65,17 @@ Architecture Runner::detectArchitecture(const QString& executablePath)
     // 0xFEEDFACF = 64-bit
     // 0xCAFEBABE = Universal binary
     unsigned int magic = (static_cast<unsigned char>(header[0]) << 24) |
-                         (static_cast<unsigned char>(header[1]) << 16) |
-                         (static_cast<unsigned char>(header[2]) << 8) |
-                         static_cast<unsigned char>(header[3]);
+        (static_cast<unsigned char>(header[1]) << 16) |
+        (static_cast<unsigned char>(header[2]) << 8) |
+        static_cast<unsigned char>(header[3]);
 
     if (magic == 0xFEEDFACF) {
         // 64-bit Mach-O, check CPU type
         // Bytes 4-7 contain CPU type
         unsigned int cpuType = (static_cast<unsigned char>(header[4]) << 24) |
-                               (static_cast<unsigned char>(header[5]) << 16) |
-                               (static_cast<unsigned char>(header[6]) << 8) |
-                               static_cast<unsigned char>(header[7]);
+            (static_cast<unsigned char>(header[5]) << 16) |
+            (static_cast<unsigned char>(header[6]) << 8) |
+            static_cast<unsigned char>(header[7]);
 
         if (cpuType == 0x01000007) { // CPU_TYPE_X86_64
             return Architecture::X86_64;
@@ -115,9 +115,9 @@ Platform Runner::detectPlatform(const QString& executablePath)
 
     // Mach-O magic
     unsigned int magic = (static_cast<unsigned char>(header[0]) << 24) |
-                         (static_cast<unsigned char>(header[1]) << 16) |
-                         (static_cast<unsigned char>(header[2]) << 8) |
-                         static_cast<unsigned char>(header[3]);
+        (static_cast<unsigned char>(header[1]) << 16) |
+        (static_cast<unsigned char>(header[2]) << 8) |
+        static_cast<unsigned char>(header[3]);
 
     if (magic == 0xFEEDFACE || magic == 0xFEEDFACF || magic == 0xCAFEBABE) {
         return Platform::MacOS;

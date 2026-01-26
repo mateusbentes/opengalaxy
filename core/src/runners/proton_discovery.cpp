@@ -35,7 +35,10 @@ std::vector<ProtonInstall> discoverProtonGE()
     scanCompatToolsDir(QDir::home().filePath(".local/share/Steam/compatibilitytools.d"), installs);
 
     // Flatpak Steam
-    scanCompatToolsDir(QDir::home().filePath(".var/app/com.valvesoftware.Steam/data/Steam/compatibilitytools.d"), installs);
+    scanCompatToolsDir(
+        QDir::home().filePath(
+            ".var/app/com.valvesoftware.Steam/data/Steam/compatibilitytools.d"),
+        installs);
 
     return installs;
 }

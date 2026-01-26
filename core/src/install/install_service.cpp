@@ -57,7 +57,8 @@ void InstallService::installGame(const api::GameInfo& game,
 
     if (isInstalling(game.id)) {
         if (completionCallback) {
-            completionCallback(util::Result<QString>::error("Game is already being installed"));
+            completionCallback(util::Result<QString>::error(
+                "Game is already being installed"));
         }
         return;
     }
@@ -126,7 +127,10 @@ void InstallService::installGame(const api::GameInfo& game,
         req.headers["Authorization"] = authHeader;
     }
 
-    http->request(req, [this, gameId = game.id, selected, http](util::Result<net::HttpClient::Response> result) mutable {
+    http->request(
+        req,
+        [this, gameId = game.id, selected, http](
+            util::Result<net::HttpClient::Response> result) mutable {
         // Check if task still exists (might have been cancelled)
         QMutexLocker locker(&tasksMutex_);
         auto it = activeTasks_.find(gameId);
@@ -167,7 +171,8 @@ void InstallService::installGame(const api::GameInfo& game,
         }
 
         // Step 2: Download installer to installDir
-        const QString installerPath = taskPtr->installDir + "/" + taskPtr->game.title + ".exe";
+        const QString installerPath =
+            taskPtr->installDir + "/" + taskPtr->game.title + ".exe";
 
         InstallProgress prog;
         prog.gameId = taskPtr->gameId;
@@ -187,9 +192,12 @@ void InstallService::installGame(const api::GameInfo& game,
                               locker.unlock();
 
                               if (!dlRes.isOk()) {
-                                  emit installFailed(taskPtr->gameId, dlRes.errorMessage());
+                                  emit installFailed(taskPtr->gameId,
+                                                    dlRes.errorMessage());
                                   if (taskPtr->completionCallback) {
-                                      taskPtr->completionCallback(util::Result<QString>::error(dlRes.errorMessage()));
+                                      taskPtr->completionCallback(
+                                          util::Result<QString>::error(
+                                              dlRes.errorMessage()));
                                   }
                                   QMutexLocker locker2(&tasksMutex_);
                                   activeTasks_.erase(taskPtr->gameId);
@@ -205,7 +213,8 @@ void InstallService::installGame(const api::GameInfo& game,
                               if (taskPtr->progressCallback) taskPtr->progressCallback(prog);
 
                               // Create an install folder and run installer.
-                              const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
+                              const QString installPath =
+                                  taskPtr->installDir + "/" + taskPtr->game.title;
                               QDir().mkpath(installPath);
 
                               // Find Wine/Proton executable (prefer Proton-GE > Proton > Wine-Staging > Wine)
@@ -222,7 +231,9 @@ void InstallService::installGame(const api::GameInfo& game,
                               for (const QString& pattern : protonGePaths) {
                                   QDir dir(QFileInfo(pattern).path());
                                   if (dir.exists()) {
-                                      QStringList entries = dir.entryList(QStringList() << "GE-Proton*", QDir::Dirs, QDir::Name | QDir::Reversed);
+                                      QStringList entries = dir.entryList(
+                                          QStringList() << "GE-Proton*", QDir::Dirs,
+                                          QDir::Name | QDir::Reversed);
                                       if (!entries.isEmpty()) {
                                           QString protonPath = dir.absolutePath() + "/" + entries.first() + "/proton";
                                           if (QFile::exists(protonPath)) {

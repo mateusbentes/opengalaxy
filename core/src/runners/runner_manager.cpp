@@ -178,8 +178,9 @@ void RunnerManager::discoverRunners()
         const QString arch = findExe({"arch"});
         if (!arch.isEmpty()) {
             LOG_INFO(QString("Found Rosetta2 (via arch): %1").arg(arch));
-            registerRunner(std::make_unique<WrapperRunner>("Rosetta2", arch, Platform::MacOS,
-                                                          Architecture::ARM64, Architecture::X86_64, true));
+            registerRunner(std::make_unique<WrapperRunner>(
+                "Rosetta2", arch, Platform::MacOS, Architecture::ARM64,
+                Architecture::X86_64, true));
         }
     }
 #endif

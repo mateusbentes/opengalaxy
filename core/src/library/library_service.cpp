@@ -349,10 +349,11 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
     std::vector<api::GameInfo> games;
 
     QSqlQuery query(db_->database());
-    if (query.exec(
-            "SELECT id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, isInstalled, installPath, "
-            "version, size, preferredRunner, runnerExecutable, runnerArguments, extraEnvironment, slug, "
-            "hiddenInLibrary, enableMangoHud, enableDxvkHudFps, enableGameMode, enableCloudSaves FROM games")) {
+    if (query.exec("SELECT id, title, platform, coverUrl, backgroundUrl, developer, "
+                   "publisher, description, isInstalled, installPath, version, size, "
+                   "preferredRunner, runnerExecutable, runnerArguments, extraEnvironment, "
+                   "slug, hiddenInLibrary, enableMangoHud, enableDxvkHudFps, "
+                   "enableGameMode, enableCloudSaves FROM games")) {
         while (query.next()) {
             api::GameInfo game;
             game.id = query.value(0).toString();

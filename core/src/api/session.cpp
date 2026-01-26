@@ -316,7 +316,10 @@ void Session::fetchUserInfo(UserCallback callback)
     req.method = "GET";
     req.headers["Authorization"] = "Bearer " + tokens_.accessToken;
 
-    client->request(req, [callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+    client->request(
+        req,
+        [callback = std::move(callback)](
+            util::Result<net::HttpClient::Response> result) mutable {
         if (!result.isOk()) {
             callback(util::Result<UserInfo>::error(result.errorMessage()));
             return;
