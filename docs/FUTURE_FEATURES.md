@@ -448,8 +448,39 @@ If you want to help implement these features:
 
 ---
 
+## CI/CD Pipeline Roadmap
+
+### Phase 1 (Current - ✅ Complete)
+- ✅ Linux x86_64 builds
+- ✅ macOS arm64 builds
+- ✅ Code quality checks (formatting, static analysis)
+- ✅ Automated testing framework
+
+### Phase 2 (Planned)
+- [ ] Linux arm64 (64-bit ARM) builds
+  - Requires Qt6 cross-compilation packages
+  - Status: Waiting for package availability
+
+### Phase 3 (Planned)
+- [ ] Linux riscv64 (RISC-V 64-bit) builds
+  - Requires Qt6 RISC-V support
+  - Status: Waiting for ecosystem maturity
+
+### Phase 4 (Planned)
+- [ ] Windows x64 builds (re-enable)
+  - Requires Qt installation method resolution
+  - Status: Investigating alternative approaches
+
+### CI/CD Infrastructure Improvements
+- [ ] Performance benchmarking in CI/CD
+- [ ] Automated release builds
+- [ ] Docker image generation
+- [ ] Binary distribution automation
+- [ ] Nightly builds for development versions
+
 ## Related Documentation
 
+- [CI_CD_SUCCESS_SUMMARY.md](CI_CD_SUCCESS_SUMMARY.md) - CI/CD pipeline success and roadmap
 - [IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md) - Implemented features
 - [ARCHITECTURE.md](ARCHITECTURE.md) - System architecture
 - [FEATURES_STATUS.md](FEATURES_STATUS.md) - Current feature status
@@ -460,6 +491,7 @@ If you want to help implement these features:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 2.1 | 2026-01-26 | Added CI/CD pipeline roadmap (Phase 1-4) |
 | 2.0 | 2026-01-26 | Reorganized - separated SDK features from non-SDK features |
 | 1.0 | 2026-01-25 | Initial roadmap document |
 
