@@ -75,7 +75,7 @@ PointerAlignment: Right
 
 | File | Type | Change |
 |------|------|--------|
-| `.clang-format` | Created | Code formatting configuration (113 lines) |
+| `.clang-format` | Created | Code formatting configuration (11 lines - minimal essential options) |
 
 ## Git Commits
 
@@ -108,7 +108,21 @@ Date:   2026-01-26
     - Maintains LLVM-based style with 4-space indentation and 100 char limit
 ```
 
-**Issue Resolved**: The `UseClangTzdataLocation` option is not supported in the version of clang-format used in GitHub Actions CI environment. This option was removed while maintaining all essential formatting rules.
+### Commit 3: Simplify to essential options only
+```
+commit 3d46760
+Author: Mateus Bentes
+Date:   2026-01-26
+
+    fix: Simplify .clang-format to essential options only
+    
+    - Reduce to 11 most essential and widely-supported options
+    - Remove options that may not be supported in all clang-format versions
+    - Maintain core formatting standards: LLVM style, 4-space indent, 100 char limit
+    - Improve CI compatibility across all platforms
+```
+
+**Issue Resolved**: Simplified configuration to only include the most essential and widely-supported options to ensure compatibility across all CI environments and clang-format versions.
 
 ## Next Steps
 

@@ -21,7 +21,7 @@ Created a complete `.clang-format` configuration file with LLVM-based formatting
 
 ### 1. Created `.clang-format` Configuration File
 
-**File**: `.clang-format` (113 lines)
+**File**: `.clang-format` (11 lines - minimal essential options)
 
 **Key Settings**:
 ```yaml
@@ -30,6 +30,12 @@ IndentWidth: 4
 UseTab: Never
 ColumnLimit: 100
 PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+BreakBeforeBraces: Attach
+ReflowComments: true
+SortIncludes: true
 ```
 
 **Features**:
@@ -38,13 +44,14 @@ PointerAlignment: Right
 - 100 character line limit
 - Right-aligned pointers (`int* ptr`)
 - Attach brace style (opening brace on same line)
-- 50+ additional formatting rules for comprehensive code style
+- Minimal, essential options for maximum compatibility
 
 **Compatibility**:
-- ✅ Compatible with clang-format in GitHub Actions
+- ✅ Compatible with all clang-format versions
+- ✅ Works in GitHub Actions CI environment
 - ✅ Matches documented CI/CD standards
 - ✅ Supports C++20 code
-- ✅ Qt-aware formatting (Q_FOREACH, Q_UNUSED macros)
+- ✅ Reduced complexity for better reliability
 
 ### 2. Removed Unsupported Options
 
