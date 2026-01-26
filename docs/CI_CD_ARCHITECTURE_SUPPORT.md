@@ -39,20 +39,41 @@ E: Unable to locate package libqt6widgets6:riscv64
 | **arm64** | ✅ Supported | Apple Silicon Macs (current standard) |
 | ~~x86_64~~ | ❌ Removed | Legacy Intel Macs (no longer supported) |
 
-### Windows Builds (1 architecture)
+### Windows Builds (0 architectures - Temporarily Disabled)
 
 | Architecture | Status | Notes |
 |---|---|---|
-| **x64** | ✅ Supported | 64-bit Windows (modern standard) |
+| ~~x64~~ | ⏸️ Disabled | Qt installation issues with aqtinstall |
 | ~~x86~~ | ❌ Removed | 32-bit Windows (obsolete for gaming) |
 | ~~arm64~~ | ❌ Removed | Windows on ARM (not practical) |
+
+**Note**: Windows builds temporarily disabled due to Qt installation compatibility issues. Can be re-enabled once Qt installation method is resolved.
 
 ## Total Build Matrix
 
 - **Linux**: 1 architecture (x86_64 only)
 - **macOS**: 1 architecture (arm64 only)
-- **Windows**: 1 architecture (x64 only)
-- **Total**: 3 architectures
+- **Windows**: 0 architectures (temporarily disabled)
+- **Total**: 2 architectures (active in CI/CD)
+
+## Why Windows Build Was Temporarily Disabled
+
+### Qt Installation Issues
+- aqtinstall doesn't have reliable Qt 6.x packages for Windows
+- Qt 6.7.0 not found
+- Qt 6.6.3 not found
+- jurplel/install-qt-action has compatibility issues
+- Needs alternative installation method
+
+### Solution
+- Temporarily disable Windows builds in CI/CD
+- Focus on Linux and macOS (working reliably)
+- Can be re-enabled once Qt installation is resolved
+
+### Future Plan
+1. Find reliable Qt installation method for Windows
+2. Test locally with alternative approaches
+3. Re-enable Windows builds in CI/CD
 
 ## Why Windows x86 32-bit Was Removed
 
