@@ -8,36 +8,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Linux builds with multiple architectures
+  # Linux builds - x86_64 native
   linux-build:
-    name: Linux - ${{ matrix.arch }}
+    name: Linux - x86_64
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64, arm64, riscv64]
-        include:
-          - arch: x86_64
-            cmake_args: ""
-            qemu: false
-          - arch: arm64
-            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
-            qemu: true
-          - arch: riscv64
-            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=riscv64"
-            qemu: true
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up QEMU for ${{ matrix.arch }}
-        if: matrix.qemu
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: ${{ matrix.arch }}
-
-      - name: Install dependencies (x86_64)
-        if: matrix.arch == 'x86_64'
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -52,31 +31,10 @@ jobs:
             libqt6sql6 \
             libqt6widgets6
 
-      - name: Install cross-compilation dependencies (arm64)
-        if: matrix.arch == 'arm64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            ninja-build \
-            crossbuild-essential-arm64
-
-      - name: Install cross-compilation dependencies (riscv64)
-        if: matrix.arch == 'riscv64'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential \
-            cmake \
-            ninja-build \
-            crossbuild-essential-riscv64
-
       - name: Create build directory
         run: mkdir -p build
 
-      - name: Configure CMake (x86_64)
-        if: matrix.arch == 'x86_64'
+      - name: Configure CMake
         run: |
           cd build
           cmake .. \
@@ -86,50 +44,25 @@ jobs:
             -DBUILD_CLI=ON \
             -DBUILD_UI=ON
 
-      - name: Configure CMake (arm64)
-        if: matrix.arch == 'arm64'
-        run: |
-          cd build
-          cmake .. \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_CLI=ON \
-            -DBUILD_UI=OFF \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
-
-      - name: Configure CMake (riscv64)
-        if: matrix.arch == 'riscv64'
-        run: |
-          cd build
-          cmake .. \
-            -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=OFF \
-            -DBUILD_CLI=ON \
-            -DBUILD_UI=OFF \
-            -DCMAKE_SYSTEM_NAME=Linux \
-            -DCMAKE_SYSTEM_PROCESSOR=riscv64 \
-            -DCMAKE_C_COMPILER=riscv64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++
-
       - name: Build
         run: |
           cd build
           ninja -j$(nproc)
 
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: linux-${{ matrix.arch }}-build
+          name: linux-x86_64-build
           path: build/
           retention-days: 7
 
-  # macOS builds - Apple Silicon only
+  # macOS builds - Apple Silicon
   macos-build:
     name: macOS - arm64
     runs-on: macos-14
@@ -161,6 +94,11 @@ jobs:
           cd build
           ninja -j$(sysctl -n hw.ncpu)
 
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
       - name: Upload build artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -182,12 +120,10 @@ jobs:
           echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Linux Builds" >> $GITHUB_STEP_SUMMARY
-          echo "- x86_64: ${{ needs.linux-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- arm64: ${{ needs.linux-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- riscv64: ${{ needs.linux-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- x86_64: ${{ needs.linux-build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### macOS Builds" >> $GITHUB_STEP_SUMMARY
-          echo "- arm64: ${{ needs.macos-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- arm64: ${{ needs.macos-build.result }}" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if any build failed
         if: |
