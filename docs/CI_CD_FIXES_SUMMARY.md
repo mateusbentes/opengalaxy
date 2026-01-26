@@ -82,7 +82,26 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 - 4bd8957: Simplify Linux build to x86_64 only
 - dc024df: Update architecture support documentation
 
-### 5. riscv64 Architecture Support
+### 5. macOS x86_64 Support
+**Status**: ✅ RESOLVED
+
+**Problem**: CI/CD pipeline building for legacy Intel Macs (x86_64) which are no longer the standard.
+
+**Solution**:
+- Removed x86_64 from macOS build matrix
+- Kept arm64 (Apple Silicon) as the only macOS build
+- Modern Macs are arm64 only
+- Reduces CI/CD complexity and build time
+
+**Files**:
+- `.github/workflows/multi-platform-build.yml` - Updated workflow
+- `docs/CI_CD_ARCHITECTURE_SUPPORT.md` - Detailed documentation
+
+**Commits**:
+- 6cba7aa: Remove macOS x86_64 build, keep arm64 only
+- ed29f32: Update architecture support for macOS arm64 only
+
+### 6. riscv64 Architecture Support
 **Status**: ✅ RESOLVED
 
 **Problem**: CI/CD pipeline failing for riscv64 because Qt6 packages not available in Ubuntu repositories.
@@ -105,8 +124,7 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 ### Linux (1 architecture)
 - ✅ x86_64 (native build)
 
-### macOS (2 architectures)
-- ✅ x86_64 (Intel)
+### macOS (1 architecture)
 - ✅ arm64 (Apple Silicon)
 
 ### Windows (3 architectures)
@@ -114,7 +132,7 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 - ✅ x86 (32-bit)
 - ✅ arm64 (Windows on ARM)
 
-**Total**: 6 architectures
+**Total**: 5 architectures
 
 ## Verification Results
 
@@ -147,9 +165,10 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 
 ## Git Commits Summary
 
-Total commits: 17
+Total commits: 19
 
 **CI/CD Configuration**:
+- 6cba7aa: Remove macOS x86_64 build, keep arm64 only
 - 4bd8957: Simplify Linux build to x86_64 only
 - 914d815: Remove riscv64 from build matrix
 
@@ -174,6 +193,7 @@ Total commits: 17
 - b05ffee: Move CI/CD fix documentation to docs directory
 - c20b88a: Add comprehensive CI/CD fixes summary
 - dc024df: Update architecture support documentation
+- ed29f32: Update architecture support for macOS arm64 only
 
 ## Key Achievements
 
