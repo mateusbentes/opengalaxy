@@ -48,24 +48,12 @@ set(UI_RESOURCES
     qt/resources/resources.qrc
 )
 
-# Prepare resources
-if(Qt6LinguistTools_FOUND)
-    message(STATUS "Qt Linguist tools found - translations enabled")
-    
-    # Create a temporary resources file with translations
-    set(RESOURCES_WITH_I18N ${CMAKE_CURRENT_BINARY_DIR}/resources_with_i18n.qrc)
-    configure_file(
-        ${CMAKE_CURRENT_SOURCE_DIR}/qt/resources/resources.qrc
-        ${RESOURCES_WITH_I18N}
-        COPYONLY
-    )
-    set(UI_RESOURCES ${RESOURCES_WITH_I18N})
-else()
-    message(STATUS "Qt Linguist tools not found - translations disabled")
-    
-    # Create resources file without translations
-    set(RESOURCES_NO_I18N ${CMAKE_CURRENT_BINARY_DIR}/resources_no_i18n.qrc)
-    file(WRITE ${RESOURCES_NO_I18N}
+# Prepare resources - always use no-i18n version
+# Translations are not practical in CI/CD environment
+message(STATUS "Using resources without translations (Qt Linguist tools not required)")
+
+set(RESOURCES_NO_I18N ${CMAKE_CURRENT_BINARY_DIR}/resources_no_i18n.qrc)
+file(WRITE ${RESOURCES_NO_I18N}
 "<!DOCTYPE RCC>
 <RCC version=\"1.0\">
     <qresource prefix=\"/\">
@@ -76,17 +64,20 @@ else()
     </qresource>
 </RCC>
 ")
-    set(UI_RESOURCES ${RESOURCES_NO_I18N})
-endif()
+set(UI_RESOURCES ${RESOURCES_NO_I18N})
 
 # Create executable
 add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS} ${UI_RESOURCES})
 
-# Qt Linguist: Create/update translation files and compile them (after target creation)
-if(Qt6LinguistTools_FOUND)
-    qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
-    qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
-endif()
+# Note: Translation support disabled - Qt Linguist tools not required
+# To enable translations in the future:
+# 1. Install Qt6LinguistTools
+# 2. Uncomment the code below
+# 3. Update resources.qrc to include translation files
+# if(Qt6LinguistTools_FOUND)
+#     qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
+#     qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
+# endif()
 
 target_include_directories(opengalaxy PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/qt
