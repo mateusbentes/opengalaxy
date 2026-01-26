@@ -7,6 +7,9 @@
 #include <QProcess>
 #include <QStandardPaths>
 #include <QDebug>
+#include <QDir>
+#include <QDesktopServices>
+#include <QUrl>
 
 namespace opengalaxy {
 namespace ui {
@@ -85,6 +88,33 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
 
     root->addWidget(compatBox);
 
+    // Tweaks Section
+    auto* tweaksBox = new QGroupBox(tr("Game Tweaks"), this);
+    auto* tweaksLayout = new QVBoxLayout(tweaksBox);
+
+    hideGameCheck_ = new QCheckBox(tr("Hide game from library"), tweaksBox);
+    hideGameCheck_->setToolTip(tr("Hide this game from the library view"));
+    tweaksLayout->addWidget(hideGameCheck_);
+
+    dxvkFpsCheck_ = new QCheckBox(tr("Show FPS in game"), tweaksBox);
+    dxvkFpsCheck_->setToolTip(tr("Display FPS counter overlay (DXVK_HUD=fps)"));
+    tweaksLayout->addWidget(dxvkFpsCheck_);
+
+    mangohudCheck_ = new QCheckBox(tr("Use MangoHud"), tweaksBox);
+    mangohudCheck_->setToolTip(tr("Show performance overlay (FPS, CPU, GPU, temps)"));
+    tweaksLayout->addWidget(mangohudCheck_);
+
+    gamemodeCheck_ = new QCheckBox(tr("Use GameMode"), tweaksBox);
+    gamemodeCheck_->setToolTip(tr("Enable GameMode for better performance"));
+    tweaksLayout->addWidget(gamemodeCheck_);
+
+    cloudSavesCheck_ = new QCheckBox(tr("Enable Cloud Saves"), tweaksBox);
+    cloudSavesCheck_->setToolTip(tr("Sync saves to GOG Cloud (requires GOG SDK)"));
+    cloudSavesCheck_->setEnabled(false);  // Disabled until SDK available
+    tweaksLayout->addWidget(cloudSavesCheck_);
+
+    root->addWidget(tweaksBox);
+
     // Wine/Proton Tools Section
     auto* toolsBox = new QGroupBox(tr("Wine/Proton Tools"), this);
     auto* toolsLayout = new QHBoxLayout(toolsBox);
@@ -106,10 +136,15 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
     regeditBtn->setToolTip(tr("Open Wine Registry Editor"));
     connect(regeditBtn, &QPushButton::clicked, this, &GameDetailsDialog::launchRegedit);
 
+    openFolderBtn_ = new QPushButton(tr("Open Folder"), this);
+    openFolderBtn_->setToolTip(tr("Open game installation folder"));
+    connect(openFolderBtn_, &QPushButton::clicked, this, &GameDetailsDialog::openInstallFolder);
+
     toolsLayout->addWidget(winecfgBtn);
     toolsLayout->addWidget(protontricksBtn);
     toolsLayout->addWidget(winetricksBtn);
     toolsLayout->addWidget(regeditBtn);
+    toolsLayout->addWidget(openFolderBtn_);
     toolsLayout->addStretch();
 
     root->addWidget(toolsBox);
@@ -131,6 +166,13 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
     runnerExecutableEdit_->setText(game_.runnerExecutable);
     runnerArgsEdit_->setPlainText(game_.runnerArguments.join("\n"));
     envEdit_->setPlainText(envToLines(game_.extraEnvironment).join("\n"));
+
+    // Load tweaks checkboxes
+    hideGameCheck_->setChecked(game_.hiddenInLibrary);
+    dxvkFpsCheck_->setChecked(game_.enableDxvkHudFps);
+    mangohudCheck_->setChecked(game_.enableMangoHud);
+    gamemodeCheck_->setChecked(game_.enableGameMode);
+    cloudSavesCheck_->setChecked(game_.enableCloudSaves);
 
     // Select preferred runner
     const QString pref = game_.preferredRunner.trimmed();
@@ -157,9 +199,9 @@ void GameDetailsDialog::populateRunners()
 void GameDetailsDialog::onSave()
 {
     QString err;
-    const QMap<QString, QString> env = parseEnvLines(envEdit_->toPlainText(), &err);
+    QMap<QString, QString> env = parseEnvLines(envEdit_->toPlainText(), &err);
     if (!err.isEmpty()) {
-        QMessageBox::warning(this, "Invalid environment", err);
+        QMessageBox::warning(this, tr("Invalid environment"), err);
         return;
     }
 
@@ -167,6 +209,25 @@ void GameDetailsDialog::onSave()
     game_.runnerExecutable = runnerExecutableEdit_->text().trimmed();
     game_.runnerArguments = runnerArgsEdit_->toPlainText().split('\n', Qt::SkipEmptyParts);
     for (QString& s : game_.runnerArguments) s = s.trimmed();
+    
+    // Save tweaks checkboxes
+    game_.hiddenInLibrary = hideGameCheck_->isChecked();
+    game_.enableDxvkHudFps = dxvkFpsCheck_->isChecked();
+    game_.enableMangoHud = mangohudCheck_->isChecked();
+    game_.enableGameMode = gamemodeCheck_->isChecked();
+    game_.enableCloudSaves = cloudSavesCheck_->isChecked();
+
+    // Apply environment variables based on tweaks (don't override user settings)
+    if (game_.enableDxvkHudFps && !env.contains("DXVK_HUD")) {
+        env["DXVK_HUD"] = "fps";
+    }
+    if (game_.enableMangoHud && !env.contains("MANGOHUD")) {
+        env["MANGOHUD"] = "1";
+    }
+    if (game_.enableGameMode && !env.contains("GAMEMODE")) {
+        env["GAMEMODE"] = "1";
+    }
+
     game_.extraEnvironment = env;
 
     if (!libraryService_) {
@@ -192,17 +253,12 @@ void GameDetailsDialog::launchWinecfg()
     
     // Set WINEPREFIX if available
     if (!game_.runnerExecutable.isEmpty()) {
-        // Extract prefix from runner executable path
-        QString prefix = game_.runnerExecutable;
-        if (prefix.contains("wine")) {
-            env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
-        }
+        env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
     }
     
     process.setEnvironment(env);
-    process.startDetached("winecfg");
-    
-    if (!process.waitForStarted()) {
+    const bool ok = process.startDetached("winecfg");
+    if (!ok) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to launch winecfg. Make sure Wine is installed."));
     }
 }
@@ -211,13 +267,8 @@ void GameDetailsDialog::launchProtontricks()
 {
     qDebug() << "Launching protontricks for:" << game_.title;
     
-    QProcess process;
-    QStringList env = QProcess::systemEnvironment();
-    
-    process.setEnvironment(env);
-    process.startDetached("protontricks", QStringList() << "--gui");
-    
-    if (!process.waitForStarted()) {
+    const bool ok = QProcess::startDetached("protontricks", QStringList() << "--gui");
+    if (!ok) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to launch protontricks. Make sure Protontricks is installed."));
     }
 }
@@ -235,9 +286,8 @@ void GameDetailsDialog::launchWinetricks()
     }
     
     process.setEnvironment(env);
-    process.startDetached("winetricks", QStringList() << "--gui");
-    
-    if (!process.waitForStarted()) {
+    const bool ok = process.startDetached("winetricks", QStringList() << "--gui");
+    if (!ok) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to launch winetricks. Make sure Winetricks is installed."));
     }
 }
@@ -255,10 +305,32 @@ void GameDetailsDialog::launchRegedit()
     }
     
     process.setEnvironment(env);
-    process.startDetached("wine", QStringList() << "regedit");
-    
-    if (!process.waitForStarted()) {
+    const bool ok = process.startDetached("wine", QStringList() << "regedit");
+    if (!ok) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to launch regedit. Make sure Wine is installed."));
+    }
+}
+
+void GameDetailsDialog::openInstallFolder()
+{
+    qDebug() << "Opening install folder for:" << game_.title;
+    
+    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+        QMessageBox::information(this, tr("Not installed"),
+                                 tr("This game is not installed or has no install path."));
+        return;
+    }
+    
+    const QString path = game_.installPath;
+    if (!QDir(path).exists()) {
+        QMessageBox::warning(this, tr("Folder not found"),
+                             tr("Install folder does not exist:\n%1").arg(path));
+        return;
+    }
+    
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(path))) {
+        QMessageBox::warning(this, tr("Failed to open"),
+                             tr("Could not open folder:\n%1").arg(path));
     }
 }
 

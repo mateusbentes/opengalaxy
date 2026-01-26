@@ -36,6 +36,13 @@ struct GameInfo {
     QStringList runnerArguments;
     QMap<QString, QString> extraEnvironment;
 
+    // Per-game tweaks and toggles
+    bool hiddenInLibrary = false;      // Hide game from library
+    bool enableMangoHud = false;       // Use MangoHud overlay
+    bool enableDxvkHudFps = false;     // Show FPS (DXVK_HUD=fps)
+    bool enableGameMode = false;       // Use GameMode
+    bool enableCloudSaves = true;      // Enable cloud saves (default true)
+
     // Download URLs
     struct DownloadLink {
         QString url;           // API link (returns JSON with { downlink, checksum })

@@ -72,7 +72,8 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
     QSqlQuery query(db_->database());
     query.prepare(
         "SELECT id, title, platform, coverUrl, isInstalled, installPath, version, preferredRunner, runnerExecutable, "
-        "runnerArguments, extraEnvironment, slug FROM games WHERE id = ?"
+        "runnerArguments, extraEnvironment, slug, hiddenInLibrary, enableMangoHud, enableDxvkHudFps, enableGameMode, enableCloudSaves "
+        "FROM games WHERE id = ?"
     );
     query.addBindValue(gameId);
 
@@ -101,6 +102,11 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
         }
 
         game.slug = query.value(11).toString();
+        game.hiddenInLibrary = query.value(12).toInt() != 0;
+        game.enableMangoHud = query.value(13).toInt() != 0;
+        game.enableDxvkHudFps = query.value(14).toInt() != 0;
+        game.enableGameMode = query.value(15).toInt() != 0;
+        game.enableCloudSaves = query.value(16).toInt() != 0;
 
         callback(util::Result<api::GameInfo>::success(game));
     } else {
@@ -149,12 +155,18 @@ void LibraryService::updateGameProperties(const api::GameInfo& game)
     const QString envJson = QString::fromUtf8(QJsonDocument(envObj).toJson(QJsonDocument::Compact));
 
     query.prepare(
-        "UPDATE games SET preferredRunner = ?, runnerExecutable = ?, runnerArguments = ?, extraEnvironment = ? WHERE id = ?"
+        "UPDATE games SET preferredRunner = ?, runnerExecutable = ?, runnerArguments = ?, extraEnvironment = ?, "
+        "hiddenInLibrary = ?, enableMangoHud = ?, enableDxvkHudFps = ?, enableGameMode = ?, enableCloudSaves = ? WHERE id = ?"
     );
     query.addBindValue(game.preferredRunner);
     query.addBindValue(game.runnerExecutable);
     query.addBindValue(game.runnerArguments.join("\n"));
     query.addBindValue(envJson);
+    query.addBindValue(game.hiddenInLibrary ? 1 : 0);
+    query.addBindValue(game.enableMangoHud ? 1 : 0);
+    query.addBindValue(game.enableDxvkHudFps ? 1 : 0);
+    query.addBindValue(game.enableGameMode ? 1 : 0);
+    query.addBindValue(game.enableCloudSaves ? 1 : 0);
     query.addBindValue(game.id);
 
     if (query.exec()) {
@@ -237,7 +249,13 @@ void LibraryService::initDatabase()
             preferredRunner TEXT,
             runnerExecutable TEXT,
             runnerArguments TEXT,
-            extraEnvironment TEXT
+            extraEnvironment TEXT,
+            slug TEXT,
+            hiddenInLibrary INTEGER DEFAULT 0,
+            enableMangoHud INTEGER DEFAULT 0,
+            enableDxvkHudFps INTEGER DEFAULT 0,
+            enableGameMode INTEGER DEFAULT 0,
+            enableCloudSaves INTEGER DEFAULT 1
         )
     )");
 
@@ -255,6 +273,11 @@ void LibraryService::initDatabase()
     tryAddColumn("ALTER TABLE games ADD COLUMN runnerArguments TEXT");
     tryAddColumn("ALTER TABLE games ADD COLUMN extraEnvironment TEXT");
     tryAddColumn("ALTER TABLE games ADD COLUMN slug TEXT");
+    tryAddColumn("ALTER TABLE games ADD COLUMN hiddenInLibrary INTEGER DEFAULT 0");
+    tryAddColumn("ALTER TABLE games ADD COLUMN enableMangoHud INTEGER DEFAULT 0");
+    tryAddColumn("ALTER TABLE games ADD COLUMN enableDxvkHudFps INTEGER DEFAULT 0");
+    tryAddColumn("ALTER TABLE games ADD COLUMN enableGameMode INTEGER DEFAULT 0");
+    tryAddColumn("ALTER TABLE games ADD COLUMN enableCloudSaves INTEGER DEFAULT 1");
 }
 
 void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
@@ -270,8 +293,9 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
     for (const auto& game : games) {
         query.prepare(R"(
             INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size, slug,
-                                         preferredRunner, runnerExecutable, runnerArguments, extraEnvironment)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                         preferredRunner, runnerExecutable, runnerArguments, extraEnvironment,
+                                         hiddenInLibrary, enableMangoHud, enableDxvkHudFps, enableGameMode, enableCloudSaves)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         )");
         query.addBindValue(game.id);
         query.addBindValue(game.title);
@@ -288,6 +312,13 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         query.addBindValue(game.preferredRunner);
         query.addBindValue(game.runnerExecutable);
         query.addBindValue(game.runnerArguments.join("\n"));
+        
+        // Add new toggle fields
+        query.addBindValue(game.hiddenInLibrary ? 1 : 0);
+        query.addBindValue(game.enableMangoHud ? 1 : 0);
+        query.addBindValue(game.enableDxvkHudFps ? 1 : 0);
+        query.addBindValue(game.enableGameMode ? 1 : 0);
+        query.addBindValue(game.enableCloudSaves ? 1 : 0);
 
         QJsonObject envObj;
         for (auto it = game.extraEnvironment.begin(); it != game.extraEnvironment.end(); ++it) {
@@ -320,7 +351,8 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
     QSqlQuery query(db_->database());
     if (query.exec(
             "SELECT id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, isInstalled, installPath, "
-            "version, size, preferredRunner, runnerExecutable, runnerArguments, extraEnvironment, slug FROM games")) {
+            "version, size, preferredRunner, runnerExecutable, runnerArguments, extraEnvironment, slug, "
+            "hiddenInLibrary, enableMangoHud, enableDxvkHudFps, enableGameMode, enableCloudSaves FROM games")) {
         while (query.next()) {
             api::GameInfo game;
             game.id = query.value(0).toString();
@@ -341,6 +373,11 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
 
             const QString envJson = query.value(15).toString();
             game.slug = query.value(16).toString();
+            game.hiddenInLibrary = query.value(17).toInt() != 0;
+            game.enableMangoHud = query.value(18).toInt() != 0;
+            game.enableDxvkHudFps = query.value(19).toInt() != 0;
+            game.enableGameMode = query.value(20).toInt() != 0;
+            game.enableCloudSaves = query.value(21).toInt() != 0;
             if (!envJson.isEmpty()) {
                 const QJsonDocument doc = QJsonDocument::fromJson(envJson.toUtf8());
                 if (doc.isObject()) {

@@ -8,6 +8,7 @@
 #include <QComboBox>
 #include <QLineEdit>
 #include <QPlainTextEdit>
+#include <QCheckBox>
 
 #include "opengalaxy/api/models.h"
 #include "opengalaxy/library/library_service.h"
@@ -34,6 +35,7 @@ private slots:
     void launchProtontricks();
     void launchWinetricks();
     void launchRegedit();
+    void openInstallFolder();
 
 private:
     void populateRunners();
@@ -48,11 +50,19 @@ private:
     QPlainTextEdit* runnerArgsEdit_ = nullptr;
     QPlainTextEdit* envEdit_ = nullptr;
 
+    // Tweaks checkboxes
+    QCheckBox* hideGameCheck_ = nullptr;
+    QCheckBox* mangohudCheck_ = nullptr;
+    QCheckBox* dxvkFpsCheck_ = nullptr;
+    QCheckBox* gamemodeCheck_ = nullptr;
+    QCheckBox* cloudSavesCheck_ = nullptr;
+
     // Tool buttons
     QPushButton* winecfgBtn_ = nullptr;
     QPushButton* protontricksBtn_ = nullptr;
     QPushButton* winetricksBtn_ = nullptr;
     QPushButton* regeditBtn_ = nullptr;
+    QPushButton* openFolderBtn_ = nullptr;
 
     QPushButton* saveButton_ = nullptr;
     QPushButton* closeButton_ = nullptr;
