@@ -62,20 +62,10 @@ jobs:
           path: build/
           retention-days: 7
 
-  # macOS builds with multiple architectures
+  # macOS builds - Apple Silicon only
   macos-build:
-    name: macOS - ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: x86_64
-            runner: macos-13
-            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=x86_64"
-          - arch: arm64
-            runner: macos-14
-            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=arm64"
+    name: macOS - arm64
+    runs-on: macos-14
 
     steps:
       - uses: actions/checkout@v4
@@ -97,7 +87,7 @@ jobs:
             -DBUILD_TESTS=ON \
             -DBUILD_CLI=ON \
             -DBUILD_UI=ON \
-            ${{ matrix.cmake_args }}
+            -DCMAKE_OSX_ARCHITECTURES=arm64
 
       - name: Build
         run: |
@@ -113,7 +103,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: macos-${{ matrix.arch }}-build
+          name: macos-arm64-build
           path: build/
           retention-days: 7
 
@@ -191,8 +181,7 @@ jobs:
           echo "- x86_64: ${{ needs.linux-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### macOS Builds" >> $GITHUB_STEP_SUMMARY
-          echo "- x86_64: ${{ needs.macos-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
-          echo "- arm64: ${{ needs.macos-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- arm64: ${{ needs.macos-build.result || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Windows Builds" >> $GITHUB_STEP_SUMMARY
           echo "- x64: ${{ needs.windows-build.outputs.x64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
