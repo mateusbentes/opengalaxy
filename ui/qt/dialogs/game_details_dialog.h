@@ -1,14 +1,14 @@
 #ifndef GAME_DETAILS_DIALOG_H
 #define GAME_DETAILS_DIALOG_H
 
-#include <QDialog>
-#include <QVBoxLayout>
-#include <QLabel>
-#include <QPushButton>
+#include <QCheckBox>
 #include <QComboBox>
+#include <QDialog>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPlainTextEdit>
-#include <QCheckBox>
+#include <QPushButton>
+#include <QVBoxLayout>
 
 #include "opengalaxy/api/models.h"
 #include "opengalaxy/library/library_service.h"
@@ -17,18 +17,15 @@
 namespace opengalaxy {
 namespace ui {
 
-class GameDetailsDialog : public QDialog
-{
+class GameDetailsDialog : public QDialog {
     Q_OBJECT
 
-public:
-    explicit GameDetailsDialog(const api::GameInfo& game,
-                               library::LibraryService* libraryService,
-                               runners::RunnerManager* runnerManager,
-                               QWidget* parent = nullptr);
+  public:
+    explicit GameDetailsDialog(const api::GameInfo &game, library::LibraryService *libraryService,
+                               runners::RunnerManager *runnerManager, QWidget *parent = nullptr);
     ~GameDetailsDialog();
 
-private slots:
+  private slots:
     void onSave();
     void onClose();
     void launchWinecfg();
@@ -40,38 +37,38 @@ private slots:
     void verifyGameFiles();
     void repairGame();
 
-private:
+  private:
     void populateRunners();
 
     api::GameInfo game_;
-    library::LibraryService* libraryService_ = nullptr;
-    runners::RunnerManager* runnerManager_ = nullptr;
+    library::LibraryService *libraryService_ = nullptr;
+    runners::RunnerManager *runnerManager_ = nullptr;
 
-    QLabel* titleLabel_ = nullptr;
-    QComboBox* runnerCombo_ = nullptr;
-    QLineEdit* runnerExecutableEdit_ = nullptr;
-    QPlainTextEdit* runnerArgsEdit_ = nullptr;
-    QPlainTextEdit* envEdit_ = nullptr;
+    QLabel *titleLabel_ = nullptr;
+    QComboBox *runnerCombo_ = nullptr;
+    QLineEdit *runnerExecutableEdit_ = nullptr;
+    QPlainTextEdit *runnerArgsEdit_ = nullptr;
+    QPlainTextEdit *envEdit_ = nullptr;
 
     // Tweaks checkboxes
-    QCheckBox* hideGameCheck_ = nullptr;
-    QCheckBox* mangohudCheck_ = nullptr;
-    QCheckBox* dxvkFpsCheck_ = nullptr;
-    QCheckBox* gamemodeCheck_ = nullptr;
-    QCheckBox* cloudSavesCheck_ = nullptr;
+    QCheckBox *hideGameCheck_ = nullptr;
+    QCheckBox *mangohudCheck_ = nullptr;
+    QCheckBox *dxvkFpsCheck_ = nullptr;
+    QCheckBox *gamemodeCheck_ = nullptr;
+    QCheckBox *cloudSavesCheck_ = nullptr;
 
     // Tool buttons
-    QPushButton* winecfgBtn_ = nullptr;
-    QPushButton* protontricksBtn_ = nullptr;
-    QPushButton* winetricksBtn_ = nullptr;
-    QPushButton* regeditBtn_ = nullptr;
-    QPushButton* openFolderBtn_ = nullptr;
-    QPushButton* verifyFilesBtn_ = nullptr;
-    QPushButton* repairGameBtn_ = nullptr;
-    QPushButton* updateGameBtn_ = nullptr;
+    QPushButton *winecfgBtn_ = nullptr;
+    QPushButton *protontricksBtn_ = nullptr;
+    QPushButton *winetricksBtn_ = nullptr;
+    QPushButton *regeditBtn_ = nullptr;
+    QPushButton *openFolderBtn_ = nullptr;
+    QPushButton *verifyFilesBtn_ = nullptr;
+    QPushButton *repairGameBtn_ = nullptr;
+    QPushButton *updateGameBtn_ = nullptr;
 
-    QPushButton* saveButton_ = nullptr;
-    QPushButton* closeButton_ = nullptr;
+    QPushButton *saveButton_ = nullptr;
+    QPushButton *closeButton_ = nullptr;
 };
 
 } // namespace ui

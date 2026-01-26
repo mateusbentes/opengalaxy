@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
-#include <QtTest/QtTest>
-#include <QSignalSpy>
-#include "opengalaxy/api/session.h"
-#include "opengalaxy/api/gog_client.h"
-#include "opengalaxy/install/install_service.h"
 #include "mock_http_client.h"
+#include "opengalaxy/api/gog_client.h"
+#include "opengalaxy/api/session.h"
+#include "opengalaxy/install/install_service.h"
+#include <QSignalSpy>
+#include <QtTest/QtTest>
 
 using namespace opengalaxy;
 
 class NetworkTests : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void initTestCase() {
         // Initialize test environment
         qDebug() << "Starting network tests with mocking";
@@ -34,12 +34,12 @@ private slots:
         QString receivedToken;
 
         session.loginWithPassword("test@example.com", "password123",
-                [&](util::Result<api::AuthTokens> result) {
-                callbackCalled = true;
-                if (result.isOk()) {
-                    receivedToken = result.value().accessToken;
-                }
-                });
+                                  [&](util::Result<api::AuthTokens> result) {
+                                      callbackCalled = true;
+                                      if (result.isOk()) {
+                                          receivedToken = result.value().accessToken;
+                                      }
+                                  });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -52,10 +52,10 @@ private slots:
         bool isError = false;
 
         session.loginWithPassword("wrong@example.com", "wrongpass",
-                [&](util::Result<api::AuthTokens> result) {
-                callbackCalled = true;
-                isError = result.isError();
-                });
+                                  [&](util::Result<api::AuthTokens> result) {
+                                      callbackCalled = true;
+                                      isError = result.isError();
+                                  });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -69,13 +69,13 @@ private slots:
         QString errorMsg;
 
         session.loginWithPassword("test@example.com", "password",
-                [&](util::Result<api::AuthTokens> result) {
-                callbackCalled = true;
-                isError = result.isError();
-                if (isError) {
-                    errorMsg = result.errorMessage();
-                }
-                });
+                                  [&](util::Result<api::AuthTokens> result) {
+                                      callbackCalled = true;
+                                      isError = result.isError();
+                                      if (isError) {
+                                          errorMsg = result.errorMessage();
+                                      }
+                                  });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -95,9 +95,7 @@ private slots:
         session.setTokens(tokens);
 
         bool callbackCalled = false;
-        session.refreshToken([&](util::Result<api::AuthTokens> result) {
-                callbackCalled = true;
-        });
+        session.refreshToken([&](util::Result<api::AuthTokens> result) { callbackCalled = true; });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -110,8 +108,8 @@ private slots:
         bool isError = false;
 
         session.refreshToken([&](util::Result<api::AuthTokens> result) {
-                callbackCalled = true;
-                isError = result.isError();
+            callbackCalled = true;
+            isError = result.isError();
         });
 
         QTest::qWait(100);
@@ -219,9 +217,7 @@ private slots:
         QVERIFY(true);
     }
 
-    void cleanupTestCase() {
-        qDebug() << "Network tests completed";
-    }
+    void cleanupTestCase() { qDebug() << "Network tests completed"; }
 };
 
 QTEST_MAIN(NetworkTests)

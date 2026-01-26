@@ -11,9 +11,8 @@ namespace opengalaxy::util {
  * @brief Result type for error handling without exceptions
  * @tparam T Success value type
  */
-template <typename T>
-class Result {
-public:
+template <typename T> class Result {
+  public:
     // Success constructor
     static Result success(T value) {
         Result r;
@@ -33,20 +32,18 @@ public:
     bool isError() const { return !isOk(); }
 
     // Get value (only call if isOk())
-    const T& value() const { return std::get<T>(data_); }
-    T& value() { return std::get<T>(data_); }
-    T valueOr(T defaultValue) const {
-        return isOk() ? value() : std::move(defaultValue);
-    }
+    const T &value() const { return std::get<T>(data_); }
+    T &value() { return std::get<T>(data_); }
+    T valueOr(T defaultValue) const { return isOk() ? value() : std::move(defaultValue); }
 
     // Get error (only call if isError())
-    const QString& errorMessage() const { return std::get<Error>(data_).message; }
+    const QString &errorMessage() const { return std::get<Error>(data_).message; }
     int errorCode() const { return std::get<Error>(data_).code; }
 
     // Convenience operators
     explicit operator bool() const { return isOk(); }
 
-private:
+  private:
     struct Error {
         QString message;
         int code;
@@ -56,9 +53,8 @@ private:
 };
 
 // Specialization for void (no value)
-template <>
-class Result<void> {
-public:
+template <> class Result<void> {
+  public:
     static Result success() {
         Result r;
         r.ok_ = true;
@@ -76,12 +72,12 @@ public:
     bool isOk() const { return ok_; }
     bool isError() const { return !ok_; }
 
-    const QString& errorMessage() const { return errorMessage_; }
+    const QString &errorMessage() const { return errorMessage_; }
     int errorCode() const { return errorCode_; }
 
     explicit operator bool() const { return isOk(); }
 
-private:
+  private:
     bool ok_ = false;
     QString errorMessage_;
     int errorCode_ = -1;

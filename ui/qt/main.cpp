@@ -1,15 +1,14 @@
 #include <QApplication>
-#include <QStyleFactory>
 #include <QFile>
-#include <QTextStream>
 #include <QFontDatabase>
+#include <QStyleFactory>
+#include <QTextStream>
 
 #include "app_window.h"
 #include "i18n/translation_manager.h"
 #include "opengalaxy/util/config.h"
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
 
     // Initialize configuration system (must be done early)
@@ -27,7 +26,8 @@ int main(int argc, char *argv[])
     QFile styleFile(":/styles/dark_theme.qss");
     if (!styleFile.exists()) {
         // Fallback: try to load from source directory
-        QString sourcePath = QCoreApplication::applicationDirPath() + "/../ui/qt/resources/styles/dark_theme.qss";
+        QString sourcePath =
+            QCoreApplication::applicationDirPath() + "/../ui/qt/resources/styles/dark_theme.qss";
         styleFile.setFileName(sourcePath);
     }
 

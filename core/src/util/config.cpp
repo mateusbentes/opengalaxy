@@ -5,7 +5,7 @@
 
 namespace opengalaxy::util {
 
-Config& Config::instance() {
+Config &Config::instance() {
     static Config instance;
     return instance;
 }
@@ -27,8 +27,7 @@ void Config::initialize() {
 }
 
 Config::Config()
-    : settings_(QSettings::IniFormat, QSettings::UserScope, "OpenGalaxy", "OpenGalaxy")
-{
+    : settings_(QSettings::IniFormat, QSettings::UserScope, "OpenGalaxy", "OpenGalaxy") {
     initializePaths();
 }
 
@@ -72,36 +71,24 @@ void Config::ensureDirectoriesExist() {
 }
 
 // Path getters
-QString Config::dataDir() const {
-    return dataDir_;
-}
+QString Config::dataDir() const { return dataDir_; }
 
-QString Config::configDir() const {
-    return configDir_;
-}
+QString Config::configDir() const { return configDir_; }
 
-QString Config::sessionFilePath() const {
-    return dataDir_ + "/session.json";
-}
+QString Config::sessionFilePath() const { return dataDir_ + "/session.json"; }
 
-QString Config::libraryDbPath() const {
-    return dataDir_ + "/library.db";
-}
+QString Config::libraryDbPath() const { return dataDir_ + "/library.db"; }
 
-QString Config::logFilePath() const {
-    return dataDir_ + "/opengalaxy.log";
-}
+QString Config::logFilePath() const { return dataDir_ + "/opengalaxy.log"; }
 
-QString Config::defaultGamesDir() const {
-    return defaultGamesDir_;
-}
+QString Config::defaultGamesDir() const { return defaultGamesDir_; }
 
 // Settings accessors
 QString Config::gamesDirectory() const {
     return settings_.value("install/gamesDirectory", defaultGamesDir_).toString();
 }
 
-void Config::setGamesDirectory(const QString& path) {
+void Config::setGamesDirectory(const QString &path) {
     settings_.setValue("install/gamesDirectory", path);
     settings_.sync();
 
@@ -109,11 +96,9 @@ void Config::setGamesDirectory(const QString& path) {
     QDir().mkpath(path);
 }
 
-QString Config::language() const {
-    return settings_.value("ui/locale", "").toString();
-}
+QString Config::language() const { return settings_.value("ui/locale", "").toString(); }
 
-void Config::setLanguage(const QString& locale) {
+void Config::setLanguage(const QString &locale) {
     settings_.setValue("ui/locale", locale);
     settings_.sync();
 }
@@ -122,7 +107,7 @@ QString Config::preferredRunner() const {
     return settings_.value("runners/preferred", "").toString();
 }
 
-void Config::setPreferredRunner(const QString& runner) {
+void Config::setPreferredRunner(const QString &runner) {
     settings_.setValue("runners/preferred", runner);
     settings_.sync();
 }
@@ -158,16 +143,14 @@ QByteArray Config::windowGeometry() const {
     return settings_.value("window/geometry").toByteArray();
 }
 
-void Config::setWindowGeometry(const QByteArray& geometry) {
+void Config::setWindowGeometry(const QByteArray &geometry) {
     settings_.setValue("window/geometry", geometry);
     settings_.sync();
 }
 
-QByteArray Config::windowState() const {
-    return settings_.value("window/state").toByteArray();
-}
+QByteArray Config::windowState() const { return settings_.value("window/state").toByteArray(); }
 
-void Config::setWindowState(const QByteArray& state) {
+void Config::setWindowState(const QByteArray &state) {
     settings_.setValue("window/state", state);
     settings_.sync();
 }

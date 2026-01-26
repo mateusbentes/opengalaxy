@@ -2,25 +2,24 @@
 #define CLOUD_SAVES_DIALOG_H
 
 #include <QDialog>
-#include <QVBoxLayout>
 #include <QListWidget>
 #include <QPushButton>
+#include <QVBoxLayout>
 
 namespace opengalaxy {
 namespace ui {
 
-class CloudSavesDialog : public QDialog
-{
+class CloudSavesDialog : public QDialog {
     Q_OBJECT
 
-public:
+  public:
     explicit CloudSavesDialog(QWidget *parent = nullptr);
     ~CloudSavesDialog();
 
-private slots:
+  private slots:
     void onDownload();
 
-private:
+  private:
     QListWidget *savesList;
     QPushButton *downloadButton;
 };

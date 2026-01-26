@@ -6,11 +6,10 @@
 namespace opengalaxy {
 namespace ui {
 
-class StorePage : public QWidget
-{
+class StorePage : public QWidget {
     Q_OBJECT
 
-public:
+  public:
     explicit StorePage(QWidget *parent = nullptr);
     ~StorePage();
 };

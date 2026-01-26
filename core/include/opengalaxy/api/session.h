@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include "../util/result.h"
+#include "models.h"
 #include <QObject>
 #include <QString>
 #include <functional>
-#include "models.h"
-#include "../util/result.h"
 
 namespace opengalaxy::api {
 
@@ -15,37 +15,38 @@ namespace opengalaxy::api {
 class Session : public QObject {
     Q_OBJECT
 
-public:
-    explicit Session(QObject* parent = nullptr);
+  public:
+    explicit Session(QObject *parent = nullptr);
     ~Session() override;
 
     using AuthCallback = std::function<void(util::Result<AuthTokens>)>;
     using UserCallback = std::function<void(util::Result<UserInfo>)>;
 
     // Authentication methods
-    void loginWithPassword(const QString& username, const QString& password, AuthCallback callback);
-    void loginWithOAuth(AuthCallback callback);  // Opens browser for OAuth flow
-    void loginWithAuthCode(const QString& authCode, AuthCallback callback);  // Exchange auth code for tokens
+    void loginWithPassword(const QString &username, const QString &password, AuthCallback callback);
+    void loginWithOAuth(AuthCallback callback); // Opens browser for OAuth flow
+    void loginWithAuthCode(const QString &authCode,
+                           AuthCallback callback); // Exchange auth code for tokens
     void logout();
     void refreshToken(AuthCallback callback);
 
     // Session state
     bool isAuthenticated() const;
-    const AuthTokens& tokens() const { return tokens_; }
-    const UserInfo& user() const { return user_; }
+    const AuthTokens &tokens() const { return tokens_; }
+    const UserInfo &user() const { return user_; }
 
     // Token management
-    void setTokens(const AuthTokens& tokens);
-    void loadSession();  // Load from secure storage
-    void saveSession();  // Save to secure storage
+    void setTokens(const AuthTokens &tokens);
+    void loadSession(); // Load from secure storage
+    void saveSession(); // Save to secure storage
 
-signals:
-    void authenticated(const UserInfo& user);
-    void authenticationFailed(const QString& error);
+  signals:
+    void authenticated(const UserInfo &user);
+    void authenticationFailed(const QString &error);
     void sessionExpired();
     void loggedOut();
 
-private:
+  private:
     AuthTokens tokens_;
     UserInfo user_;
     bool authenticated_ = false;

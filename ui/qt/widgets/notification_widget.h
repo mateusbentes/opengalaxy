@@ -1,26 +1,25 @@
 #ifndef NOTIFICATION_WIDGET_H
 #define NOTIFICATION_WIDGET_H
 
-#include <QWidget>
 #include <QLabel>
 #include <QPropertyAnimation>
 #include <QTimer>
+#include <QWidget>
 
-class NotificationWidget : public QWidget
-{
+class NotificationWidget : public QWidget {
     Q_OBJECT
 
-public:
+  public:
     explicit NotificationWidget(const QString &message, QWidget *parent = nullptr);
     ~NotificationWidget();
 
     void showNotification();
     static void showToast(const QString &message, QWidget *parent = nullptr);
 
-private slots:
+  private slots:
     void startHideAnimation();
 
-private:
+  private:
     void setupUI();
     void setupAnimations();
 

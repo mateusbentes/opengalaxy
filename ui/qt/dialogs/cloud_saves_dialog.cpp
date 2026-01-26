@@ -3,9 +3,7 @@
 namespace opengalaxy {
 namespace ui {
 
-CloudSavesDialog::CloudSavesDialog(QWidget *parent)
-    : QDialog(parent)
-{
+CloudSavesDialog::CloudSavesDialog(QWidget *parent) : QDialog(parent) {
     setWindowTitle("Cloud Saves");
     savesList = new QListWidget(this);
     downloadButton = new QPushButton("Download", this);
@@ -17,13 +15,9 @@ CloudSavesDialog::CloudSavesDialog(QWidget *parent)
     connect(downloadButton, &QPushButton::clicked, this, &CloudSavesDialog::onDownload);
 }
 
-CloudSavesDialog::~CloudSavesDialog()
-{
-}
+CloudSavesDialog::~CloudSavesDialog() {}
 
-void CloudSavesDialog::onDownload()
-{
-}
+void CloudSavesDialog::onDownload() {}
 
 } // namespace ui
 } // namespace opengalaxy

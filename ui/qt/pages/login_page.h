@@ -1,24 +1,23 @@
 #ifndef LOGIN_PAGE_H
 #define LOGIN_PAGE_H
 
-#include <QWidget>
 #include <QLineEdit>
+#include <QWidget>
 
 namespace opengalaxy {
 namespace ui {
 
-class LoginPage : public QWidget
-{
+class LoginPage : public QWidget {
     Q_OBJECT
 
-public:
+  public:
     explicit LoginPage(QWidget *parent = nullptr);
     ~LoginPage();
 
-signals:
-    void loginRequested(const QString& username, const QString& password);
+  signals:
+    void loginRequested(const QString &username, const QString &password);
 
-private slots:
+  private slots:
     void onLoginClicked();
 };
 

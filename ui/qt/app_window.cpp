@@ -1,28 +1,26 @@
 #include "app_window.h"
 
-#include <QVBoxLayout>
+#include <QApplication>
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
-#include <QPushButton>
 #include <QLabel>
 #include <QListWidget>
-#include <QGraphicsDropShadowEffect>
 #include <QMessageBox>
 #include <QMouseEvent>
+#include <QPushButton>
 #include <QScreen>
-#include <QApplication>
+#include <QVBoxLayout>
 
-#include "widgets/game_card.h"
-#include "pages/store_page.h"
-#include "pages/friends_page.h"
 #include "dialogs/oauth_login_dialog.h"
+#include "pages/friends_page.h"
+#include "pages/store_page.h"
+#include "widgets/game_card.h"
 
 namespace opengalaxy {
 namespace ui {
 
-AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
-    : QMainWindow(parent)
-    , translationManager_(translationManager)
-{
+AppWindow::AppWindow(TranslationManager *translationManager, QWidget *parent)
+    : QMainWindow(parent), translationManager_(translationManager) {
     setWindowTitle(tr("OpenGalaxy"));
     setWindowIcon(QIcon(":/data/opengalaxyicon.png"));
     setMinimumSize(1400, 900);
@@ -32,17 +30,17 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
     // Remove translucent background for solid color
     // setAttribute(Qt::WA_TranslucentBackground);
 
-    QWidget* centralWidget = new QWidget(this);
+    QWidget *centralWidget = new QWidget(this);
     setCentralWidget(centralWidget);
 
-    QVBoxLayout* outerLayout = new QVBoxLayout(centralWidget);
+    QVBoxLayout *outerLayout = new QVBoxLayout(centralWidget);
     outerLayout->setContentsMargins(0, 0, 0, 0);
     outerLayout->setSpacing(0);
 
     setupTitleBar();
     outerLayout->addWidget(titleBar);
 
-    QHBoxLayout* mainLayout = new QHBoxLayout();
+    QHBoxLayout *mainLayout = new QHBoxLayout();
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
@@ -70,9 +68,8 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
 
     connect(loginPage, &LoginPage::loginRequested, this, &AppWindow::startOAuthLogin);
     connect(session_, &api::Session::authenticated, this, &AppWindow::onLoginSuccess);
-    connect(session_, &api::Session::authenticationFailed, this, [this](const QString& err) {
-        QMessageBox::warning(this, tr("Login failed"), err);
-    });
+    connect(session_, &api::Session::authenticationFailed, this,
+            [this](const QString &err) { QMessageBox::warning(this, tr("Login failed"), err); });
     connect(settingsPage, &SettingsPage::logoutRequested, this, &AppWindow::onLogout);
 
     // Check if user is already logged in from saved session
@@ -94,109 +91,99 @@ AppWindow::AppWindow(TranslationManager* translationManager, QWidget* parent)
 
 AppWindow::~AppWindow() = default;
 
-void AppWindow::setupTitleBar()
-{
+void AppWindow::setupTitleBar() {
     titleBar = new QWidget(this);
     titleBar->setObjectName("titleBar");
     titleBar->setFixedHeight(40);
-    titleBar->setStyleSheet(
-        "QWidget#titleBar {"
-        "   background: rgba(26, 15, 46, 0.95);"
-        "   border-bottom: 1px solid rgba(124, 77, 255, 0.2);"
-        "}"
-    );
+    titleBar->setStyleSheet("QWidget#titleBar {"
+                            "   background: rgba(26, 15, 46, 0.95);"
+                            "   border-bottom: 1px solid rgba(124, 77, 255, 0.2);"
+                            "}");
 
-    QHBoxLayout* titleLayout = new QHBoxLayout(titleBar);
+    QHBoxLayout *titleLayout = new QHBoxLayout(titleBar);
     titleLayout->setContentsMargins(15, 0, 0, 0);
     titleLayout->setSpacing(10);
 
     // Add icon to title bar
-    QLabel* iconLabel = new QLabel(titleBar);
+    QLabel *iconLabel = new QLabel(titleBar);
     QPixmap iconPixmap(":/data/opengalaxyicon.png");
     iconLabel->setPixmap(iconPixmap.scaled(24, 24, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     titleLayout->addWidget(iconLabel);
 
-    QLabel* titleLabel = new QLabel(tr("OpenGalaxy"), titleBar);
+    QLabel *titleLabel = new QLabel(tr("OpenGalaxy"), titleBar);
     titleLabel->setObjectName("titleLabel");
     titleLabel->setStyleSheet("font-size: 14px; font-weight: bold; color: #ffffff;");
     titleLayout->addWidget(titleLabel);
 
     titleLayout->addStretch();
 
-    QPushButton* minimizeBtn = new QPushButton("−", titleBar);
+    QPushButton *minimizeBtn = new QPushButton("−", titleBar);
     minimizeBtn->setObjectName("minimizeButton");
     minimizeBtn->setFixedSize(46, 40);
-    minimizeBtn->setStyleSheet(
-        "QPushButton#minimizeButton {"
-        "   background: transparent;"
-        "   border: none;"
-        "   border-radius: 0px;"
-        "   color: #ffffff;"
-        "   font-size: 20px;"
-        "   font-weight: bold;"
-        "   padding: 0px;"
-        "}"
-        "QPushButton#minimizeButton:hover {"
-        "   background: rgba(255, 255, 255, 0.1);"
-        "}"
-        "QPushButton#minimizeButton:pressed {"
-        "   background: rgba(255, 255, 255, 0.15);"
-        "}"
-    );
+    minimizeBtn->setStyleSheet("QPushButton#minimizeButton {"
+                               "   background: transparent;"
+                               "   border: none;"
+                               "   border-radius: 0px;"
+                               "   color: #ffffff;"
+                               "   font-size: 20px;"
+                               "   font-weight: bold;"
+                               "   padding: 0px;"
+                               "}"
+                               "QPushButton#minimizeButton:hover {"
+                               "   background: rgba(255, 255, 255, 0.1);"
+                               "}"
+                               "QPushButton#minimizeButton:pressed {"
+                               "   background: rgba(255, 255, 255, 0.15);"
+                               "}");
     connect(minimizeBtn, &QPushButton::clicked, this, &AppWindow::onMinimizeClicked);
     titleLayout->addWidget(minimizeBtn);
 
-    QPushButton* maximizeBtn = new QPushButton("□", titleBar);
+    QPushButton *maximizeBtn = new QPushButton("□", titleBar);
     maximizeBtn->setObjectName("maximizeButton");
     maximizeBtn->setFixedSize(46, 40);
-    maximizeBtn->setStyleSheet(
-        "QPushButton#maximizeButton {"
-        "   background: transparent;"
-        "   border: none;"
-        "   border-radius: 0px;"
-        "   color: #ffffff;"
-        "   font-size: 16px;"
-        "   font-weight: bold;"
-        "   padding: 0px;"
-        "}"
-        "QPushButton#maximizeButton:hover {"
-        "   background: rgba(255, 255, 255, 0.1);"
-        "}"
-        "QPushButton#maximizeButton:pressed {"
-        "   background: rgba(255, 255, 255, 0.15);"
-        "}"
-    );
+    maximizeBtn->setStyleSheet("QPushButton#maximizeButton {"
+                               "   background: transparent;"
+                               "   border: none;"
+                               "   border-radius: 0px;"
+                               "   color: #ffffff;"
+                               "   font-size: 16px;"
+                               "   font-weight: bold;"
+                               "   padding: 0px;"
+                               "}"
+                               "QPushButton#maximizeButton:hover {"
+                               "   background: rgba(255, 255, 255, 0.1);"
+                               "}"
+                               "QPushButton#maximizeButton:pressed {"
+                               "   background: rgba(255, 255, 255, 0.15);"
+                               "}");
     connect(maximizeBtn, &QPushButton::clicked, this, &AppWindow::onMaximizeClicked);
     titleLayout->addWidget(maximizeBtn);
 
-    QPushButton* closeBtn = new QPushButton("×", titleBar);
+    QPushButton *closeBtn = new QPushButton("×", titleBar);
     closeBtn->setObjectName("closeButton");
     closeBtn->setFixedSize(46, 40);
-    closeBtn->setStyleSheet(
-        "QPushButton#closeButton {"
-        "   background: transparent;"
-        "   border: none;"
-        "   border-radius: 0px;"
-        "   color: #ffffff;"
-        "   font-size: 24px;"
-        "   font-weight: bold;"
-        "   padding: 0px;"
-        "}"
-        "QPushButton#closeButton:hover {"
-        "   background: #e81123;"
-        "   color: #ffffff;"
-        "}"
-        "QPushButton#closeButton:pressed {"
-        "   background: #c50712;"
-        "   color: #ffffff;"
-        "}"
-    );
+    closeBtn->setStyleSheet("QPushButton#closeButton {"
+                            "   background: transparent;"
+                            "   border: none;"
+                            "   border-radius: 0px;"
+                            "   color: #ffffff;"
+                            "   font-size: 24px;"
+                            "   font-weight: bold;"
+                            "   padding: 0px;"
+                            "}"
+                            "QPushButton#closeButton:hover {"
+                            "   background: #e81123;"
+                            "   color: #ffffff;"
+                            "}"
+                            "QPushButton#closeButton:pressed {"
+                            "   background: #c50712;"
+                            "   color: #ffffff;"
+                            "}");
     connect(closeBtn, &QPushButton::clicked, this, &AppWindow::onCloseClicked);
     titleLayout->addWidget(closeBtn);
 }
 
-void AppWindow::setupSidebar()
-{
+void AppWindow::setupSidebar() {
     sidebar = new QListWidget(this);
     sidebar->setObjectName("sidebar");
     sidebar->setFixedWidth(220);
@@ -204,19 +191,19 @@ void AppWindow::setupSidebar()
     sidebar->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     sidebar->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    QListWidgetItem* libraryItem = new QListWidgetItem(tr("Library"), sidebar);
+    QListWidgetItem *libraryItem = new QListWidgetItem(tr("Library"), sidebar);
     libraryItem->setData(Qt::UserRole, 1);
 
-    QListWidgetItem* storeItem = new QListWidgetItem(tr("Store"), sidebar);
+    QListWidgetItem *storeItem = new QListWidgetItem(tr("Store"), sidebar);
     storeItem->setData(Qt::UserRole, 2);
 
-    QListWidgetItem* friendsItem = new QListWidgetItem(tr("Friends"), sidebar);
+    QListWidgetItem *friendsItem = new QListWidgetItem(tr("Friends"), sidebar);
     friendsItem->setData(Qt::UserRole, 3);
 
-    QListWidgetItem* settingsItem = new QListWidgetItem(tr("Settings"), sidebar);
+    QListWidgetItem *settingsItem = new QListWidgetItem(tr("Settings"), sidebar);
     settingsItem->setData(Qt::UserRole, 4);
 
-    connect(sidebar, &QListWidget::itemClicked, this, [this](QListWidgetItem* item) {
+    connect(sidebar, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
         int pageIndex = item->data(Qt::UserRole).toInt();
         stackedWidget->setCurrentIndex(pageIndex);
     });
@@ -224,8 +211,7 @@ void AppWindow::setupSidebar()
     sidebar->setCurrentRow(0);
 }
 
-void AppWindow::onLoginSuccess()
-{
+void AppWindow::onLoginSuccess() {
     sidebar->setVisible(true);
     stackedWidget->setCurrentWidget(libraryPage);
 
@@ -233,21 +219,19 @@ void AppWindow::onLoginSuccess()
     libraryPage->refreshLibrary(true);
 }
 
-void AppWindow::startOAuthLogin(const QString& username, const QString& password)
-{
+void AppWindow::startOAuthLogin(const QString &username, const QString &password) {
 #ifdef HAVE_WEBENGINE
     // Show OAuth login dialog
     // If username/password provided (legacy), use auto-fill; otherwise let user login manually
-    auto* dialog = username.isEmpty()
-        ? new OAuthLoginDialog(this)
-        : new OAuthLoginDialog(username, password, this);
+    auto *dialog = username.isEmpty() ? new OAuthLoginDialog(this)
+                                      : new OAuthLoginDialog(username, password, this);
 
-    connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
+    connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString &code) {
         // Exchange authorization code for tokens
         session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {
-                if (!result.isOk()) {
+            if (!result.isOk()) {
                 QMessageBox::warning(this, tr("Login failed"), result.errorMessage());
-                }
+            }
         });
     });
     dialog->exec();
@@ -256,51 +240,50 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
     // Fallback to direct password authentication if WebEngine not available
     session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
         if (!result.isOk()) {
-                QMessageBox::warning(this, tr("Login Failed"),
-                tr("Failed to login: %1\n\nPlease check your credentials and try again.").arg(result.errorMessage()));
+            QMessageBox::warning(
+                this, tr("Login Failed"),
+                tr("Failed to login: %1\n\nPlease check your credentials and try again.")
+                    .arg(result.errorMessage()));
         }
         // Success is handled by the authenticated() signal
     });
 #endif
 }
 
-void AppWindow::mousePressEvent(QMouseEvent* event)
-{
-    if (event->button()  ==  Qt::LeftButton) {
-        QWidget* childWidget = childAt(event->pos());
+void AppWindow::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        QWidget *childWidget = childAt(event->pos());
 
         // Check if click is on title bar or its children (but not buttons)
         bool onTitleBar = false;
-        QWidget* widget = childWidget;
-        while (widget  &&  widget  !=  this) {
-                if (widget  ==  titleBar) {
+        QWidget *widget = childWidget;
+        while (widget && widget != this) {
+            if (widget == titleBar) {
                 onTitleBar = true;
                 break;
-                }
-                widget = widget->parentWidget();
+            }
+            widget = widget->parentWidget();
         }
 
         // Don't drag if clicking on buttons
-        if (onTitleBar  &&  childWidget  && 
-                childWidget->objectName()  !=  "minimizeButton"  && 
-                childWidget->objectName()  !=  "maximizeButton"  && 
-                childWidget->objectName()  !=  "closeButton") {
-                isDragging = true;
-                dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
-                event->accept();
+        if (onTitleBar && childWidget && childWidget->objectName() != "minimizeButton" &&
+            childWidget->objectName() != "maximizeButton" &&
+            childWidget->objectName() != "closeButton") {
+            isDragging = true;
+            dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
+            event->accept();
         }
     }
     QMainWindow::mousePressEvent(event);
 }
 
-void AppWindow::mouseMoveEvent(QMouseEvent* event)
-{
-    if (isDragging  &&  (event->buttons() & Qt::LeftButton)) {
+void AppWindow::mouseMoveEvent(QMouseEvent *event) {
+    if (isDragging && (event->buttons() & Qt::LeftButton)) {
         if (isMaximized) {
-                // If maximized, restore to normal size when dragging
-                onMaximizeClicked();
-                // Adjust drag position for the new window size
-                dragPosition = QPoint(width() / 2, 20);
+            // If maximized, restore to normal size when dragging
+            onMaximizeClicked();
+            // Adjust drag position for the new window size
+            dragPosition = QPoint(width() / 2, 20);
         }
         move(event->globalPosition().toPoint() - dragPosition);
         event->accept();
@@ -308,49 +291,40 @@ void AppWindow::mouseMoveEvent(QMouseEvent* event)
     QMainWindow::mouseMoveEvent(event);
 }
 
-void AppWindow::mouseReleaseEvent(QMouseEvent* event)
-{
-    if (event->button()  ==  Qt::LeftButton) {
+void AppWindow::mouseReleaseEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
         isDragging = false;
     }
     QMainWindow::mouseReleaseEvent(event);
 }
 
-void AppWindow::onMinimizeClicked()
-{
-    showMinimized();
-}
+void AppWindow::onMinimizeClicked() { showMinimized(); }
 
-void AppWindow::onMaximizeClicked()
-{
+void AppWindow::onMaximizeClicked() {
     if (isMaximized) {
         showNormal();
         isMaximized = false;
 
         // Update maximize button symbol
-        QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
+        QPushButton *maxBtn = titleBar->findChild<QPushButton *>("maximizeButton");
         if (maxBtn) {
-                maxBtn->setText("□");
+            maxBtn->setText("□");
         }
     } else {
         showMaximized();
         isMaximized = true;
 
         // Update maximize button symbol
-        QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
+        QPushButton *maxBtn = titleBar->findChild<QPushButton *>("maximizeButton");
         if (maxBtn) {
-                maxBtn->setText("❐");
+            maxBtn->setText("❐");
         }
     }
 }
 
-void AppWindow::onCloseClicked()
-{
-    close();
-}
+void AppWindow::onCloseClicked() { close(); }
 
-void AppWindow::onLogout()
-{
+void AppWindow::onLogout() {
     // Hide sidebar and show login page
     sidebar->setVisible(false);
     stackedWidget->setCurrentWidget(loginPage);

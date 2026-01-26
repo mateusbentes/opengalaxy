@@ -1,11 +1,10 @@
 #include "notification_widget.h"
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QGraphicsDropShadowEffect>
 
 NotificationWidget::NotificationWidget(const QString &message, QWidget *parent)
-    : QWidget(parent), messageLabel(nullptr)
-{
+    : QWidget(parent), messageLabel(nullptr) {
     setWindowFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_DeleteOnClose);
     setFixedSize(400, 60);
@@ -16,12 +15,9 @@ NotificationWidget::NotificationWidget(const QString &message, QWidget *parent)
     messageLabel->setText(message);
 }
 
-NotificationWidget::~NotificationWidget()
-{
-}
+NotificationWidget::~NotificationWidget() {}
 
-void NotificationWidget::setupUI()
-{
+void NotificationWidget::setupUI() {
     setStyleSheet(
         R"(
         NotificationWidget {
@@ -52,8 +48,7 @@ void NotificationWidget::setupUI()
     setGraphicsEffect(shadow);
 }
 
-void NotificationWidget::setupAnimations()
-{
+void NotificationWidget::setupAnimations() {
     slideInAnimation = new QPropertyAnimation(this, "geometry");
     slideInAnimation->setDuration(300);
     slideInAnimation->setEasingCurve(QEasingCurve::OutBack);
@@ -66,26 +61,24 @@ void NotificationWidget::setupAnimations()
     connect(hideTimer, &QTimer::timeout, this, &NotificationWidget::startHideAnimation);
 }
 
-void NotificationWidget::showNotification()
-{
+void NotificationWidget::showNotification() {
     move(parentWidget()->width() - width() - 20, 100);
     show();
     slideInAnimation->setStartValue(QRect(parentWidget()->width(), 100, width(), height()));
-    slideInAnimation->setEndValue(QRect(parentWidget()->width() - width() - 20, 100, width(), height()));
+    slideInAnimation->setEndValue(
+        QRect(parentWidget()->width() - width() - 20, 100, width(), height()));
     slideInAnimation->start();
 
     hideTimer->start(3000);
 }
 
-void NotificationWidget::startHideAnimation()
-{
+void NotificationWidget::startHideAnimation() {
     hideTimer->stop();
     slideOutAnimation->start();
     connect(slideOutAnimation, &QPropertyAnimation::finished, this, &QWidget::close);
 }
 
-void NotificationWidget::showToast(const QString &message, QWidget *parent)
-{
+void NotificationWidget::showToast(const QString &message, QWidget *parent) {
     NotificationWidget *toast = new NotificationWidget(message, parent);
     toast->showNotification();
 }

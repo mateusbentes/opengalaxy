@@ -10,17 +10,15 @@
 namespace opengalaxy {
 namespace ui {
 
-class GameInformationDialog : public QDialog
-{
+class GameInformationDialog : public QDialog {
     Q_OBJECT
 
-public:
-    explicit GameInformationDialog(const api::GameInfo& game,
-                                   QWidget* parent = nullptr);
+  public:
+    explicit GameInformationDialog(const api::GameInfo &game, QWidget *parent = nullptr);
     ~GameInformationDialog();
 
-private:
-    void openLink(const QString& url);
+  private:
+    void openLink(const QString &url);
 
     api::GameInfo game_;
 };

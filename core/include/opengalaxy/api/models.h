@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include <QString>
 #include <QDateTime>
-#include <QStringList>
 #include <QMap>
+#include <QString>
+#include <QStringList>
 #include <vector>
 
 namespace opengalaxy::api {
@@ -13,44 +13,45 @@ namespace opengalaxy::api {
  * @brief Game information from GOG API
  */
 struct GameInfo {
-    QString id;              // GOG game ID (numeric)
-    QString slug;            // GOG game slug (for store URLs)
-    QString title;           // Game title
-    QString platform;        // Platform (Windows, Linux, macOS)
-    QString coverUrl;        // Cover image URL
-    QString backgroundUrl;   // Background image URL
-    QStringList genres;      // Game genres
-    QString developer;       // Developer name
-    QString publisher;       // Publisher name
-    QDateTime releaseDate;   // Release date
-    QString description;     // Game description
+    QString id;            // GOG game ID (numeric)
+    QString slug;          // GOG game slug (for store URLs)
+    QString title;         // Game title
+    QString platform;      // Platform (Windows, Linux, macOS)
+    QString coverUrl;      // Cover image URL
+    QString backgroundUrl; // Background image URL
+    QStringList genres;    // Game genres
+    QString developer;     // Developer name
+    QString publisher;     // Publisher name
+    QDateTime releaseDate; // Release date
+    QString description;   // Game description
     bool isInstalled = false;
-    QString installPath;     // Local installation path
-    QString version;         // Installed version
-    qint64 size = 0;         // Download size in bytes
+    QString installPath; // Local installation path
+    QString version;     // Installed version
+    qint64 size = 0;     // Download size in bytes
 
     // Per-game properties (user overrides)
-    // runner: "Auto" (empty) | "Native" | "Wine" | "Proton-GE (...)" | "Box64" | "FEX" | "Rosetta2" | "QEMU"
+    // runner: "Auto" (empty) | "Native" | "Wine" | "Proton-GE (...)" | "Box64" | "FEX" | "Rosetta2"
+    // | "QEMU"
     QString preferredRunner;
     QString runnerExecutable;
     QStringList runnerArguments;
     QMap<QString, QString> extraEnvironment;
 
     // Per-game tweaks and toggles
-    bool hiddenInLibrary = false;      // Hide game from library
-    bool enableMangoHud = false;       // Use MangoHud overlay
-    bool enableDxvkHudFps = false;     // Show FPS (DXVK_HUD=fps)
-    bool enableGameMode = false;       // Use GameMode
-    bool enableCloudSaves = true;      // Enable cloud saves (default true)
+    bool hiddenInLibrary = false;  // Hide game from library
+    bool enableMangoHud = false;   // Use MangoHud overlay
+    bool enableDxvkHudFps = false; // Show FPS (DXVK_HUD=fps)
+    bool enableGameMode = false;   // Use GameMode
+    bool enableCloudSaves = true;  // Enable cloud saves (default true)
 
     // Download URLs
     struct DownloadLink {
-        QString url;           // API link (returns JSON with { downlink, checksum })
-        QString platform;      // windows, linux, mac
+        QString url;      // API link (returns JSON with { downlink, checksum })
+        QString platform; // windows, linux, mac
         QString language;
         QString version;
         qint64 size = 0;
-        QString checksumUrl;   // optional: URL to checksum XML
+        QString checksumUrl; // optional: URL to checksum XML
     };
     std::vector<DownloadLink> downloads;
 };
@@ -75,13 +76,9 @@ struct AuthTokens {
     QString tokenType = "Bearer";
     QDateTime expiresAt;
 
-    bool isExpired() const {
-        return QDateTime::currentDateTime()  >=  expiresAt;
-    }
+    bool isExpired() const { return QDateTime::currentDateTime() >= expiresAt; }
 
-    bool isValid() const {
-        return !accessToken.isEmpty()  &&  !isExpired();
-    }
+    bool isValid() const { return !accessToken.isEmpty() && !isExpired(); }
 };
 
 /**
@@ -116,8 +113,8 @@ struct FriendInfo {
     QString userId;
     QString username;
     QString avatarUrl;
-    QString status;          // online, offline, away, busy
-    QString currentGame;     // Currently playing game
+    QString status;      // online, offline, away, busy
+    QString currentGame; // Currently playing game
     QDateTime lastSeen;
 };
 

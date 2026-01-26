@@ -6,43 +6,35 @@
 #include <QProcessEnvironment>
 
 namespace opengalaxy::runners {
-static QString platformToString(Platform p)
-{
+static QString platformToString(Platform p) {
     switch (p) {
-        case Platform::Windows: return "Windows";
-        case Platform::Linux: return "Linux";
-        case Platform::MacOS: return "macOS";
-        case Platform::DOS: return "DOS";
-        default: return "Unknown";
+    case Platform::Windows:
+        return "Windows";
+    case Platform::Linux:
+        return "Linux";
+    case Platform::MacOS:
+        return "macOS";
+    case Platform::DOS:
+        return "DOS";
+    default:
+        return "Unknown";
     }
 }
 
-WrapperRunner::WrapperRunner(QString runnerName,
-                             QString wrapperExecutable,
-                             Platform supportedPlatform,
-                             Architecture hostArch,
-                             Architecture targetArch,
-                             bool requiresISATranslation)
-    : runnerName_(std::move(runnerName))
-    , wrapperExecutable_(std::move(wrapperExecutable))
-    , supportedPlatform_(supportedPlatform)
-    , hostArch_(hostArch)
-    , targetArch_(targetArch)
-    , requiresISATranslation_(requiresISATranslation)
-{
-}
+WrapperRunner::WrapperRunner(QString runnerName, QString wrapperExecutable,
+                             Platform supportedPlatform, Architecture hostArch,
+                             Architecture targetArch, bool requiresISATranslation)
+    : runnerName_(std::move(runnerName)), wrapperExecutable_(std::move(wrapperExecutable)),
+      supportedPlatform_(supportedPlatform), hostArch_(hostArch), targetArch_(targetArch),
+      requiresISATranslation_(requiresISATranslation) {}
 
 QString WrapperRunner::name() const { return runnerName_; }
 
 QString WrapperRunner::version() const { return "1.0"; }
 
-bool WrapperRunner::isAvailable() const
-{
-    return QFileInfo::exists(wrapperExecutable_);
-}
+bool WrapperRunner::isAvailable() const { return QFileInfo::exists(wrapperExecutable_); }
 
-RunnerCapabilities WrapperRunner::capabilities() const
-{
+RunnerCapabilities WrapperRunner::capabilities() const {
     RunnerCapabilities caps;
     caps.name = runnerName_;
     caps.version = version();
@@ -54,49 +46,46 @@ RunnerCapabilities WrapperRunner::capabilities() const
     return caps;
 }
 
-bool WrapperRunner::canRun(const LaunchConfig& config) const
-{
+bool WrapperRunner::canRun(const LaunchConfig &config) const {
     // For now, runners are selected explicitly by name in UI (preferredRunner).
     // As a safety net, require matching platform.
-    return config.gamePlatform  ==  supportedPlatform_;
+    return config.gamePlatform == supportedPlatform_;
 }
 
-std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
-{
+std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig &config) {
     auto process = std::make_unique<QProcess>();
 
     // Use custom executable if provided, otherwise use auto-detected one
-    const QString chosenWrapper =
-        config.runnerExecutableOverride.trimmed().isEmpty()
-                ? wrapperExecutable_
-                : config.runnerExecutableOverride.trimmed();
+    const QString chosenWrapper = config.runnerExecutableOverride.trimmed().isEmpty()
+                                      ? wrapperExecutable_
+                                      : config.runnerExecutableOverride.trimmed();
 
-    if (chosenWrapper.isEmpty()  ||  !QFileInfo::exists(chosenWrapper)) {
-        LOG_ERROR(QString("Wrapper executable not found for %1: '%2'")
-                      .arg(runnerName_, chosenWrapper));
+    if (chosenWrapper.isEmpty() || !QFileInfo::exists(chosenWrapper)) {
+        LOG_ERROR(
+            QString("Wrapper executable not found for %1: '%2'").arg(runnerName_, chosenWrapper));
         return nullptr;
     }
 
     // env: start from current environment and override
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
+    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);
 
     QStringList args;
 
-    if (runnerName_  ==  "Rosetta2") {
+    if (runnerName_ == "Rosetta2") {
         // Use: arch -x86_64 [runnerArgs...] <game> [gameArgs...]
         args << "-x86_64";
-        args << config.runnerArguments;  // Custom wrapper args
+        args << config.runnerArguments; // Custom wrapper args
         args << config.gamePath;
-        args << config.arguments;        // Game args
+        args << config.arguments; // Game args
     } else {
         // Use: <wrapper> [runnerArgs...] <game> [gameArgs...]
-        args << config.runnerArguments;  // Custom wrapper args first
+        args << config.runnerArguments; // Custom wrapper args first
         args << config.gamePath;
-        args << config.arguments;        // Game args after
+        args << config.arguments; // Game args after
     }
 
     process->setProgram(chosenWrapper);

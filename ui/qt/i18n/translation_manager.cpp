@@ -1,67 +1,56 @@
 #include "translation_manager.h"
 
-#include <QApplication>
-#include <QSettings>
-#include <QLocale>
-#include <QDir>
-#include <QDebug>
 #include "opengalaxy/util/config.h"
+#include <QApplication>
+#include <QDebug>
+#include <QDir>
+#include <QLocale>
+#include <QSettings>
 
 namespace opengalaxy {
 namespace ui {
 
-TranslationManager::TranslationManager(QObject* parent)
-    : QObject(parent)
-    , currentLocale_("en_US")
-{
-}
+TranslationManager::TranslationManager(QObject *parent)
+    : QObject(parent), currentLocale_("en_US") {}
 
 TranslationManager::~TranslationManager() = default;
 
-QString TranslationManager::gogApiLocale() const
-{
+QString TranslationManager::gogApiLocale() const {
     // Convert Qt locale format (en_US) to GOG API format (en-US)
     QString apiLocale = currentLocale_;
     apiLocale.replace('_', '-');
     return apiLocale;
 }
 
-QStringList TranslationManager::availableLocales() const
-{
+QStringList TranslationManager::availableLocales() const {
     QStringList locales;
     locales << "en_US"; // English is always available (source language)
 
     // Check for available translation files
     QDir resourceDir(":/i18n");
     if (resourceDir.exists()) {
-        QStringList qmFiles = resourceDir.entryList(
-                QStringList() << "opengalaxy_*.qm", QDir::Files);
-        for (const QString& file : qmFiles) {
-                // Extract locale from filename: opengalaxy_pt_BR.qm -> pt_BR
-                QString locale = file;
-                locale.remove("opengalaxy_").remove(".qm");
-                if (!locales.contains(locale)) {
+        QStringList qmFiles =
+            resourceDir.entryList(QStringList() << "opengalaxy_*.qm", QDir::Files);
+        for (const QString &file : qmFiles) {
+            // Extract locale from filename: opengalaxy_pt_BR.qm -> pt_BR
+            QString locale = file;
+            locale.remove("opengalaxy_").remove(".qm");
+            if (!locales.contains(locale)) {
                 locales << locale;
-                }
+            }
         }
     }
 
     return locales;
 }
 
-QString TranslationManager::localeDisplayName(const QString& locale) const
-{
+QString TranslationManager::localeDisplayName(const QString &locale) const {
     // Map locale codes to display names
     static QMap<QString, QString> displayNames = {
-        {"en_US", "English"},
-        {"pt_BR", "Português (Brasil)"},
-        {"es_ES", "Español"},
-        {"fr_FR", "Français"},
-        {"de_DE", "Deutsch"},
-        {"ru_RU", "Русский"},
-        {"zh_CN", "简体中文"},
-        {"ja_JP", "日本語"}
-    };
+        {"en_US", "English"},  {"pt_BR", "Português (Brasil)"},
+        {"es_ES", "Español"},  {"fr_FR", "Français"},
+        {"de_DE", "Deutsch"},  {"ru_RU", "Русский"},
+        {"zh_CN", "简体中文"}, {"ja_JP", "日本語"}};
 
     if (displayNames.contains(locale)) {
         return displayNames[locale];
@@ -72,13 +61,12 @@ QString TranslationManager::localeDisplayName(const QString& locale) const
     return qlocale.nativeLanguageName();
 }
 
-bool TranslationManager::loadTranslator(const QString& locale)
-{
+bool TranslationManager::loadTranslator(const QString &locale) {
     // Remove previous translator
     qApp->removeTranslator(&translator_);
 
     // English is the source language, no translation file needed
-    if (locale  ==  "en_US") {
+    if (locale == "en_US") {
         return true;
     }
 
@@ -95,9 +83,8 @@ bool TranslationManager::loadTranslator(const QString& locale)
     return false;
 }
 
-void TranslationManager::setLocale(const QString& locale)
-{
-    if (currentLocale_  ==  locale) {
+void TranslationManager::setLocale(const QString &locale) {
+    if (currentLocale_ == locale) {
         return;
     }
 
@@ -114,8 +101,7 @@ void TranslationManager::setLocale(const QString& locale)
     qDebug() << "Language changed to:" << locale << "(restart required)";
 }
 
-void TranslationManager::loadFromSettings()
-{
+void TranslationManager::loadFromSettings() {
     QString savedLocale = opengalaxy::util::Config::instance().language();
 
     if (!savedLocale.isEmpty()) {
@@ -130,12 +116,12 @@ void TranslationManager::loadFromSettings()
         // Check if we have a translation for this locale
         QStringList available = availableLocales();
         if (available.contains(systemLocale)) {
-                currentLocale_ = systemLocale;
-                qDebug() << "Using system locale:" << currentLocale_;
+            currentLocale_ = systemLocale;
+            qDebug() << "Using system locale:" << currentLocale_;
         } else {
-                // Fallback to English
-                currentLocale_ = "en_US";
-                qDebug() << "Falling back to English";
+            // Fallback to English
+            currentLocale_ = "en_US";
+            qDebug() << "Falling back to English";
         }
 
         // Save the detected/fallback locale

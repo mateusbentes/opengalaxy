@@ -7,10 +7,7 @@
 
 namespace opengalaxy::runners {
 
-WineRunner::WineRunner(QString winePath)
-    : winePath_(std::move(winePath))
-{
-}
+WineRunner::WineRunner(QString winePath) : winePath_(std::move(winePath)) {}
 
 QString WineRunner::name() const { return "Wine"; }
 
@@ -18,8 +15,7 @@ QString WineRunner::version() const { return "system"; }
 
 bool WineRunner::isAvailable() const { return QFileInfo::exists(winePath_); }
 
-RunnerCapabilities WineRunner::capabilities() const
-{
+RunnerCapabilities WineRunner::capabilities() const {
     RunnerCapabilities caps;
     caps.name = name();
     caps.version = version();
@@ -32,19 +28,17 @@ RunnerCapabilities WineRunner::capabilities() const
     return caps;
 }
 
-bool WineRunner::canRun(const LaunchConfig& config) const
-{
+bool WineRunner::canRun(const LaunchConfig &config) const {
     // Wine is for Windows games on Linux.
-    return config.gamePlatform  ==  Platform::Windows;
+    return config.gamePlatform == Platform::Windows;
 }
 
-std::unique_ptr<QProcess> WineRunner::launch(const LaunchConfig& config)
-{
+std::unique_ptr<QProcess> WineRunner::launch(const LaunchConfig &config) {
     auto process = std::make_unique<QProcess>();
 
     // env: start from system and append overrides
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
+    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);

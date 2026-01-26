@@ -6,13 +6,12 @@
 
 namespace opengalaxy::runners {
 
-static void scanCompatToolsDir(const QString& dirPath, std::vector<ProtonInstall>& out)
-{
+static void scanCompatToolsDir(const QString &dirPath, std::vector<ProtonInstall> &out) {
     QDir dir(dirPath);
     if (!dir.exists()) return;
 
     const auto entries = dir.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (const QFileInfo& fi : entries) {
+    for (const QFileInfo &fi : entries) {
         const QString base = fi.fileName();
         if (!base.startsWith("GE-Proton")) continue;
 
@@ -26,8 +25,7 @@ static void scanCompatToolsDir(const QString& dirPath, std::vector<ProtonInstall
     }
 }
 
-std::vector<ProtonInstall> discoverProtonGE()
-{
+std::vector<ProtonInstall> discoverProtonGE() {
     std::vector<ProtonInstall> installs;
 
     // Standard Steam locations
@@ -36,8 +34,7 @@ std::vector<ProtonInstall> discoverProtonGE()
 
     // Flatpak Steam
     scanCompatToolsDir(
-        QDir::home().filePath(
-                ".var/app/com.valvesoftware.Steam/data/Steam/compatibilitytools.d"),
+        QDir::home().filePath(".var/app/com.valvesoftware.Steam/data/Steam/compatibilitytools.d"),
         installs);
 
     return installs;

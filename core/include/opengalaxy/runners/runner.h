@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include <QMap>
+#include <QProcess>
 #include <QString>
 #include <QStringList>
-#include <QProcess>
-#include <QMap>
 #include <memory>
 
 namespace opengalaxy::runners {
@@ -27,13 +27,7 @@ enum class Architecture {
 /**
  * @brief Platform types
  */
-enum class Platform {
-    Unknown,
-    Windows,
-    Linux,
-    MacOS,
-    DOS
-};
+enum class Platform { Unknown, Windows, Linux, MacOS, DOS };
 
 /**
  * @brief Runner capabilities
@@ -46,7 +40,7 @@ struct RunnerCapabilities {
     Architecture hostArch;
     Architecture targetArch;
     bool requiresISATranslation = false;
-    QStringList supportedExtensions;  // .exe, .sh, etc.
+    QStringList supportedExtensions; // .exe, .sh, etc.
 };
 
 /**
@@ -61,15 +55,15 @@ struct LaunchConfig {
     Architecture gameArch;
 
     // Optional per-game overrides (used by WrapperRunner / translators)
-    QString runnerExecutableOverride;   // e.g. /usr/local/bin/FEXInterpreter
-    QStringList runnerArguments;        // wrapper/translator args (NOT game args)
+    QString runnerExecutableOverride; // e.g. /usr/local/bin/FEXInterpreter
+    QStringList runnerArguments;      // wrapper/translator args (NOT game args)
 };
 
 /**
  * @brief Base class for game runners
  */
 class Runner {
-public:
+  public:
     virtual ~Runner() = default;
 
     // Runner information
@@ -79,18 +73,21 @@ public:
     virtual RunnerCapabilities capabilities() const = 0;
 
     // Check if this runner can run the given game
-    virtual bool canRun(const LaunchConfig& config) const = 0;
+    virtual bool canRun(const LaunchConfig &config) const = 0;
 
     // Launch game (returns owned QProcess - caller must manage lifetime)
-    virtual std::unique_ptr<QProcess> launch(const LaunchConfig& config) = 0;
+    virtual std::unique_ptr<QProcess> launch(const LaunchConfig &config) = 0;
 
     // Configuration
     virtual QStringList configOptions() const { return {}; }
-    virtual void setConfigOption(const QString& key, const QString& value) { Q_UNUSED(key); Q_UNUSED(value); }
+    virtual void setConfigOption(const QString &key, const QString &value) {
+        Q_UNUSED(key);
+        Q_UNUSED(value);
+    }
 
     // Helper to detect architecture and platform from executable
-    static Architecture detectArchitecture(const QString& executablePath);
-    static Platform detectPlatform(const QString& executablePath);
+    static Architecture detectArchitecture(const QString &executablePath);
+    static Platform detectPlatform(const QString &executablePath);
 };
 
 } // namespace opengalaxy::runners

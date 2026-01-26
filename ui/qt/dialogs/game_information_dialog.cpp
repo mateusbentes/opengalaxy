@@ -1,20 +1,17 @@
 #include "game_information_dialog.h"
 
-#include <QVBoxLayout>
+#include <QDebug>
+#include <QDesktopServices>
 #include <QHBoxLayout>
 #include <QScrollArea>
-#include <QDesktopServices>
 #include <QUrl>
-#include <QDebug>
+#include <QVBoxLayout>
 
 namespace opengalaxy {
 namespace ui {
 
-GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
-                                                            QWidget* parent)
-    : QDialog(parent)
-    , game_(game)
-{
+GameInformationDialog::GameInformationDialog(const api::GameInfo &game, QWidget *parent)
+    : QDialog(parent), game_(game) {
     setWindowTitle(tr("Information - %1").arg(game_.title));
     setMinimumSize(600, 500);
     setStyleSheet(R"(
@@ -58,53 +55,53 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
         }
     )");
 
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(30, 30, 30, 30);
     mainLayout->setSpacing(15);
 
-    QScrollArea* scrollArea = new QScrollArea(this);
+    QScrollArea *scrollArea = new QScrollArea(this);
     scrollArea->setWidgetResizable(true);
     scrollArea->setStyleSheet("border: none;");
 
-    QWidget* content = new QWidget(scrollArea);
-    QVBoxLayout* contentLayout = new QVBoxLayout(content);
+    QWidget *content = new QWidget(scrollArea);
+    QVBoxLayout *contentLayout = new QVBoxLayout(content);
     contentLayout->setContentsMargins(0, 0, 0, 0);
     contentLayout->setSpacing(10);
 
     // Title
-    QLabel* titleLabel = new QLabel(game_.title, content);
+    QLabel *titleLabel = new QLabel(game_.title, content);
     titleLabel->setObjectName("title");
     titleLabel->setWordWrap(true);
     contentLayout->addWidget(titleLabel);
 
     // Description
     if (!game_.description.isEmpty()) {
-        QLabel* descLabel = new QLabel(game_.description, content);
+        QLabel *descLabel = new QLabel(game_.description, content);
         descLabel->setObjectName("content");
         descLabel->setWordWrap(true);
         contentLayout->addWidget(descLabel);
     }
 
     // Links section
-    QLabel* linksTitle = new QLabel(tr("Links"), content);
+    QLabel *linksTitle = new QLabel(tr("Links"), content);
     linksTitle->setObjectName("section");
     contentLayout->addWidget(linksTitle);
 
-    QVBoxLayout* linksLayout = new QVBoxLayout();
+    QVBoxLayout *linksLayout = new QVBoxLayout();
     linksLayout->setContentsMargins(0, 0, 0, 0);
     linksLayout->setSpacing(8);
 
     // GOG Store link
-    QPushButton* gogBtn = new QPushButton(tr("🔗 GOG Store Page"), content);
+    QPushButton *gogBtn = new QPushButton(tr("🔗 GOG Store Page"), content);
     connect(gogBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-                url = QString("https://www.gog.com/en/game/%1").arg(game_.slug);
+            url = QString("https://www.gog.com/en/game/%1").arg(game_.slug);
         } else {
-                // Fallback: search for game by title
-                QString searchQuery = game_.title;
-                searchQuery = searchQuery.replace(" ", "%20");
-                url = QString("https://www.gog.com/en/games?search=%1").arg(searchQuery);
+            // Fallback: search for game by title
+            QString searchQuery = game_.title;
+            searchQuery = searchQuery.replace(" ", "%20");
+            url = QString("https://www.gog.com/en/games?search=%1").arg(searchQuery);
         }
         qDebug() << "Opening GOG Store:" << url << "Slug:" << game_.slug;
         openLink(url);
@@ -112,17 +109,16 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     linksLayout->addWidget(gogBtn);
 
     // Support link - GOG uses support.gog.com help center
-    QPushButton* supportBtn = new QPushButton(tr("❓ Support"), content);
+    QPushButton *supportBtn = new QPushButton(tr("❓ Support"), content);
     connect(supportBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-                // Try to open game-specific support article
-                url = QString(
-                "https://support.gog.com/hc/en-us/search?query=%1&product=gog")
-                .arg(game_.title.replace(" ", "%20"));
+            // Try to open game-specific support article
+            url = QString("https://support.gog.com/hc/en-us/search?query=%1&product=gog")
+                      .arg(game_.title.replace(" ", "%20"));
         } else {
-                // Fallback: GOG support main page
-                url = "https://support.gog.com/hc/en-us";
+            // Fallback: GOG support main page
+            url = "https://support.gog.com/hc/en-us";
         }
         qDebug() << "Opening Support:" << url << "Slug:" << game_.slug;
         openLink(url);
@@ -130,14 +126,14 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     linksLayout->addWidget(supportBtn);
 
     // Forum link
-    QPushButton* forumBtn = new QPushButton(tr("💬 Forum"), content);
+    QPushButton *forumBtn = new QPushButton(tr("💬 Forum"), content);
     connect(forumBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-                url = QString("https://www.gog.com/forum/%1").arg(game_.slug);
+            url = QString("https://www.gog.com/forum/%1").arg(game_.slug);
         } else {
-                // Fallback: GOG forum main page
-                url = "https://www.gog.com/forum";
+            // Fallback: GOG forum main page
+            url = "https://www.gog.com/forum";
         }
         qDebug() << "Opening Forum:" << url << "Slug:" << game_.slug;
         openLink(url);
@@ -145,7 +141,7 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     linksLayout->addWidget(forumBtn);
 
     // PCGamingWiki link
-    QPushButton* wikiBtn = new QPushButton(tr("📖 PCGamingWiki"), content);
+    QPushButton *wikiBtn = new QPushButton(tr("📖 PCGamingWiki"), content);
     connect(wikiBtn, &QPushButton::clicked, this, [this]() {
         openLink(QString("https://www.pcgamingwiki.com/wiki/%1").arg(game_.title));
     });
@@ -154,25 +150,18 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     contentLayout->addLayout(linksLayout);
 
     // Game info section
-    QLabel* infoTitle = new QLabel(tr("Game Information"), content);
+    QLabel *infoTitle = new QLabel(tr("Game Information"), content);
     infoTitle->setObjectName("section");
     contentLayout->addWidget(infoTitle);
 
-    QString releaseDateStr = game_.releaseDate.isValid()
-        ? game_.releaseDate.toString("yyyy-MM-dd")
-        : tr("Unknown");
+    QString releaseDateStr =
+        game_.releaseDate.isValid() ? game_.releaseDate.toString("yyyy-MM-dd") : tr("Unknown");
 
-    QString infoText = QString(
-        "<b>%1:</b> %2<br>"
-        "<b>%3:</b> %4"
-    ).arg(
-        tr("Platform"),
-        game_.platform,
-        tr("Release Date"),
-        releaseDateStr
-    );
+    QString infoText = QString("<b>%1:</b> %2<br>"
+                               "<b>%3:</b> %4")
+                           .arg(tr("Platform"), game_.platform, tr("Release Date"), releaseDateStr);
 
-    QLabel* infoLabel = new QLabel(infoText, content);
+    QLabel *infoLabel = new QLabel(infoText, content);
     infoLabel->setObjectName("content");
     infoLabel->setTextFormat(Qt::RichText);
     infoLabel->setWordWrap(true);
@@ -184,7 +173,7 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     mainLayout->addWidget(scrollArea);
 
     // Close button
-    QPushButton* closeBtn = new QPushButton(tr("Close"), this);
+    QPushButton *closeBtn = new QPushButton(tr("Close"), this);
     closeBtn->setMinimumWidth(100);
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     mainLayout->addWidget(closeBtn);
@@ -192,10 +181,7 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
 
 GameInformationDialog::~GameInformationDialog() = default;
 
-void GameInformationDialog::openLink(const QString& url)
-{
-    QDesktopServices::openUrl(QUrl(url));
-}
+void GameInformationDialog::openLink(const QString &url) { QDesktopServices::openUrl(QUrl(url)); }
 
 } // namespace ui
 } // namespace opengalaxy

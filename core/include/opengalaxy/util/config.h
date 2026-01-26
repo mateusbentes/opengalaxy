@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include <QString>
+#include <QDir>
 #include <QSettings>
 #include <QStandardPaths>
-#include <QDir>
+#include <QString>
 
 namespace opengalaxy::util {
 
@@ -30,11 +30,11 @@ namespace opengalaxy::util {
  *   - Games: ~/Games/
  */
 class Config {
-public:
+  public:
     /**
      * @brief Get the singleton instance
      */
-    static Config& instance();
+    static Config &instance();
 
     /**
      * @brief Initialize the configuration system
@@ -43,22 +43,22 @@ public:
     static void initialize();
 
     // Path getters
-    QString dataDir() const;           // Application data directory
-    QString configDir() const;         // Configuration directory
-    QString sessionFilePath() const;   // Session file path
-    QString libraryDbPath() const;     // Library database path
-    QString logFilePath() const;       // Log file path
-    QString defaultGamesDir() const;   // Default games installation directory
+    QString dataDir() const;         // Application data directory
+    QString configDir() const;       // Configuration directory
+    QString sessionFilePath() const; // Session file path
+    QString libraryDbPath() const;   // Library database path
+    QString logFilePath() const;     // Log file path
+    QString defaultGamesDir() const; // Default games installation directory
 
     // Settings accessors
     QString gamesDirectory() const;
-    void setGamesDirectory(const QString& path);
+    void setGamesDirectory(const QString &path);
 
     QString language() const;
-    void setLanguage(const QString& locale);
+    void setLanguage(const QString &locale);
 
     QString preferredRunner() const;
-    void setPreferredRunner(const QString& runner);
+    void setPreferredRunner(const QString &runner);
 
     bool autoRefreshLibrary() const;
     void setAutoRefreshLibrary(bool enabled);
@@ -71,10 +71,10 @@ public:
 
     // Window state
     QByteArray windowGeometry() const;
-    void setWindowGeometry(const QByteArray& geometry);
+    void setWindowGeometry(const QByteArray &geometry);
 
     QByteArray windowState() const;
-    void setWindowState(const QByteArray& state);
+    void setWindowState(const QByteArray &state);
 
     // Ensure directories exist
     void ensureDirectoriesExist();
@@ -82,15 +82,15 @@ public:
     // Clear all settings (for testing/reset)
     void clear();
 
-private:
+  private:
     Config();
     ~Config() = default;
 
     // Disable copy/move
-    Config(const Config&) = delete;
-    Config& operator=(const Config&) = delete;
-    Config(Config && ) = delete;
-    Config& operator=(Config && ) = delete;
+    Config(const Config &) = delete;
+    Config &operator=(const Config &) = delete;
+    Config(Config &&) = delete;
+    Config &operator=(Config &&) = delete;
 
     QSettings settings_;
     QString dataDir_;

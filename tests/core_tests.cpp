@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-#include <QtTest/QtTest>
-#include "opengalaxy/util/result.h"
 #include "opengalaxy/util/log.h"
+#include "opengalaxy/util/result.h"
+#include <QtTest/QtTest>
 
 class CoreTests : public QObject {
     Q_OBJECT
 
-private slots:
+  private slots:
     void initTestCase() {
         opengalaxy::util::Logger::instance().setLevel(opengalaxy::util::LogLevel::Debug);
     }

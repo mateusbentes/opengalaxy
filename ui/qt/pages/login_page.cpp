@@ -1,34 +1,32 @@
 #include "login_page.h"
-#include <QVBoxLayout>
+#include "opengalaxy/api/session.h"
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
-#include <QPushButton>
 #include <QLineEdit>
 #include <QMessageBox>
-#include <QGraphicsDropShadowEffect>
-#include "opengalaxy/api/session.h"
+#include <QPushButton>
+#include <QVBoxLayout>
 
 namespace opengalaxy {
 namespace ui {
 
-LoginPage::LoginPage(QWidget *parent)
-    : QWidget(parent)
-{
+LoginPage::LoginPage(QWidget *parent) : QWidget(parent) {
     // Create main layout
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(0, 0, 0, 60);  // Add bottom margin to prevent cutoff
+    QVBoxLayout *mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(0, 0, 0, 60); // Add bottom margin to prevent cutoff
     mainLayout->setSpacing(0);
 
     // Create centered container
-    QWidget* container = new QWidget(this);
+    QWidget *container = new QWidget(this);
     container->setMaximumWidth(450);
 
-    QVBoxLayout* containerLayout = new QVBoxLayout(container);
-    containerLayout->setContentsMargins(40, 40, 40, 60);  // Increased bottom margin
+    QVBoxLayout *containerLayout = new QVBoxLayout(container);
+    containerLayout->setContentsMargins(40, 40, 40, 60); // Increased bottom margin
     containerLayout->setSpacing(20);
 
     // Title
-    QLabel* titleLabel = new QLabel(tr("Welcome to OpenGalaxy"), container);
+    QLabel *titleLabel = new QLabel(tr("Welcome to OpenGalaxy"), container);
     titleLabel->setStyleSheet(R"(
         QLabel {
                 color: #3c3a37;
@@ -41,7 +39,7 @@ LoginPage::LoginPage(QWidget *parent)
     containerLayout->addWidget(titleLabel);
 
     // Subtitle
-    QLabel* subtitleLabel = new QLabel(tr("Sign in with your GOG account"), container);
+    QLabel *subtitleLabel = new QLabel(tr("Sign in with your GOG account"), container);
     subtitleLabel->setStyleSheet(R"(
         QLabel {
                 color: #5a5855;
@@ -53,7 +51,8 @@ LoginPage::LoginPage(QWidget *parent)
     containerLayout->addWidget(subtitleLabel);
 
     // Info text
-    QLabel* infoLabel = new QLabel(tr("You will be redirected to GOG's secure login page"), container);
+    QLabel *infoLabel =
+        new QLabel(tr("You will be redirected to GOG's secure login page"), container);
     infoLabel->setStyleSheet(R"(
         QLabel {
                 color: #8a8884;
@@ -69,7 +68,7 @@ LoginPage::LoginPage(QWidget *parent)
     containerLayout->addSpacing(20);
 
     // Login button with GOG branding
-    QPushButton* loginButton = new QPushButton(tr("🔐 Sign In with GOG"), container);
+    QPushButton *loginButton = new QPushButton(tr("🔐 Sign In with GOG"), container);
     loginButton->setMinimumHeight(56);
     loginButton->setStyleSheet(R"(
         QPushButton {
@@ -99,7 +98,7 @@ LoginPage::LoginPage(QWidget *parent)
 
     // Add container to main layout with centering
     mainLayout->addStretch(1);
-    QHBoxLayout* centerLayout = new QHBoxLayout();
+    QHBoxLayout *centerLayout = new QHBoxLayout();
     centerLayout->addStretch();
     centerLayout->addWidget(container);
     centerLayout->addStretch();
@@ -117,12 +116,9 @@ LoginPage::LoginPage(QWidget *parent)
     connect(loginButton, &QPushButton::clicked, this, &LoginPage::onLoginClicked);
 }
 
-LoginPage::~LoginPage()
-{
-}
+LoginPage::~LoginPage() {}
 
-void LoginPage::onLoginClicked()
-{
+void LoginPage::onLoginClicked() {
     // Emit with empty credentials - OAuth dialog will handle authentication
     emit loginRequested("", "");
 }

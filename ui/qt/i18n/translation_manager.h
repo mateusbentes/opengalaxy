@@ -2,18 +2,17 @@
 #define TRANSLATION_MANAGER_H
 
 #include <QObject>
-#include <QTranslator>
 #include <QString>
+#include <QTranslator>
 
 namespace opengalaxy {
 namespace ui {
 
-class TranslationManager : public QObject
-{
+class TranslationManager : public QObject {
     Q_OBJECT
 
-public:
-    explicit TranslationManager(QObject* parent = nullptr);
+  public:
+    explicit TranslationManager(QObject *parent = nullptr);
     ~TranslationManager() override;
 
     // Get current UI locale (e.g., "en_US", "pt_BR")
@@ -26,19 +25,19 @@ public:
     QStringList availableLocales() const;
 
     // Get display name for a locale (e.g., "English", "Português")
-    QString localeDisplayName(const QString& locale) const;
+    QString localeDisplayName(const QString &locale) const;
 
     // Set language (will take effect after restart)
-    void setLocale(const QString& locale);
+    void setLocale(const QString &locale);
 
     // Load language from settings or system default
     void loadFromSettings();
 
-signals:
-    void localeChanged(const QString& newLocale);
+  signals:
+    void localeChanged(const QString &newLocale);
 
-private:
-    bool loadTranslator(const QString& locale);
+  private:
+    bool loadTranslator(const QString &locale);
 
     QTranslator translator_;
     QString currentLocale_;

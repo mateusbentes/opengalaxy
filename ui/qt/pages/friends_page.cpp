@@ -1,25 +1,19 @@
 #include "friends_page.h"
 #include <QHBoxLayout>
-#include <QPushButton>
 #include <QMessageBox>
+#include <QPushButton>
 
 namespace opengalaxy {
 namespace ui {
 
-FriendsPage::FriendsPage(api::Session* session, QWidget *parent)
-    : QWidget(parent)
-    , session_(session)
-    , gogClient_(session_, this)
-{
+FriendsPage::FriendsPage(api::Session *session, QWidget *parent)
+    : QWidget(parent), session_(session), gogClient_(session_, this) {
     setupUI();
 }
 
-FriendsPage::~FriendsPage()
-{
-}
+FriendsPage::~FriendsPage() {}
 
-void FriendsPage::setupUI()
-{
+void FriendsPage::setupUI() {
     setStyleSheet(R"(
         FriendsPage {
                 background: #f5f3f0;
@@ -31,16 +25,16 @@ void FriendsPage::setupUI()
     layout->setSpacing(16);
 
     // Header
-    QHBoxLayout* headerLayout = new QHBoxLayout();
+    QHBoxLayout *headerLayout = new QHBoxLayout();
 
-    QLabel* titleLabel = new QLabel(tr("Friends"), this);
+    QLabel *titleLabel = new QLabel(tr("Friends"), this);
     titleLabel->setStyleSheet(R"(
         QLabel { color: #3c3a37; font-size: 28px; font-weight: 700; }
     )");
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
 
-    QPushButton* refreshBtn = new QPushButton(tr("Refresh"), this);
+    QPushButton *refreshBtn = new QPushButton(tr("Refresh"), this);
     refreshBtn->setStyleSheet(R"(
         QPushButton {
                 background: #9b4dca;
@@ -100,9 +94,8 @@ void FriendsPage::setupUI()
     refreshFriends();
 }
 
-void FriendsPage::refreshFriends()
-{
-    if (!session_  ||  !session_->isAuthenticated()) {
+void FriendsPage::refreshFriends() {
+    if (!session_ || !session_->isAuthenticated()) {
         statusLabel->setText(tr("Please log in to view friends."));
         friendsView->clear();
         return;
@@ -118,9 +111,9 @@ void FriendsPage::refreshFriends()
     // For now, show a message
     statusLabel->setText(tr("Friends feature coming soon!"));
 
-    QListWidgetItem* item = new QListWidgetItem(friendsView);
+    QListWidgetItem *item = new QListWidgetItem(friendsView);
     item->setText(tr("🚧 The GOG API friends endpoint is not yet implemented.\n"
-                            "This feature will be available in a future update."));
+                     "This feature will be available in a future update."));
     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
 
     // TODO: Implement when GOG API client has friends support

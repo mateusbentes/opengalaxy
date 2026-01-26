@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
-#include <QObject>
-#include <vector>
-#include <memory>
 #include "runner.h"
+#include <QObject>
+#include <memory>
+#include <vector>
 
 namespace opengalaxy::runners {
 
@@ -14,8 +14,8 @@ namespace opengalaxy::runners {
 class RunnerManager : public QObject {
     Q_OBJECT
 
-public:
-    explicit RunnerManager(QObject* parent = nullptr);
+  public:
+    explicit RunnerManager(QObject *parent = nullptr);
     ~RunnerManager() override;
 
     // Discover and register all available runners
@@ -25,19 +25,19 @@ public:
     std::vector<RunnerCapabilities> availableRunners() const;
 
     // Find best runner for a game
-    Runner* findBestRunner(const LaunchConfig& config);
+    Runner *findBestRunner(const LaunchConfig &config);
 
     // Get specific runner by name
-    Runner* getRunner(const QString& name);
+    Runner *getRunner(const QString &name);
 
     // Register custom runner
     void registerRunner(std::unique_ptr<Runner> runner);
 
-signals:
+  signals:
     void runnersDiscovered(int count);
-    void runnerAdded(const QString& name);
+    void runnerAdded(const QString &name);
 
-private:
+  private:
     std::vector<std::unique_ptr<Runner>> runners_;
 
     void discoverNativeRunner();

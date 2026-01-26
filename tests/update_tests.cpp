@@ -1,17 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
-#include <QtTest/QtTest>
 #include "opengalaxy/api/gog_client.h"
 #include "opengalaxy/library/library_service.h"
+#include <QtTest/QtTest>
 
 using namespace opengalaxy;
 
 class UpdateTests : public QObject {
     Q_OBJECT
 
-private slots:
-    void initTestCase() {
-        qDebug() << "Starting update tests";
-    }
+  private slots:
+    void initTestCase() { qDebug() << "Starting update tests"; }
 
     // ========== Game Update Tests ==========
 
@@ -126,7 +124,8 @@ private slots:
 
     void testAppUpdateDownload() {
         // Test downloading OpenGalaxy update
-        QString downloadUrl = "https://github.com/mateusbentes/opengalaxy/releases/download/v1.1.0/opengalaxy-1.1.0.exe";
+        QString downloadUrl = "https://github.com/mateusbentes/opengalaxy/releases/download/v1.1.0/"
+                              "opengalaxy-1.1.0.exe";
 
         bool downloadStarted = false;
         int progressPercentage = 0;
@@ -149,7 +148,7 @@ private slots:
 
         // Mock checksum verification
         QString actualChecksum = "abc123def456";
-        bool checksumValid = (actualChecksum  ==  expectedChecksum);
+        bool checksumValid = (actualChecksum == expectedChecksum);
 
         QVERIFY(checksumValid);
     }
@@ -275,9 +274,7 @@ private slots:
         QVERIFY(!failureReason.isEmpty());
     }
 
-    void cleanupTestCase() {
-        qDebug() << "Update tests completed";
-    }
+    void cleanupTestCase() { qDebug() << "Update tests completed"; }
 };
 
 QTEST_MAIN(UpdateTests)
