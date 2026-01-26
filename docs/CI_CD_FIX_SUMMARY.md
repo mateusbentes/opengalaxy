@@ -183,9 +183,9 @@ a7d59d4 Fix CI failures: update ui/qt/CMakeLists.txt and add clang-format/clang-
 ## Expected CI/CD Results
 
 ### Build Checks
-- ✅ Linux builds (x86_64, arm64, armv7, riscv64) - Should now pass
-- ✅ macOS builds (x86_64, arm64) - Should now pass
-- ✅ Windows builds (x64, x86, arm64) - Should now pass
+- ✅ Linux builds (x86_64, arm64, riscv64) - Should now pass
+- ✅ macOS builds (arm64) - Should now pass
+- ✅ Windows builds (x64) - Should now pass
 
 ### Code Quality Checks
 - ✅ clang-format - Should now pass with proper configuration

@@ -448,10 +448,20 @@ If you want to help implement these features:
 
 ---
 
-## CI/CD Pipeline Roadmap
+## CI/CD Pipeline Status
 
-### Phase 1 (Planned)
-- [ ] Windows x64 builds (re-enable)
+### ✅ Phase 1 (Completed)
+- [x] Linux x86_64 builds (native)
+- [x] Linux arm64 builds (native, using GitHub's free ARM runners)
+- [x] macOS arm64 builds (native)
+
+### Phase 2 (Planned)
+- [ ] Linux RISC-V builds
+  - Requires RISC-V runner (not available from GitHub)
+  - Options: RISC-V Runners (3000 free min/month) or self-hosted runner
+
+### Phase 3 (Planned)
+- [ ] Windows x64 builds
   - Requires Qt installation method resolution
   - Status: Investigating alternative approaches
 

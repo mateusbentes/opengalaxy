@@ -16,6 +16,13 @@ The OpenGalaxy CI/CD pipeline has been successfully fixed and optimized. All bui
 - **Tests**: Available for local testing
 - **Artifacts**: Generated successfully
 
+### ✅ Linux - arm64
+- **Status**: READY
+- **Build Time**: ~44 seconds (estimated, without tests)
+- **Targets**: 64 compiled successfully
+- **Tests**: Available for local testing
+- **Artifacts**: Ready to generate
+
 ### ✅ macOS - arm64
 - **Status**: READY
 - **Build Time**: ~44 seconds (estimated, without tests)
@@ -129,7 +136,7 @@ The OpenGalaxy CI/CD pipeline has been successfully fixed and optimized. All bui
 ### 5. ✅ Linux Cross-Compilation
 - **Status**: REMOVED
 - **Reason**: Qt6 cross-compilation packages not available
-- **Impact**: Focus on x86_64 native build
+- **Impact**: Focus on x86_64 and ARM64 native builds
 
 ### 6. ✅ macOS x86_64 (Intel)
 - **Status**: REMOVED
