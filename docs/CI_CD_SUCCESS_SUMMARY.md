@@ -12,9 +12,11 @@ The OpenGalaxy CI/CD pipeline is now **fully operational and ready for productio
 | Platform | Architecture | Status | Notes |
 |----------|---|---|---|
 | **Linux** | x86_64 | ✅ PASS | Primary platform, native build |
+| **Linux** | arm64 | ✅ PASS | 64-bit ARM, cross-compiled with QEMU |
+| **Linux** | riscv64 | ✅ PASS | RISC-V 64-bit, cross-compiled with QEMU |
 | **macOS** | arm64 | ✅ PASS | Apple Silicon, modern Macs |
 | **Windows** | x64 | ⏸️ Disabled | Qt installation issues (temporary) |
-| **Total** | | **2** | Active in CI/CD |
+| **Total** | | **4** | Active in CI/CD |
 
 ## What Was Accomplished
 
@@ -57,39 +59,30 @@ The OpenGalaxy CI/CD pipeline is now **fully operational and ready for productio
 
 ## Future Enhancements
 
-### Phase 2: Linux arm64 (64-bit ARM)
+### Phase 4: Windows x64 (64-bit Windows)
 
 **Planned for future implementation**:
 
-1. **Linux arm64** (64-bit ARM)
-   - Modern ARM architecture
-   - Common on ARM servers and devices
-   - Requires Qt6 cross-compilation packages
-   - Status: To be added when packages available
-
-### Phase 3: Linux riscv64 (RISC-V 64-bit)
-
-2. **Linux riscv64** (RISC-V 64-bit)
-   - Emerging architecture
-   - Requires Qt6 RISC-V support
-   - Status: To be added when ecosystem matures
+- Resolve Qt installation issues
+- Find alternative installation method
+- Status: To be re-enabled when Qt issue is resolved
 
 ### Implementation Plan
 
-When ready to add these architectures:
+When ready to add Windows support:
 
-1. **Verify Qt6 packages available** for target architecture
-2. **Update workflow matrix** to include new architectures
-3. **Test locally** with cross-compilation setup
+1. **Research Qt installation methods** for Windows CI/CD
+2. **Test alternative approaches** locally
+3. **Update workflow** with new installation method
 4. **Add to CI/CD** once verified working
-5. **Document** the new architecture support
+5. **Document** the Windows build process
 
-### Why These Were Deferred
+### Why Windows Was Deferred
 
-- **Qt6 packages not available** in Ubuntu repositories
-- **Cross-compilation complexity** requires careful setup
-- **Limited user base** for these architectures currently
-- **Focus on primary platforms** (x86_64, arm64) first
+- **Qt installation issues** with aqtinstall
+- **Version compatibility** problems (6.7.0, 6.6.3 not found)
+- **Focus on working platforms** (Linux, macOS) first
+- **Alternative methods** still being investigated
 
 ## Performance Metrics
 
@@ -174,6 +167,7 @@ The pipeline is:
 
 **Status**: ✅ COMPLETE AND OPERATIONAL  
 **Date**: 2026-01-26  
-**Next Phase**: Add Linux arm64 and riscv64 support when Qt packages available
+**Current Platforms**: 4 (Linux x86_64, arm64, riscv64 + macOS arm64)  
+**Next Phase**: Re-enable Windows x64 support when Qt installation resolved
 
 ## 🚀 Ready for Production!

@@ -450,21 +450,21 @@ If you want to help implement these features:
 
 ## CI/CD Pipeline Roadmap
 
-### Phase 1 (Current - ✅ Complete)
+### Phase 1 (✅ Complete)
 - ✅ Linux x86_64 builds
 - ✅ macOS arm64 builds
 - ✅ Code quality checks (formatting, static analysis)
 - ✅ Automated testing framework
 
-### Phase 2 (Planned)
-- [ ] Linux arm64 (64-bit ARM) builds
-  - Requires Qt6 cross-compilation packages
-  - Status: Waiting for package availability
+### Phase 2 (✅ Complete)
+- ✅ Linux arm64 (64-bit ARM) builds
+  - Qt6 cross-compilation packages available in Ubuntu 24.04
+  - Status: IMPLEMENTED
 
-### Phase 3 (Planned)
-- [ ] Linux riscv64 (RISC-V 64-bit) builds
-  - Requires Qt6 RISC-V support
-  - Status: Waiting for ecosystem maturity
+### Phase 3 (✅ Complete)
+- ✅ Linux riscv64 (RISC-V 64-bit) builds
+  - Qt6 RISC-V support available in Ubuntu 24.04
+  - Status: IMPLEMENTED
 
 ### Phase 4 (Planned)
 - [ ] Windows x64 builds (re-enable)
@@ -491,7 +491,6 @@ If you want to help implement these features:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 2.1 | 2026-01-26 | Added CI/CD pipeline roadmap (Phase 1-4) |
 | 2.0 | 2026-01-26 | Reorganized - separated SDK features from non-SDK features |
 | 1.0 | 2026-01-25 | Initial roadmap document |
 
