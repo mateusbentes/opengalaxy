@@ -174,6 +174,7 @@ Complete documentation index:
 
 ### Git Commits
 ```
+d62f9ae docs: Add CI/CD fix summary document
 c501d07 docs: Add comprehensive documentation index
 0bd22bf docs: Add comprehensive CI/CD and code quality documentation
 a7d59d4 Fix CI failures: update ui/qt/CMakeLists.txt and add clang-format/clang-tidy configs
