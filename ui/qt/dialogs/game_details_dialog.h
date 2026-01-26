@@ -21,15 +21,19 @@ class GameDetailsDialog : public QDialog
     Q_OBJECT
 
 public:
-    GameDetailsDialog(const api::GameInfo& game,
-                      library::LibraryService* libraryService,
-                      runners::RunnerManager* runnerManager,
-                      QWidget* parent = nullptr);
+    explicit GameDetailsDialog(const api::GameInfo& game,
+                               library::LibraryService* libraryService,
+                               runners::RunnerManager* runnerManager,
+                               QWidget* parent = nullptr);
     ~GameDetailsDialog();
 
 private slots:
     void onSave();
     void onClose();
+    void launchWinecfg();
+    void launchProtontricks();
+    void launchWinetricks();
+    void launchRegedit();
 
 private:
     void populateRunners();
@@ -43,6 +47,12 @@ private:
     QLineEdit* runnerExecutableEdit_ = nullptr;
     QPlainTextEdit* runnerArgsEdit_ = nullptr;
     QPlainTextEdit* envEdit_ = nullptr;
+
+    // Tool buttons
+    QPushButton* winecfgBtn_ = nullptr;
+    QPushButton* protontricksBtn_ = nullptr;
+    QPushButton* winetricksBtn_ = nullptr;
+    QPushButton* regeditBtn_ = nullptr;
 
     QPushButton* saveButton_ = nullptr;
     QPushButton* closeButton_ = nullptr;

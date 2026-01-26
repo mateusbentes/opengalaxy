@@ -41,11 +41,14 @@ signals:
     void installRequested(const QString& gameId);
     void cancelInstallRequested(const QString& gameId);
     void updateRequested(const QString& gameId);
+    void informationRequested(const QString& gameId);
+    void propertiesRequested(const QString& gameId);
 
 protected:
     void enterEvent(QEnterEvent* event) override;
     void leaveEvent(QEvent* event) override;
     void mouseDoubleClickEvent(QMouseEvent* event) override;
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
     void setupAnimations();

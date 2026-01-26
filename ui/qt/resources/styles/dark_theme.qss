@@ -1,4 +1,4 @@
-/* OpenGalaxy Light Theme - GOG Galaxy Style */
+/* OpenGalaxy Light Theme - Clean & Modern */
 
 /* Global Styles */
 * {
@@ -8,7 +8,7 @@
 
 /* Main Window */
 QMainWindow {
-    background: #f5f3f0;
+    background: #f8f7f5;
 }
 
 /* Title Bar */
@@ -70,31 +70,28 @@ QListWidget#sidebar::item:hover {
 
 QListWidget#sidebar::item:selected {
     background: #5a5855;
-    border-left: 3px solid #9b4dca;
+    border-left: 3px solid #6c5ce7;
     color: #ffffff;
     font-weight: 600;
 }
 
 /* Buttons */
 QPushButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #9b4dca, stop:1 #8b3dba);
+    background: #6c5ce7;
     color: white;
     border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
+    border-radius: 6px;
+    padding: 10px 20px;
     font-weight: 600;
     font-size: 14px;
 }
 
 QPushButton:hover {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #ab5dda, stop:1 #9b4dca);
+    background: #5f3dc4;
 }
 
 QPushButton:pressed {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #8b3dba, stop:1 #7b2daa);
+    background: #4c2d9f;
 }
 
 QPushButton:disabled {
@@ -103,15 +100,13 @@ QPushButton:disabled {
 }
 
 QPushButton#playButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #00e676, stop:1 #00c853);
+    background: #27ae60;
     font-size: 16px;
-    padding: 14px 32px;
+    padding: 12px 28px;
 }
 
 QPushButton#playButton:hover {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                stop:0 #00ff88, stop:1 #00d65f);
+    background: #229954;
 }
 
 QPushButton#secondaryButton {
@@ -127,15 +122,15 @@ QPushButton#secondaryButton:hover {
 /* Input Fields */
 QLineEdit {
     background: #ffffff;
-    border: 2px solid #d0cec9;
-    border-radius: 8px;
-    padding: 12px 16px;
+    border: 2px solid #e8e6e3;
+    border-radius: 6px;
+    padding: 10px 14px;
     color: #3c3a37;
-    selection-background-color: #9b4dca;
+    selection-background-color: #6c5ce7;
 }
 
 QLineEdit:focus {
-    border: 2px solid #9b4dca;
+    border: 2px solid #6c5ce7;
     background: #ffffff;
 }
 
@@ -157,13 +152,13 @@ QScrollBar:vertical {
 }
 
 QScrollBar::handle:vertical {
-    background: #9b4dca;
+    background: #6c5ce7;
     border-radius: 6px;
     min-height: 30px;
 }
 
 QScrollBar::handle:vertical:hover {
-    background: #ab5dda;
+    background: #5f3dc4;
 }
 
 QScrollBar::add-line:vertical,
@@ -179,13 +174,13 @@ QScrollBar:horizontal {
 }
 
 QScrollBar::handle:horizontal {
-    background: #9b4dca;
+    background: #6c5ce7;
     border-radius: 6px;
     min-width: 30px;
 }
 
 QScrollBar::handle:horizontal:hover {
-    background: #ab5dda;
+    background: #5f3dc4;
 }
 
 /* Labels */
@@ -216,12 +211,14 @@ QLabel#sectionTitle {
 QFrame#gameCard {
     background: #ffffff;
     border-radius: 12px;
-    border: 1px solid #d0cec9;
+    border: 1px solid #e8e6e3;
+    padding: 0px;
 }
 
 QFrame#gameCard:hover {
-    background: #fafaf9;
-    border: 1px solid #9b4dca;
+    background: #ffffff;
+    border: 2px solid #6c5ce7;
+    padding: -1px;
 }
 
 /* Tabs */
@@ -245,23 +242,23 @@ QTabBar::tab:hover {
 }
 
 QTabBar::tab:selected {
-    background: rgba(124, 77, 255, 0.2);
+    background: rgba(108, 92, 231, 0.15);
     color: white;
-    border-bottom: 3px solid #7c4dff;
+    border-bottom: 3px solid #6c5ce7;
     font-weight: 600;
 }
 
 /* Combo Box */
 QComboBox {
-    background: rgba(255, 255, 255, 0.05);
-    border: 2px solid rgba(124, 77, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px 16px;
-    color: white;
+    background: #ffffff;
+    border: 2px solid #e8e6e3;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #3c3a37;
 }
 
 QComboBox:hover {
-    border: 2px solid rgba(124, 77, 255, 0.5);
+    border: 2px solid #6c5ce7;
 }
 
 QComboBox::drop-down {
@@ -276,51 +273,50 @@ QComboBox::down-arrow {
 }
 
 QComboBox QAbstractItemView {
-    background: #2d1b4e;
-    border: 1px solid rgba(124, 77, 255, 0.3);
-    border-radius: 8px;
-    selection-background-color: rgba(124, 77, 255, 0.3);
-    color: white;
+    background: #ffffff;
+    border: 1px solid #e8e6e3;
+    border-radius: 6px;
+    selection-background-color: #6c5ce7;
+    color: #3c3a37;
     padding: 4px;
 }
 
 /* Check Box */
 QCheckBox {
-    color: #e0e0e0;
+    color: #3c3a37;
     spacing: 8px;
 }
 
 QCheckBox::indicator {
-    width: 20px;
-    height: 20px;
-    border-radius: 4px;
-    border: 2px solid rgba(124, 77, 255, 0.5);
-    background: rgba(255, 255, 255, 0.05);
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    border: 2px solid #d0cec9;
+    background: #ffffff;
 }
 
 QCheckBox::indicator:hover {
-    border: 2px solid #7c4dff;
-    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid #6c5ce7;
+    background: #ffffff;
 }
 
 QCheckBox::indicator:checked {
-    background: #7c4dff;
-    border: 2px solid #7c4dff;
+    background: #6c5ce7;
+    border: 2px solid #6c5ce7;
 }
 
 /* Progress Bar */
 QProgressBar {
-    background: rgba(255, 255, 255, 0.05);
+    background: #e8e6e3;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
     height: 8px;
     text-align: center;
 }
 
 QProgressBar::chunk {
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                                stop:0 #7c4dff, stop:1 #00e676);
-    border-radius: 8px;
+    background: #6c5ce7;
+    border-radius: 6px;
 }
 
 /* Menu Bar */
@@ -383,11 +379,11 @@ QSplitter::handle:hover {
 
 /* Group Box */
 QGroupBox {
-    border: 2px solid rgba(124, 77, 255, 0.3);
-    border-radius: 12px;
+    border: 2px solid #e8e6e3;
+    border-radius: 8px;
     margin-top: 12px;
     padding-top: 16px;
-    color: white;
+    color: #3c3a37;
     font-weight: 600;
 }
 
@@ -395,7 +391,7 @@ QGroupBox::title {
     subcontrol-origin: margin;
     subcontrol-position: top left;
     padding: 0 8px;
-    background: #2d1b4e;
+    background: #f8f7f5;
 }
 
 /* Notification Widget */

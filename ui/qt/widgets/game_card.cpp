@@ -10,6 +10,8 @@
 #include <QDebug>
 #include <QTimer>
 #include <QRandomGenerator>
+#include <QMenu>
+#include <QContextMenuEvent>
 #include <algorithm>
 
 namespace opengalaxy {
@@ -301,6 +303,44 @@ void GameCard::mouseDoubleClickEvent(QMouseEvent* event)
 {
     Q_UNUSED(event);
     emit detailsRequested(gameId_);
+}
+
+void GameCard::contextMenuEvent(QContextMenuEvent* event)
+{
+    QMenu menu;
+    menu.setStyleSheet(R"(
+        QMenu {
+            background: #f8f7f5;
+            color: #3c3a37;
+            border: 1px solid #e8e6e3;
+            border-radius: 6px;
+            padding: 4px;
+        }
+        QMenu::item {
+            padding: 8px 16px;
+            border-radius: 4px;
+            color: #3c3a37;
+        }
+        QMenu::item:hover {
+            background: #e8e6e3;
+            color: #3c3a37;
+        }
+        QMenu::item:selected {
+            background: #6c5ce7;
+            color: white;
+        }
+    )");
+    
+    QAction* informationAction = menu.addAction(tr("Information"));
+    QAction* propertiesAction = menu.addAction(tr("Properties"));
+    
+    QAction* selectedAction = menu.exec(event->globalPos());
+    
+    if (selectedAction == informationAction) {
+        emit informationRequested(gameId_);
+    } else if (selectedAction == propertiesAction) {
+        emit propertiesRequested(gameId_);
+    }
 }
 
 void GameCard::enterEvent(QEnterEvent* event)

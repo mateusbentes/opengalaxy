@@ -72,7 +72,7 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
     QSqlQuery query(db_->database());
     query.prepare(
         "SELECT id, title, platform, coverUrl, isInstalled, installPath, version, preferredRunner, runnerExecutable, "
-        "runnerArguments, extraEnvironment FROM games WHERE id = ?"
+        "runnerArguments, extraEnvironment, slug FROM games WHERE id = ?"
     );
     query.addBindValue(gameId);
 
@@ -99,6 +99,8 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
                 }
             }
         }
+
+        game.slug = query.value(11).toString();
 
         callback(util::Result<api::GameInfo>::success(game));
     } else {
@@ -252,6 +254,7 @@ void LibraryService::initDatabase()
     tryAddColumn("ALTER TABLE games ADD COLUMN runnerExecutable TEXT");
     tryAddColumn("ALTER TABLE games ADD COLUMN runnerArguments TEXT");
     tryAddColumn("ALTER TABLE games ADD COLUMN extraEnvironment TEXT");
+    tryAddColumn("ALTER TABLE games ADD COLUMN slug TEXT");
 }
 
 void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
@@ -266,9 +269,9 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
     bool hasError = false;
     for (const auto& game : games) {
         query.prepare(R"(
-            INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size,
+            INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size, slug,
                                          preferredRunner, runnerExecutable, runnerArguments, extraEnvironment)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         )");
         query.addBindValue(game.id);
         query.addBindValue(game.title);
@@ -279,6 +282,7 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         query.addBindValue(game.publisher);
         query.addBindValue(game.description);
         query.addBindValue(game.size);
+        query.addBindValue(game.slug);
 
         // Keep user properties when refreshing from API (these fields are user-owned)
         query.addBindValue(game.preferredRunner);
@@ -316,7 +320,7 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
     QSqlQuery query(db_->database());
     if (query.exec(
             "SELECT id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, isInstalled, installPath, "
-            "version, size, preferredRunner, runnerExecutable, runnerArguments, extraEnvironment FROM games")) {
+            "version, size, preferredRunner, runnerExecutable, runnerArguments, extraEnvironment, slug FROM games")) {
         while (query.next()) {
             api::GameInfo game;
             game.id = query.value(0).toString();
@@ -336,6 +340,7 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
             game.runnerArguments = query.value(14).toString().split('\n', Qt::SkipEmptyParts);
 
             const QString envJson = query.value(15).toString();
+            game.slug = query.value(16).toString();
             if (!envJson.isEmpty()) {
                 const QJsonDocument doc = QJsonDocument::fromJson(envJson.toUtf8());
                 if (doc.isObject()) {

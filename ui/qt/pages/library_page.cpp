@@ -13,6 +13,7 @@
 #include "../widgets/game_card.h"
 #include "../widgets/notification_widget.h"
 #include "../dialogs/game_details_dialog.h"
+#include "../dialogs/game_information_dialog.h"
 
 namespace opengalaxy {
 namespace ui {
@@ -182,6 +183,8 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
             connect(card, &GameCard::installRequested, this, &LibraryPage::installGame);
             connect(card, &GameCard::cancelInstallRequested, this, &LibraryPage::cancelInstall);
             connect(card, &GameCard::updateRequested, this, &LibraryPage::updateGame);
+            connect(card, &GameCard::informationRequested, this, &LibraryPage::showGameInformation);
+            connect(card, &GameCard::propertiesRequested, this, &LibraryPage::openGameProperties);
 
             cardsById_.insert(game.id, card);
             
@@ -246,8 +249,41 @@ void LibraryPage::openGameDetails(const QString& gameId)
             QMessageBox::warning(this, "Error", result.errorMessage());
             return;
         }
-        GameDetailsDialog dlg(result.value(), &libraryService_, &runnerManager_, this);
-        dlg.exec();
+        GameDetailsDialog* dlg = new GameDetailsDialog(result.value(), &libraryService_, &runnerManager_, this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->exec();
+    });
+}
+
+void LibraryPage::openGameProperties(const QString& gameId)
+{
+    qDebug() << "Opening properties for game:" << gameId;
+    libraryService_.getGame(gameId, [this](auto result) {
+        if (!result.isOk()) {
+            qDebug() << "Error getting game:" << result.errorMessage();
+            QMessageBox::warning(this, "Error", result.errorMessage());
+            return;
+        }
+        qDebug() << "Got game info:" << result.value().title;
+        GameDetailsDialog* dlg = new GameDetailsDialog(result.value(), &libraryService_, &runnerManager_, this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->exec();
+    });
+}
+
+void LibraryPage::showGameInformation(const QString& gameId)
+{
+    qDebug() << "Opening information for game:" << gameId;
+    libraryService_.getGame(gameId, [this](auto result) {
+        if (!result.isOk()) {
+            qDebug() << "Error getting game:" << result.errorMessage();
+            QMessageBox::warning(this, "Error", result.errorMessage());
+            return;
+        }
+        qDebug() << "Got game info:" << result.value().title;
+        GameInformationDialog* dlg = new GameInformationDialog(result.value(), this);
+        dlg->setAttribute(Qt::WA_DeleteOnClose);
+        dlg->exec();
     });
 }
 

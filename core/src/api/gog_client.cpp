@@ -69,6 +69,7 @@ void GOGClient::fetchLibrary(GamesCallback callback)
                 GameInfo g;
                 g.id = QString::number(p.value("id").toVariant().toLongLong());
                 g.title = p.value("title").toString();
+                g.slug = p.value("slug").toString();
                 
                 // GOG API returns protocol-relative URLs (//images-X.gog.com/...)
                 // or full HTTPS URLs. Both need size suffix for CDN.

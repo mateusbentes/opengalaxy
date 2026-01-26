@@ -34,6 +34,8 @@ private slots:
 
 private:
     void openGameDetails(const QString& gameId);
+    void openGameProperties(const QString& gameId);
+    void showGameInformation(const QString& gameId);
     void launchGame(const QString& gameId);
     void installGame(const QString& gameId);
     void cancelInstall(const QString& gameId);

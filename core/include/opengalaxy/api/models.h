@@ -13,7 +13,8 @@ namespace opengalaxy::api {
  * @brief Game information from GOG API
  */
 struct GameInfo {
-    QString id;              // GOG game ID
+    QString id;              // GOG game ID (numeric)
+    QString slug;            // GOG game slug (for store URLs)
     QString title;           // Game title
     QString platform;        // Platform (Windows, Linux, macOS)
     QString coverUrl;        // Cover image URL

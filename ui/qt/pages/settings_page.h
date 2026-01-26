@@ -26,7 +26,6 @@ signals:
 private slots:
     void onLanguageChanged(int index);
     void onInstallationFoldersClicked();
-    void onLauncherOptionsClicked();
     void onLogoutClicked();
     void onAboutClicked();
     void onCheckForUpdates();

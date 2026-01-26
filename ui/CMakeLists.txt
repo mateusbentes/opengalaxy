@@ -16,6 +16,7 @@ set(UI_SOURCES
     qt/widgets/game_card.cpp
     qt/widgets/notification_widget.cpp
     qt/dialogs/game_details_dialog.cpp
+    qt/dialogs/game_information_dialog.cpp
     qt/dialogs/cloud_saves_dialog.cpp
     qt/dialogs/oauth_login_dialog.cpp
     qt/i18n/translation_manager.cpp
@@ -32,6 +33,7 @@ set(UI_HEADERS
     qt/widgets/game_card.h
     qt/widgets/notification_widget.h
     qt/dialogs/game_details_dialog.h
+    qt/dialogs/game_information_dialog.h
     qt/dialogs/cloud_saves_dialog.h
     qt/dialogs/oauth_login_dialog.h
     qt/i18n/translation_manager.h

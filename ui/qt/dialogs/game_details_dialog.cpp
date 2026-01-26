@@ -4,6 +4,9 @@
 #include <QFormLayout>
 #include <QHBoxLayout>
 #include <QMessageBox>
+#include <QProcess>
+#include <QStandardPaths>
+#include <QDebug>
 
 namespace opengalaxy {
 namespace ui {
@@ -45,7 +48,7 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
     , libraryService_(libraryService)
     , runnerManager_(runnerManager)
 {
-    setWindowTitle("Game Properties");
+    setWindowTitle(tr("Game Properties"));
     setModal(true);
     resize(520, 520);
 
@@ -58,34 +61,63 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
                              this);
     root->addWidget(titleLabel_);
 
-    auto* compatBox = new QGroupBox("Compatibility", this);
+    auto* compatBox = new QGroupBox(tr("Compatibility"), this);
     auto* form = new QFormLayout(compatBox);
 
     runnerCombo_ = new QComboBox(compatBox);
-    runnerCombo_->setToolTip("Choose how this game should be launched");
+    runnerCombo_->setToolTip(tr("Choose how this game should be launched"));
 
     runnerExecutableEdit_ = new QLineEdit(compatBox);
-    runnerExecutableEdit_->setPlaceholderText("Optional: full path to wrapper (overrides auto-detected path)");
+    runnerExecutableEdit_->setPlaceholderText(tr("Optional: full path to wrapper (overrides auto-detected path)"));
 
     runnerArgsEdit_ = new QPlainTextEdit(compatBox);
-    runnerArgsEdit_->setPlaceholderText("Runner arguments (one per line)\nExample: --some-flag");
+    runnerArgsEdit_->setPlaceholderText(tr("Runner arguments (one per line)\nExample: --some-flag"));
     runnerArgsEdit_->setFixedHeight(90);
 
     envEdit_ = new QPlainTextEdit(compatBox);
-    envEdit_->setPlaceholderText("Environment variables (KEY=VALUE, one per line)\nExample: BOX64_LOG=1");
+    envEdit_->setPlaceholderText(tr("Environment variables (KEY=VALUE, one per line)\nCommon: DXVK_HUD=fps, VKD3D_CONFIG=..., PROTON_LOG=1"));
     envEdit_->setFixedHeight(140);
 
-    form->addRow("Translator / Runner", runnerCombo_);
-    form->addRow("Runner executable", runnerExecutableEdit_);
-    form->addRow("Runner arguments", runnerArgsEdit_);
-    form->addRow("Environment", envEdit_);
+    form->addRow(tr("Translator / Runner"), runnerCombo_);
+    form->addRow(tr("Runner executable"), runnerExecutableEdit_);
+    form->addRow(tr("Runner arguments"), runnerArgsEdit_);
+    form->addRow(tr("Environment"), envEdit_);
 
     root->addWidget(compatBox);
 
+    // Wine/Proton Tools Section
+    auto* toolsBox = new QGroupBox(tr("Wine/Proton Tools"), this);
+    auto* toolsLayout = new QHBoxLayout(toolsBox);
+    toolsLayout->setSpacing(8);
+
+    auto* winecfgBtn = new QPushButton(tr("Winecfg"), this);
+    winecfgBtn->setToolTip(tr("Open Wine configuration (winecfg)"));
+    connect(winecfgBtn, &QPushButton::clicked, this, &GameDetailsDialog::launchWinecfg);
+
+    auto* protontricksBtn = new QPushButton(tr("Protontricks"), this);
+    protontricksBtn->setToolTip(tr("Open Protontricks for DLL/runtime management"));
+    connect(protontricksBtn, &QPushButton::clicked, this, &GameDetailsDialog::launchProtontricks);
+
+    auto* winetricksBtn = new QPushButton(tr("Winetricks"), this);
+    winetricksBtn->setToolTip(tr("Open Winetricks for DLL/runtime management"));
+    connect(winetricksBtn, &QPushButton::clicked, this, &GameDetailsDialog::launchWinetricks);
+
+    auto* regeditBtn = new QPushButton(tr("Regedit"), this);
+    regeditBtn->setToolTip(tr("Open Wine Registry Editor"));
+    connect(regeditBtn, &QPushButton::clicked, this, &GameDetailsDialog::launchRegedit);
+
+    toolsLayout->addWidget(winecfgBtn);
+    toolsLayout->addWidget(protontricksBtn);
+    toolsLayout->addWidget(winetricksBtn);
+    toolsLayout->addWidget(regeditBtn);
+    toolsLayout->addStretch();
+
+    root->addWidget(toolsBox);
+
     auto* buttons = new QHBoxLayout();
     buttons->addStretch();
-    saveButton_ = new QPushButton("Save", this);
-    closeButton_ = new QPushButton("Close", this);
+    saveButton_ = new QPushButton(tr("Save"), this);
+    closeButton_ = new QPushButton(tr("Close"), this);
     buttons->addWidget(saveButton_);
     buttons->addWidget(closeButton_);
     root->addLayout(buttons);
@@ -138,17 +170,96 @@ void GameDetailsDialog::onSave()
     game_.extraEnvironment = env;
 
     if (!libraryService_) {
-        QMessageBox::warning(this, "Error", "Library service not available");
+        QMessageBox::warning(this, tr("Error"), tr("Library service not available"));
         return;
     }
 
     libraryService_->updateGameProperties(game_);
-    QMessageBox::information(this, "Saved", "Game properties saved.");
+    QMessageBox::information(this, tr("Saved"), tr("Game properties saved."));
 }
 
 void GameDetailsDialog::onClose()
 {
     accept();
+}
+
+void GameDetailsDialog::launchWinecfg()
+{
+    qDebug() << "Launching winecfg for:" << game_.title;
+    
+    QProcess process;
+    QStringList env = QProcess::systemEnvironment();
+    
+    // Set WINEPREFIX if available
+    if (!game_.runnerExecutable.isEmpty()) {
+        // Extract prefix from runner executable path
+        QString prefix = game_.runnerExecutable;
+        if (prefix.contains("wine")) {
+            env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
+        }
+    }
+    
+    process.setEnvironment(env);
+    process.startDetached("winecfg");
+    
+    if (!process.waitForStarted()) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to launch winecfg. Make sure Wine is installed."));
+    }
+}
+
+void GameDetailsDialog::launchProtontricks()
+{
+    qDebug() << "Launching protontricks for:" << game_.title;
+    
+    QProcess process;
+    QStringList env = QProcess::systemEnvironment();
+    
+    process.setEnvironment(env);
+    process.startDetached("protontricks", QStringList() << "--gui");
+    
+    if (!process.waitForStarted()) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to launch protontricks. Make sure Protontricks is installed."));
+    }
+}
+
+void GameDetailsDialog::launchWinetricks()
+{
+    qDebug() << "Launching winetricks for:" << game_.title;
+    
+    QProcess process;
+    QStringList env = QProcess::systemEnvironment();
+    
+    // Set WINEPREFIX if available
+    if (!game_.runnerExecutable.isEmpty()) {
+        env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
+    }
+    
+    process.setEnvironment(env);
+    process.startDetached("winetricks", QStringList() << "--gui");
+    
+    if (!process.waitForStarted()) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to launch winetricks. Make sure Winetricks is installed."));
+    }
+}
+
+void GameDetailsDialog::launchRegedit()
+{
+    qDebug() << "Launching regedit for:" << game_.title;
+    
+    QProcess process;
+    QStringList env = QProcess::systemEnvironment();
+    
+    // Set WINEPREFIX if available
+    if (!game_.runnerExecutable.isEmpty()) {
+        env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
+    }
+    
+    process.setEnvironment(env);
+    process.startDetached("wine", QStringList() << "regedit");
+    
+    if (!process.waitForStarted()) {
+        QMessageBox::warning(this, tr("Error"), tr("Failed to launch regedit. Make sure Wine is installed."));
+    }
 }
 
 } // namespace ui
