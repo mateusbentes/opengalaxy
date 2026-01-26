@@ -60,23 +60,7 @@ jobs:
             build-essential \
             cmake \
             ninja-build \
-            crossbuild-essential-arm64 \
-            pkg-config-aarch64-linux-gnu
-
-      - name: Install Qt6 for arm64 from source
-        if: matrix.arch == 'arm64'
-        run: |
-          mkdir -p /tmp/qt6-arm64
-          cd /tmp/qt6-arm64
-          # Download Qt6 prebuilt binaries for arm64 or use system packages
-          # For now, we'll use a minimal approach with available packages
-          sudo apt-get install -y \
-            libgl1-mesa-dev:arm64 \
-            libxkbcommon-dev:arm64 \
-            libxkbcommon-x11-dev:arm64 \
-            libfontconfig1-dev:arm64 \
-            libfreetype6-dev:arm64 \
-            libharfbuzz-dev:arm64 || true
+            crossbuild-essential-arm64
 
       - name: Install cross-compilation dependencies (riscv64)
         if: matrix.arch == 'riscv64'
@@ -86,23 +70,7 @@ jobs:
             build-essential \
             cmake \
             ninja-build \
-            crossbuild-essential-riscv64 \
-            pkg-config-riscv64-linux-gnu
-
-      - name: Install Qt6 for riscv64 from source
-        if: matrix.arch == 'riscv64'
-        run: |
-          mkdir -p /tmp/qt6-riscv64
-          cd /tmp/qt6-riscv64
-          # Download Qt6 prebuilt binaries for riscv64 or use system packages
-          # For now, we'll use a minimal approach with available packages
-          sudo apt-get install -y \
-            libgl1-mesa-dev:riscv64 \
-            libxkbcommon-dev:riscv64 \
-            libxkbcommon-x11-dev:riscv64 \
-            libfontconfig1-dev:riscv64 \
-            libfreetype6-dev:riscv64 \
-            libharfbuzz-dev:riscv64 || true
+            crossbuild-essential-riscv64
 
       - name: Create build directory
         run: mkdir -p build
@@ -131,8 +99,7 @@ jobs:
             -DCMAKE_SYSTEM_NAME=Linux \
             -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
             -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-            -DCMAKE_FIND_ROOT_PATH=/usr/aarch64-linux-gnu
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++
 
       - name: Configure CMake (riscv64)
         if: matrix.arch == 'riscv64'
@@ -147,8 +114,7 @@ jobs:
             -DCMAKE_SYSTEM_NAME=Linux \
             -DCMAKE_SYSTEM_PROCESSOR=riscv64 \
             -DCMAKE_C_COMPILER=riscv64-linux-gnu-gcc \
-            -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++ \
-            -DCMAKE_FIND_ROOT_PATH=/usr/riscv64-linux-gnu
+            -DCMAKE_CXX_COMPILER=riscv64-linux-gnu-g++
 
       - name: Build
         run: |
