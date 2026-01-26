@@ -111,4 +111,3 @@ TabWidth: 4
 TypenameMacros:
   - STACK_OF
   - QUEUE_OF
-UseClangTzdataLocation: false
