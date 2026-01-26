@@ -488,7 +488,8 @@ void GameCard::loadCoverImage(const QString& url)
         QPixmap pixmap;
         if (pixmap.loadFromData(imageData)) {
             // Scale to fit within the cover container while maintaining aspect ratio
-            QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+            QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio,
+                                           Qt::SmoothTransformation);
             coverImage->setPixmap(scaled);
             coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
         }

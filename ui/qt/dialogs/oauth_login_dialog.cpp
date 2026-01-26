@@ -136,15 +136,14 @@ void OAuthLoginDialog::startOAuthFlow()
 void OAuthLoginDialog::showCodeInputDialog()
 {
     bool ok;
-    QString input = QInputDialog::getText(this,
-        tr("Paste Login URL"),
-        tr("After logging in to GOG, copy the ENTIRE URL from your browser's address bar and paste it here.\n\n"
+    QString input = QInputDialog::getText(
+        this, tr("Paste Login URL"),
+        tr("After logging in to GOG, copy the ENTIRE URL from your browser's "
+           "address bar and paste it here.\n\n"
            "It should look like:\n"
            "https://embed.gog.com/on_login_success?code=XXXXX\n\n"
            "Paste the URL:"),
-        QLineEdit::Normal,
-        "",
-        &ok);
+        QLineEdit::Normal, "", &ok);
 
     if (ok && !input.isEmpty()) {
         // Try to extract code from URL

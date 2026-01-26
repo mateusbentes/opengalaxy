@@ -383,11 +383,13 @@ void GameDetailsDialog::updateGame()
     // 4. Download and install update
 
     // For now, show a message that update check would be performed
-    QMessageBox::information(this, tr("Update Check"),
-                            tr("Checking for updates for:\n%1\n\n"
-                               "Note: Full update functionality requires GOG SDK integration.\n"
-                               "Currently, you can use the Update button on the game card to check for updates.")
-                            .arg(game_.title));
+    QMessageBox::information(
+        this, tr("Update Check"),
+        tr("Checking for updates for:\n%1\n\n"
+           "Note: Full update functionality requires GOG SDK integration.\n"
+           "Currently, you can use the Update button on the game card to "
+           "check for updates.")
+            .arg(game_.title));
 }
 
 void GameDetailsDialog::verifyGameFiles()

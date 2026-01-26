@@ -41,7 +41,8 @@ private:
     // GOG OAuth parameters
     static constexpr const char* CLIENT_ID = "46899977096215655";
     // Use GOG's registered redirect URI for embed clients
-    static constexpr const char* REDIRECT_URI = "https://embed.gog.com/on_login_success?origin=client";
+    static constexpr const char* REDIRECT_URI =
+        "https://embed.gog.com/on_login_success?origin=client";
 };
 
 } // namespace ui

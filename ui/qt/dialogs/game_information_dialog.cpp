@@ -117,7 +117,9 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
         QString url;
         if (!game_.slug.isEmpty()) {
             // Try to open game-specific support article
-            url = QString("https://support.gog.com/hc/en-us/search?query=%1&product=gog").arg(game_.title.replace(" ", "%20"));
+            url = QString(
+                "https://support.gog.com/hc/en-us/search?query=%1&product=gog")
+                .arg(game_.title.replace(" ", "%20"));
         } else {
             // Fallback: GOG support main page
             url = "https://support.gog.com/hc/en-us";

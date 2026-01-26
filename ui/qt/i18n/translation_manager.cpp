@@ -34,7 +34,8 @@ QStringList TranslationManager::availableLocales() const
     // Check for available translation files
     QDir resourceDir(":/i18n");
     if (resourceDir.exists()) {
-        QStringList qmFiles = resourceDir.entryList(QStringList() << "opengalaxy_*.qm", QDir::Files);
+        QStringList qmFiles = resourceDir.entryList(
+            QStringList() << "opengalaxy_*.qm", QDir::Files);
         for (const QString& file : qmFiles) {
             // Extract locale from filename: opengalaxy_pt_BR.qm -> pt_BR
             QString locale = file;

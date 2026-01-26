@@ -464,7 +464,9 @@ void SettingsPage::onAboutClicked()
     ).arg(osInfo, cpuArch, kernelVersion, qtVersion);
 
     QLabel* sysInfoLabel = new QLabel(sysInfoText, &dialog);
-    sysInfoLabel->setStyleSheet("font-size: 11px; color: #5a5855; padding: 5px; background: #f5f5f5; border-radius: 5px;");
+    sysInfoLabel->setStyleSheet(
+        "font-size: 11px; color: #5a5855; padding: 5px; "
+        "background: #f5f5f5; border-radius: 5px;");
     sysInfoLabel->setTextFormat(Qt::RichText);
     sysInfoLabel->setWordWrap(true);
     layout->addWidget(sysInfoLabel);
