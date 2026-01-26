@@ -48,10 +48,8 @@ set(UI_RESOURCES
     qt/resources/resources.qrc
 )
 
-# Qt Linguist: Create/update translation files and compile them
+# Prepare resources
 if(Qt6LinguistTools_FOUND)
-    qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
-    qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
     message(STATUS "Qt Linguist tools found - translations enabled")
     
     # Create a temporary resources file with translations
@@ -83,6 +81,12 @@ endif()
 
 # Create executable
 add_executable(opengalaxy ${UI_SOURCES} ${UI_HEADERS} ${UI_RESOURCES})
+
+# Qt Linguist: Create/update translation files and compile them (after target creation)
+if(Qt6LinguistTools_FOUND)
+    qt_add_lupdate(opengalaxy SOURCES ${UI_SOURCES} ${UI_HEADERS} TS_FILES ${TS_FILES})
+    qt_add_lrelease(opengalaxy TS_FILES ${TS_FILES} QM_FILES_OUTPUT_VARIABLE QM_FILES)
+endif()
 
 target_include_directories(opengalaxy PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/qt
