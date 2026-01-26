@@ -114,7 +114,7 @@ myFunction(a, b, c);
 
 ## Git Commits
 
-### Commit 1: Fix code formatting
+### Commit 1: Fix code formatting (Python script)
 ```
 commit a41fdd5
 Author: Mateus Bentes
@@ -142,6 +142,21 @@ Date:   2026-01-26
     - Code now passes clang-format validation
 ```
 
+### Commit 3: Apply clang-format to all source files
+```
+commit fbd6bdd
+Author: Mateus Bentes
+Date:   2026-01-26
+
+    style: Apply clang-format to all source files
+    
+    - Fix pointer alignment (right-aligned per .clang-format)
+    - Fix spacing and formatting throughout codebase
+    - All files now pass clang-format --dry-run -Werror validation
+    - All 64 build targets compile successfully
+    - Ready for CI/CD pipeline
+```
+
 ## Expected CI/CD Results
 
 ✅ **Code Quality Checks**:
@@ -161,13 +176,16 @@ Date:   2026-01-26
 
 | Metric | Value |
 |--------|-------|
-| Files Formatted | 37 |
-| Lines Changed | 1,323 insertions, 1,228 deletions |
+| Files Formatted (Python script) | 37 |
+| Files Formatted (clang-format) | 64 |
+| Total Lines Changed | 2,631 insertions, 2,875 deletions |
 | Indentation Issues Fixed | ~500+ |
+| Pointer Alignment Issues Fixed | ~300+ |
 | Operator Spacing Issues Fixed | ~200+ |
 | Build Status | ✅ All 64 targets compile |
 | Compilation Errors | 0 |
 | Compilation Warnings | 0 |
+| clang-format Validation | ✅ PASS (--dry-run -Werror) |
 
 ## Next Steps
 
