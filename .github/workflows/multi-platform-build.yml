@@ -20,18 +20,23 @@ jobs:
           - arch: x86_64
             cmake_args: ""
             qemu: false
+            container: null
           - arch: arm64
             cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
             qemu: true
+            container: "arm64v8/ubuntu:24.04"
           - arch: riscv64
             cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=riscv64"
             qemu: true
+            container: "riscv64/ubuntu:24.04"
+
+    container: ${{ matrix.container }}
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up QEMU for ${{ matrix.arch }}
-        if: matrix.qemu
+        if: matrix.qemu && matrix.arch != 'x86_64'
         uses: docker/setup-qemu-action@v3
         with:
           platforms: ${{ matrix.arch }}
@@ -55,48 +60,35 @@ jobs:
       - name: Install dependencies (arm64)
         if: matrix.arch == 'arm64'
         run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             build-essential \
             cmake \
             ninja-build \
-            crossbuild-essential-arm64 \
-            qt6-base-dev:arm64 \
-            qt6-tools-dev:arm64 \
-            libqt6core6:arm64 \
-            libqt6gui6:arm64 \
-            libqt6network6:arm64 \
-            libqt6sql6:arm64 \
-            libqt6widgets6:arm64 \
-            libqt6core6-dev:arm64 \
-            libqt6gui-dev:arm64 \
-            libqt6network-dev:arm64 \
-            libqt6sql-dev:arm64 \
-            libqt6widgets-dev:arm64
+            qt6-base-dev \
+            qt6-tools-dev \
+            libqt6core6 \
+            libqt6gui6 \
+            libqt6network6 \
+            libqt6sql6 \
+            libqt6widgets6
 
       - name: Install dependencies (riscv64)
         if: matrix.arch == 'riscv64'
         run: |
-          sudo dpkg --add-architecture riscv64
-          sudo apt-get update
-          sudo apt-get install -y \
+          apt-get update
+          apt-get install -y \
             build-essential \
             cmake \
             ninja-build \
-            crossbuild-essential-riscv64 \
-            qt6-base-dev:riscv64 \
-            qt6-tools-dev:riscv64 \
-            libqt6core6:riscv64 \
-            libqt6gui6:riscv64 \
-            libqt6network6:riscv64 \
-            libqt6sql6:riscv64 \
-            libqt6widgets6:riscv64 \
-            libqt6core6-dev:riscv64 \
-            libqt6gui-dev:riscv64 \
-            libqt6network-dev:riscv64 \
-            libqt6sql-dev:riscv64 \
-            libqt6widgets-dev:riscv64
+            qt6-base-dev \
+            qt6-tools-dev \
+            libqt6core6 \
+            libqt6gui6 \
+            libqt6network6 \
+            libqt6sql6 \
+            libqt6widgets6
+
       - name: Create build directory
         run: mkdir -p build
 
@@ -163,8 +155,6 @@ jobs:
           name: macos-arm64-build
           path: build/
           retention-days: 7
-
-
 
   # Build summary
   build-summary:
