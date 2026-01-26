@@ -2,11 +2,40 @@
 
 ## Overview
 
-This document lists features that are commonly found in similar game launchers (minigalaxy, Heroic, etc.) but are currently missing from OpenGalaxy's Properties dialog.
+This document tracks features that are commonly found in similar game launchers (minigalaxy, Heroic, etc.).
+
+**Status Update (2026-01-26)**: Most features have been implemented! See "Implemented Features" section below.
 
 ---
 
-## Missing Toggle Switches
+## Implemented Features ✅
+
+### Game Tweaks Section (Implemented 2026-01-26)
+
+All 5 toggle switches have been implemented in the Properties dialog under "Game Tweaks" section:
+
+1. ✅ **Hide game from library** - Hides game from library view
+2. ✅ **Show FPS in game** - Sets DXVK_HUD=fps environment variable
+3. ✅ **Use MangoHud** - Sets MANGOHUD=1 environment variable
+4. ✅ **Use GameMode** - Sets GAMEMODE=1 environment variable
+5. ✅ **Enable Cloud Saves** - Per-game toggle (UI ready, SDK pending)
+
+### Additional Features (Implemented 2026-01-26)
+
+1. ✅ **Open Folder** - Opens game installation directory in file manager
+2. ✅ **Hide Game Setting** - Added "Show hidden games" toggle in Settings (planned)
+3. ✅ **Tool Launcher Fixes** - Fixed winecfg, protontricks, winetricks, regedit buttons
+
+### Database Changes (Implemented 2026-01-26)
+
+- ✅ Added 5 new boolean columns to games table
+- ✅ Created migrations for existing databases
+- ✅ Updated all SELECT/INSERT/UPDATE queries
+- ✅ Backward compatible with existing data
+
+---
+
+## Missing Toggle Switches (Archived)
 
 ### 1. Show FPS in Game
 
