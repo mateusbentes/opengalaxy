@@ -1,0 +1,253 @@
+name: Multi-Platform Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  # Linux builds with multiple architectures
+  linux-build:
+    name: Linux - ${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, arm64, armv7, riscv64]
+        include:
+          - arch: x86_64
+            cmake_args: ""
+            qemu: false
+          - arch: arm64
+            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
+            qemu: true
+          - arch: armv7
+            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=armv7l"
+            qemu: true
+          - arch: riscv64
+            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=riscv64"
+            qemu: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU for ${{ matrix.arch }}
+        if: matrix.qemu
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: ${{ matrix.arch }}
+
+      - name: Install dependencies (x86_64)
+        if: matrix.arch == 'x86_64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-tools-dev \
+            libqt6core6 \
+            libqt6gui6 \
+            libqt6network6 \
+            libqt6sql6 \
+            libqt6widgets6
+
+      - name: Install dependencies (cross-compile)
+        if: matrix.arch != 'x86_64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            crossbuild-essential-${{ matrix.arch }} \
+            qt6-base-dev:${{ matrix.arch }} \
+            qt6-tools-dev:${{ matrix.arch }} \
+            libqt6core6:${{ matrix.arch }} \
+            libqt6gui6:${{ matrix.arch }} \
+            libqt6network6:${{ matrix.arch }} \
+            libqt6sql6:${{ matrix.arch }} \
+            libqt6widgets6:${{ matrix.arch }}
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON \
+            -DBUILD_CLI=ON \
+            -DBUILD_UI=ON \
+            ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: |
+          cd build
+          ninja -j$(nproc)
+
+      - name: Run tests
+        if: matrix.arch == 'x86_64'
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}-build
+          path: build/
+          retention-days: 7
+
+  # macOS builds with multiple architectures
+  macos-build:
+    name: macOS - ${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: macos-13
+            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=x86_64"
+          - arch: arm64
+            runner: macos-14
+            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=arm64"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew update
+          brew install cmake ninja qt6
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTS=ON \
+            -DBUILD_CLI=ON \
+            -DBUILD_UI=ON \
+            ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: |
+          cd build
+          ninja -j$(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}-build
+          path: build/
+          retention-days: 7
+
+  # Windows builds with multiple architectures
+  windows-build:
+    name: Windows - ${{ matrix.arch }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x64, x86, arm64]
+        include:
+          - arch: x64
+            cmake_args: "-A x64"
+          - arch: x86
+            cmake_args: "-A Win32"
+          - arch: arm64
+            cmake_args: "-A ARM64"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.7.0'
+          arch: ${{ matrix.arch }}
+          modules: 'qtbase qttools'
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake .. `
+            -G "Visual Studio 17 2022" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DBUILD_TESTS=ON `
+            -DBUILD_CLI=ON `
+            -DBUILD_UI=ON `
+            ${{ matrix.cmake_args }}
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Release --parallel $env:NUMBER_OF_PROCESSORS
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure -C Release
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ matrix.arch }}-build
+          path: build/
+          retention-days: 7
+
+  # Build summary
+  build-summary:
+    name: Build Summary
+    runs-on: ubuntu-latest
+    needs: [linux-build, macos-build, windows-build]
+    if: always()
+
+    steps:
+      - name: Check build status
+        run: |
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Linux Builds" >> $GITHUB_STEP_SUMMARY
+          echo "- x86_64: ${{ needs.linux-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- arm64: ${{ needs.linux-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- armv7: ${{ needs.linux-build.outputs.armv7 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- riscv64: ${{ needs.linux-build.outputs.riscv64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### macOS Builds" >> $GITHUB_STEP_SUMMARY
+          echo "- x86_64: ${{ needs.macos-build.outputs.x86_64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- arm64: ${{ needs.macos-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Windows Builds" >> $GITHUB_STEP_SUMMARY
+          echo "- x64: ${{ needs.windows-build.outputs.x64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- x86: ${{ needs.windows-build.outputs.x86 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- arm64: ${{ needs.windows-build.outputs.arm64 || 'Completed' }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Fail if any build failed
+        if: |
+          needs.linux-build.result == 'failure' ||
+          needs.macos-build.result == 'failure' ||
+          needs.windows-build.result == 'failure'
+        run: exit 1

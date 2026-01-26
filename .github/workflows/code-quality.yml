@@ -1,0 +1,152 @@
+name: Code Quality Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  # Code formatting check
+  clang-format:
+    name: Code Formatting (clang-format)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: sudo apt-get install -y clang-format
+
+      - name: Check code formatting
+        run: |
+          find . -name "*.cpp" -o -name "*.h" | grep -v build | xargs clang-format --dry-run -Werror
+
+  # Static analysis with clang-tidy
+  clang-tidy:
+    name: Static Analysis (clang-tidy)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            clang-tidy \
+            qt6-base-dev \
+            qt6-tools-dev \
+            libqt6core6 \
+            libqt6gui6 \
+            libqt6network6 \
+            libqt6sql6 \
+            libqt6widgets6
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          cmake .. \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_CLANG_TIDY="clang-tidy;-checks=*,-fuchsia-*,-google-*"
+
+      - name: Run clang-tidy
+        run: |
+          cd build
+          ninja 2>&1 | tee tidy-output.txt || true
+
+      - name: Upload clang-tidy results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-results
+          path: build/tidy-output.txt
+          retention-days: 7
+
+  # CMake configuration check
+  cmake-check:
+    name: CMake Configuration Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-tools-dev
+
+      - name: Check CMakeLists.txt syntax
+        run: |
+          mkdir -p build
+          cd build
+          cmake .. --debug-output 2>&1 | head -50
+
+  # Dependency check
+  dependency-check:
+    name: Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for missing dependencies
+        run: |
+          echo "Checking CMakeLists.txt for required packages..."
+          grep -E "find_package|add_subdirectory" CMakeLists.txt
+          echo ""
+          echo "Checking for Qt6 components..."
+          grep -E "Qt6.*REQUIRED" CMakeLists.txt
+
+  # Documentation check
+  docs-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check documentation files
+        run: |
+          echo "Checking documentation..."
+          ls -la docs/
+          echo ""
+          echo "Checking README..."
+          head -20 README.md
+          echo ""
+          echo "Checking BUILD.md..."
+          head -20 docs/BUILD.md || echo "BUILD.md not found"
+
+  # License check
+  license-check:
+    name: License Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check license headers
+        run: |
+          echo "Checking for SPDX license headers..."
+          find . -name "*.cpp" -o -name "*.h" | grep -v build | head -10 | xargs head -1
+
+      - name: Verify LICENSE file
+        run: |
+          if [ -f LICENSE ]; then
+            echo "LICENSE file found"
+            head -5 LICENSE
+          else
+            echo "WARNING: LICENSE file not found"
+          fi

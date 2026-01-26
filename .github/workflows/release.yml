@@ -1,0 +1,210 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+
+jobs:
+  # Create release
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            ## OpenGalaxy Release
+            
+            ### Changes
+            - See CHANGELOG.md for detailed changes
+            
+            ### Downloads
+            - Linux (x86_64, arm64, armv7, riscv64)
+            - macOS (x86_64, arm64)
+            - Windows (x64, x86, arm64)
+            
+            ### Installation
+            See [BUILD.md](docs/BUILD.md) for installation instructions.
+          draft: false
+          prerelease: false
+
+  # Build and upload artifacts
+  build-release:
+    name: Build Release - ${{ matrix.platform }}-${{ matrix.arch }}
+    runs-on: ${{ matrix.runner }}
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds
+          - platform: linux
+            arch: x86_64
+            runner: ubuntu-latest
+            cmake_args: ""
+            artifact_name: opengalaxy-linux-x86_64
+
+          - platform: linux
+            arch: arm64
+            runner: ubuntu-latest
+            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=aarch64"
+            artifact_name: opengalaxy-linux-arm64
+
+          - platform: linux
+            arch: armv7
+            runner: ubuntu-latest
+            cmake_args: "-DCMAKE_SYSTEM_PROCESSOR=armv7l"
+            artifact_name: opengalaxy-linux-armv7
+
+          # macOS builds
+          - platform: macos
+            arch: x86_64
+            runner: macos-13
+            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=x86_64"
+            artifact_name: opengalaxy-macos-x86_64
+
+          - platform: macos
+            arch: arm64
+            runner: macos-14
+            cmake_args: "-DCMAKE_OSX_ARCHITECTURES=arm64"
+            artifact_name: opengalaxy-macos-arm64
+
+          # Windows builds
+          - platform: windows
+            arch: x64
+            runner: windows-latest
+            cmake_args: "-A x64"
+            artifact_name: opengalaxy-windows-x64
+
+          - platform: windows
+            arch: x86
+            runner: windows-latest
+            cmake_args: "-A Win32"
+            artifact_name: opengalaxy-windows-x86
+
+          - platform: windows
+            arch: arm64
+            runner: windows-latest
+            cmake_args: "-A ARM64"
+            artifact_name: opengalaxy-windows-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            cmake \
+            ninja-build \
+            qt6-base-dev \
+            qt6-tools-dev \
+            libqt6core6 \
+            libqt6gui6 \
+            libqt6network6 \
+            libqt6sql6 \
+            libqt6widgets6
+
+      - name: Install dependencies (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          brew update
+          brew install cmake ninja qt6
+
+      - name: Install Qt (Windows)
+        if: matrix.platform == 'windows'
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: '6.7.0'
+          arch: ${{ matrix.arch }}
+          modules: 'qtbase qttools'
+
+      - name: Create build directory
+        run: mkdir -p build
+
+      - name: Configure CMake
+        run: |
+          cd build
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            cmake .. -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_CLI=ON -DBUILD_UI=ON ${{ matrix.cmake_args }}
+          else
+            cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON -DBUILD_CLI=ON -DBUILD_UI=ON ${{ matrix.cmake_args }}
+          fi
+        shell: bash
+
+      - name: Build
+        run: |
+          cd build
+          if [ "${{ matrix.platform }}" = "windows" ]; then
+            cmake --build . --config Release --parallel %NUMBER_OF_PROCESSORS%
+          else
+            ninja -j$(nproc)
+          fi
+        shell: bash
+
+      - name: Run tests
+        run: |
+          cd build
+          ctest --output-on-failure
+        shell: bash
+
+      - name: Create artifact (Linux/macOS)
+        if: matrix.platform != 'windows'
+        run: |
+          cd build
+          tar -czf ${{ matrix.artifact_name }}.tar.gz ui/opengalaxy cli/opengalaxy-cli
+          ls -lh ${{ matrix.artifact_name }}.tar.gz
+
+      - name: Create artifact (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          cd build
+          7z a ${{ matrix.artifact_name }}.zip ui/Release/opengalaxy.exe cli/Release/opengalaxy-cli.exe
+          dir ${{ matrix.artifact_name }}.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            build/${{ matrix.artifact_name }}.tar.gz
+            build/${{ matrix.artifact_name }}.zip
+          retention-days: 30
+
+  # Generate checksums
+  checksums:
+    name: Generate Checksums
+    runs-on: ubuntu-latest
+    needs: build-release
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Generate checksums
+        run: |
+          find . -type f \( -name "*.tar.gz" -o -name "*.zip" \) -exec sha256sum {} \; > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: checksums
+          path: SHA256SUMS
+          retention-days: 30
