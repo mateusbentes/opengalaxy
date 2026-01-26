@@ -20,7 +20,7 @@ StorePage::StorePage(QWidget* parent)
     // Create centered content
     QWidget* contentWidget = new QWidget(this);
     contentWidget->setMaximumWidth(700);
-    
+
     QVBoxLayout* contentLayout = new QVBoxLayout(contentWidget);
     contentLayout->setContentsMargins(40, 60, 40, 40);
     contentLayout->setSpacing(30);

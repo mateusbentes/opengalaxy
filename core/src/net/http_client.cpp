@@ -15,7 +15,7 @@ HttpClient::HttpClient(QObject* parent)
 {
     // Set default User-Agent
     setDefaultHeader("User-Agent", "OpenGalaxy/1.0");
-    
+
     // Enable connection keep-alive to prevent "Connection closed" errors
     setDefaultHeader("Connection", "keep-alive");
     setDefaultHeader("Accept", "*/*");
@@ -96,7 +96,7 @@ void HttpClient::downloadFile(const QString& url, const QString& destPath,
 
         Response response;
         response.statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        
+
         LOG_INFO(QString("Download completed: %1").arg(destPath));
         callback(util::Result<Response>::success(response));
         emit requestFinished(url, response.statusCode);
@@ -157,12 +157,12 @@ void HttpClient::executeRequest(const Request& req, Callback callback, int retry
         }
 
         // Check for network-level errors (not HTTP errors)
-        bool hasNetworkError = (reply->error() != QNetworkReply::NoError && 
+        bool hasNetworkError = (reply->error() != QNetworkReply::NoError &&
                                 reply->error() != QNetworkReply::ProtocolFailure &&
                                 reply->error() != QNetworkReply::ContentNotFoundError &&
                                 reply->error() != QNetworkReply::AuthenticationRequiredError &&
                                 reply->error() != QNetworkReply::ContentAccessDenied);
-        
+
         // Retry on transient errors
         bool shouldRetry = (reply->error() == QNetworkReply::TimeoutError ||
                            reply->error() == QNetworkReply::TemporaryNetworkFailureError ||

@@ -14,7 +14,7 @@ private slots:
     void testRunnerDiscovery() {
         manager_->discoverRunners();
         auto runners = manager_->availableRunners();
-        
+
         // Should find at least one runner (native)
         QVERIFY(runners.size() > 0);
     }
@@ -22,7 +22,7 @@ private slots:
     void testNativeRunnerAvailable() {
         manager_->discoverRunners();
         auto* runner = manager_->getRunner("Native");
-        
+
         QVERIFY(runner != nullptr);
         QVERIFY(runner->isAvailable());
     }
@@ -31,9 +31,9 @@ private slots:
         // Test that we can get runner capabilities which includes architecture info
         manager_->discoverRunners();
         auto runners = manager_->availableRunners();
-        
+
         QVERIFY(runners.size() > 0);
-        
+
         // At least one runner should match host architecture
         bool foundHostArch = false;
 #if defined(__x86_64__) || defined(_M_X64)
@@ -57,9 +57,9 @@ private slots:
     void testPlatformDetection() {
         manager_->discoverRunners();
         auto runners = manager_->availableRunners();
-        
+
         QVERIFY(runners.size() > 0);
-        
+
         // At least one runner should support host platform
         bool foundHostPlatform = false;
 #ifdef Q_OS_LINUX
@@ -89,12 +89,12 @@ private slots:
 
     void testBestRunnerSelection() {
         manager_->discoverRunners();
-        
+
         opengalaxy::runners::LaunchConfig config;
         config.gamePath = "/tmp/test_game";
         config.gamePlatform = opengalaxy::runners::Platform::Linux;
         config.gameArch = opengalaxy::runners::Architecture::X86_64;
-        
+
         auto* runner = manager_->findBestRunner(config);
         QVERIFY(runner != nullptr);
     }

@@ -158,15 +158,15 @@ GameCard::GameCard(const QString& gameId,
     // Position overlay widgets
     actionButton_->move((coverContainer->width() - actionButton_->width()) / 2,
                         (coverContainer->height() - actionButton_->height()) / 2 - 30);
-    
+
     // Position Update and Repair buttons side-by-side
     int buttonY = actionButton_->y() + actionButton_->height() + 10;
     int totalWidth = 160 + 160 + 8;  // Two buttons + spacing
     int startX = (coverContainer->width() - totalWidth) / 2;
-    
+
     updateButton_->move(startX, buttonY);
     repairButton_->move(startX + 160 + 8, buttonY);
-    
+
     progressBar_->move((coverContainer->width() - progressBar_->width()) / 2,
                        buttonY + 50 + 12);
 
@@ -260,21 +260,21 @@ void GameCard::setInstalling(bool installing)
 void GameCard::setInstallProgress(int percent)
 {
     int newProgress = std::clamp(percent, 0, 100);
-    
+
     // Animate progress bar smoothly
     if (!progressAnimation) {
         progressAnimation = new QPropertyAnimation(progressBar_, "value", this);
         progressAnimation->setDuration(300); // 300ms smooth transition
         progressAnimation->setEasingCurve(QEasingCurve::OutCubic);
     }
-    
+
     progressAnimation->stop();
     progressAnimation->setStartValue(progressBar_->value());
     progressAnimation->setEndValue(newProgress);
     progressAnimation->start();
-    
+
     installProgress_ = newProgress;
-    
+
     if (installing_ || updating_) {
         progressBar_->show();
     }
@@ -370,12 +370,12 @@ void GameCard::contextMenuEvent(QContextMenuEvent* event)
             color: white;
         }
     )");
-    
+
     QAction* informationAction = menu.addAction(tr("Information"));
     QAction* propertiesAction = menu.addAction(tr("Properties"));
-    
+
     QAction* selectedAction = menu.exec(event->globalPos());
-    
+
     if (selectedAction == informationAction) {
         emit informationRequested(gameId_);
     } else if (selectedAction == propertiesAction) {
@@ -446,21 +446,21 @@ void GameCard::loadCoverImage(const QString& url)
         // Configure for better connection handling
         sharedManager->setTransferTimeout(10000); // 10 second timeout
     }
-    
+
     // Make request with proper headers
     QNetworkRequest request(qurl);
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setRawHeader("User-Agent", "OpenGalaxy/0.1.0");
     request.setRawHeader("Accept", "image/*");
-    
+
     // Set connection keep-alive
     request.setRawHeader("Connection", "keep-alive");
-    
+
     QNetworkReply* reply = sharedManager->get(request);
-    
+
     connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
         reply->deleteLater();
-        
+
         if (reply->error() != QNetworkReply::NoError) {
             // Silently ignore connection errors for cover images
             // They're not critical and will just show the placeholder
@@ -479,12 +479,12 @@ void GameCard::loadCoverImage(const QString& url)
             }
             return;
         }
-        
+
         QByteArray imageData = reply->readAll();
         if (imageData.isEmpty()) {
             return;
         }
-        
+
         QPixmap pixmap;
         if (pixmap.loadFromData(imageData)) {
             // Scale to fit within the cover container while maintaining aspect ratio
@@ -493,7 +493,7 @@ void GameCard::loadCoverImage(const QString& url)
             coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
         }
     });
-    
+
     // Handle errors during download
     connect(reply, &QNetworkReply::errorOccurred, this, [this, reply](QNetworkReply::NetworkError error) {
         // Silently ignore common network errors for cover images

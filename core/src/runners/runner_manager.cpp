@@ -36,28 +36,28 @@ static QString architectureToString(Architecture arch)
 static Architecture hostArchitecture()
 {
     const QString arch = QSysInfo::currentCpuArchitecture().toLower();
-    
+
     // x86 family
     if (arch == "x86_64" || arch == "amd64") return Architecture::X86_64;
     if (arch == "i386" || arch == "i686" || arch == "x86") return Architecture::X86;
-    
+
     // ARM family
     if (arch == "arm64" || arch == "aarch64") return Architecture::ARM64;
     if (arch.startsWith("arm")) return Architecture::ARM;
-    
+
     // RISC-V
     if (arch == "riscv64" || arch == "riscv") return Architecture::RISCV64;
-    
+
     // PowerPC
-    if (arch == "ppc64" || arch == "ppc64le" || arch == "powerpc64" || arch == "powerpc64le") 
+    if (arch == "ppc64" || arch == "ppc64le" || arch == "powerpc64" || arch == "powerpc64le")
         return Architecture::PPC64;
-    
+
     // MIPS
     if (arch == "mips64" || arch == "mips64el") return Architecture::MIPS64;
-    
+
     // LoongArch
     if (arch == "loongarch64") return Architecture::LoongArch64;
-    
+
     return Architecture::Unknown;
 }
 

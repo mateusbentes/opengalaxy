@@ -25,10 +25,10 @@ Architecture Runner::detectArchitecture(const QString& executablePath)
         // ELF class: header[4]
         // 1 = 32-bit, 2 = 64-bit
         unsigned char elfClass = static_cast<unsigned char>(header[4]);
-        
+
         // Machine type: header[18-19] (little-endian)
-        unsigned short machine = (static_cast<unsigned char>(header[19]) << 8) | 
-                                  static_cast<unsigned char>(header[18]);
+        unsigned short machine = (static_cast<unsigned char>(header[19]) << 8) |
+                                 static_cast<unsigned char>(header[18]);
 
         // Common machine types:
         // 0x03 = x86 (32-bit)
@@ -76,7 +76,7 @@ Architecture Runner::detectArchitecture(const QString& executablePath)
                                (static_cast<unsigned char>(header[5]) << 16) |
                                (static_cast<unsigned char>(header[6]) << 8) |
                                static_cast<unsigned char>(header[7]);
-        
+
         if (cpuType == 0x01000007) { // CPU_TYPE_X86_64
             return Architecture::X86_64;
         } else if (cpuType == 0x0100000C) { // CPU_TYPE_ARM64

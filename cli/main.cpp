@@ -152,11 +152,11 @@ public:
             runners::LaunchConfig config;
             config.gamePath = game.installPath;
             config.workingDirectory = QFileInfo(game.installPath).absolutePath();
-            
+
             // Detect platform and architecture from binary
             config.gamePlatform = runners::Runner::detectPlatform(game.installPath);
             config.gameArch = runners::Runner::detectArchitecture(game.installPath);
-            
+
             // Use game-specific settings if available
             config.runnerExecutableOverride = game.runnerExecutable.trimmed();
             config.runnerArguments = game.runnerArguments; // Already a QStringList
@@ -244,10 +244,10 @@ private:
 int main(int argc, char *argv[])
 {
     QCoreApplication app(argc, argv);
-    
+
     // Initialize configuration system
     util::Config::initialize();
-    
+
     QCoreApplication::setApplicationName("OpenGalaxy CLI");
     QCoreApplication::setApplicationVersion("1.0.0");
 

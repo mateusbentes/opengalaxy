@@ -10,20 +10,20 @@ namespace opengalaxy::util {
 
 /**
  * @brief Cross-platform configuration manager
- * 
+ *
  * Manages application settings and data paths for Windows, macOS, and Linux.
  * Uses platform-specific standard locations:
- * 
+ *
  * Linux:
  *   - Config: ~/.config/OpenGalaxy/
  *   - Data: ~/.local/share/opengalaxy/
  *   - Games: ~/Games/
- * 
+ *
  * Windows:
  *   - Config: %APPDATA%\OpenGalaxy\
  *   - Data: %APPDATA%\OpenGalaxy\
  *   - Games: %USERPROFILE%\Games\
- * 
+ *
  * macOS:
  *   - Config: ~/Library/Preferences/OpenGalaxy/
  *   - Data: ~/Library/Application Support/opengalaxy/

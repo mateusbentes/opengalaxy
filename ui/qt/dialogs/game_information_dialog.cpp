@@ -156,10 +156,10 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     infoTitle->setObjectName("section");
     contentLayout->addWidget(infoTitle);
 
-    QString releaseDateStr = game_.releaseDate.isValid() 
-        ? game_.releaseDate.toString("yyyy-MM-dd") 
+    QString releaseDateStr = game_.releaseDate.isValid()
+        ? game_.releaseDate.toString("yyyy-MM-dd")
         : tr("Unknown");
-    
+
     QString infoText = QString(
         "<b>%1:</b> %2<br>"
         "<b>%3:</b> %4"

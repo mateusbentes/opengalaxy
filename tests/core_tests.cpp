@@ -13,7 +13,7 @@ private slots:
 
     void testResultSuccess() {
         auto result = opengalaxy::util::Result<int>::success(42);
-        
+
         QVERIFY(result.isOk());
         QVERIFY(!result.isError());
         QCOMPARE(result.value(), 42);
@@ -21,7 +21,7 @@ private slots:
 
     void testResultError() {
         auto result = opengalaxy::util::Result<int>::error("Test error", 404);
-        
+
         QVERIFY(!result.isOk());
         QVERIFY(result.isError());
         QCOMPARE(result.errorMessage(), QString("Test error"));
@@ -31,7 +31,7 @@ private slots:
     void testResultValueOr() {
         auto success = opengalaxy::util::Result<int>::success(42);
         auto error = opengalaxy::util::Result<int>::error("Error");
-        
+
         QCOMPARE(success.valueOr(0), 42);
         QCOMPARE(error.valueOr(99), 99);
     }
@@ -39,7 +39,7 @@ private slots:
     void testResultVoid() {
         auto success = opengalaxy::util::Result<void>::success();
         auto error = opengalaxy::util::Result<void>::error("Test error");
-        
+
         QVERIFY(success.isOk());
         QVERIFY(error.isError());
         QCOMPARE(error.errorMessage(), QString("Test error"));
@@ -49,7 +49,7 @@ private slots:
         opengalaxy::util::Logger::instance().info("Test info message");
         opengalaxy::util::Logger::instance().warning("Test warning message");
         opengalaxy::util::Logger::instance().error("Test error message");
-        
+
         // Just verify it doesn't crash
         QVERIFY(true);
     }
@@ -57,14 +57,14 @@ private slots:
     void testLoggerLevels() {
         opengalaxy::util::Logger::instance().setLevel(opengalaxy::util::LogLevel::Error);
         QCOMPARE(opengalaxy::util::Logger::instance().level(), opengalaxy::util::LogLevel::Error);
-        
+
         // Debug and info should be filtered
         opengalaxy::util::Logger::instance().debug("Should not appear");
         opengalaxy::util::Logger::instance().info("Should not appear");
-        
+
         // Error should appear
         opengalaxy::util::Logger::instance().error("Should appear");
-        
+
         QVERIFY(true);
     }
 

@@ -228,7 +228,7 @@ void AppWindow::onLoginSuccess()
 {
     sidebar->setVisible(true);
     stackedWidget->setCurrentWidget(libraryPage);
-    
+
     // Force refresh library from GOG (not cache) after login
     libraryPage->refreshLibrary(true);
 }
@@ -238,10 +238,10 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
 #ifdef HAVE_WEBENGINE
     // Show OAuth login dialog
     // If username/password provided (legacy), use auto-fill; otherwise let user login manually
-    auto* dialog = username.isEmpty() 
+    auto* dialog = username.isEmpty()
         ? new OAuthLoginDialog(this)
         : new OAuthLoginDialog(username, password, this);
-    
+
     connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
         // Exchange authorization code for tokens
         session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {
@@ -256,7 +256,7 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
     // Fallback to direct password authentication if WebEngine not available
     session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
         if (!result.isOk()) {
-            QMessageBox::warning(this, tr("Login Failed"), 
+            QMessageBox::warning(this, tr("Login Failed"),
                 tr("Failed to login: %1\n\nPlease check your credentials and try again.").arg(result.errorMessage()));
         }
         // Success is handled by the authenticated() signal
@@ -268,7 +268,7 @@ void AppWindow::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton) {
         QWidget* childWidget = childAt(event->pos());
-        
+
         // Check if click is on title bar or its children (but not buttons)
         bool onTitleBar = false;
         QWidget* widget = childWidget;
@@ -279,9 +279,9 @@ void AppWindow::mousePressEvent(QMouseEvent* event)
             }
             widget = widget->parentWidget();
         }
-        
+
         // Don't drag if clicking on buttons
-        if (onTitleBar && childWidget && 
+        if (onTitleBar && childWidget &&
             childWidget->objectName() != "minimizeButton" &&
             childWidget->objectName() != "maximizeButton" &&
             childWidget->objectName() != "closeButton") {
@@ -326,7 +326,7 @@ void AppWindow::onMaximizeClicked()
     if (isMaximized) {
         showNormal();
         isMaximized = false;
-        
+
         // Update maximize button symbol
         QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
         if (maxBtn) {
@@ -335,7 +335,7 @@ void AppWindow::onMaximizeClicked()
     } else {
         showMaximized();
         isMaximized = true;
-        
+
         // Update maximize button symbol
         QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
         if (maxBtn) {
@@ -354,7 +354,7 @@ void AppWindow::onLogout()
     // Hide sidebar and show login page
     sidebar->setVisible(false);
     stackedWidget->setCurrentWidget(loginPage);
-    
+
     // Clear library
     libraryPage->refreshLibrary(false);
 }

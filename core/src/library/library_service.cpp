@@ -312,7 +312,7 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         query.addBindValue(game.preferredRunner);
         query.addBindValue(game.runnerExecutable);
         query.addBindValue(game.runnerArguments.join("\n"));
-        
+
         // Add new toggle fields
         query.addBindValue(game.hiddenInLibrary ? 1 : 0);
         query.addBindValue(game.enableMangoHud ? 1 : 0);

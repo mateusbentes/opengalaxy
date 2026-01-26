@@ -24,7 +24,7 @@ public slots:
 
 private:
     void setupUI();
-    
+
     api::Session* session_;
     api::GOGClient gogClient_;
     QListWidget* friendsView;

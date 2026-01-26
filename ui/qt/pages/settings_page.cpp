@@ -31,7 +31,7 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             background: #f5f3f0;
             color: #3c3a37;
         }
-        
+
         QLabel#sectionTitle {
             font-size: 22px;
             font-weight: 600;
@@ -39,19 +39,19 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             border-bottom: 1px solid #d0cec9;
             color: #3c3a37;
         }
-        
+
         QLabel#sectionSubtitle {
             font-size: 16px;
             color: #5a5855;
             padding: 0 60px 30px 60px;
         }
-        
+
         QLabel#settingLabel {
             font-size: 15px;
             color: #3c3a37;
             padding: 10px 60px;
         }
-        
+
         QComboBox {
             background: #ffffff;
             border: 2px solid #d0cec9;
@@ -62,16 +62,16 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             margin: 0 60px 20px 60px;
             min-width: 250px;
         }
-        
+
         QComboBox:hover {
             border-color: #9b4dca;
         }
-        
+
         QComboBox::drop-down {
             border: none;
             width: 30px;
         }
-        
+
         QPushButton {
             background: #ffffff;
             border: 1px solid #d0cec9;
@@ -82,7 +82,7 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             min-width: 200px;
             margin: 5px 60px;
         }
-        
+
         QPushButton:hover {
             background: #fafaf9;
             border-color: #9b4dca;
@@ -108,17 +108,17 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     generalTitle->setObjectName("sectionTitle");
     QLabel *generalSubtitle = new QLabel(tr("Manage your OpenGalaxy preferences"), content);
     generalSubtitle->setObjectName("sectionSubtitle");
-    
+
     contentLayout->addWidget(generalTitle);
     contentLayout->addWidget(generalSubtitle);
-    
+
     // Language setting
     QLabel *languageLabel = new QLabel(tr("Language"), content);
     languageLabel->setObjectName("settingLabel");
     contentLayout->addWidget(languageLabel);
-    
+
     languageCombo_ = new QComboBox(content);
-    
+
     // Populate language combo box
     if (translationManager_) {
         QStringList locales = translationManager_->availableLocales();
@@ -126,18 +126,18 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             QString displayName = translationManager_->localeDisplayName(locale);
             languageCombo_->addItem(displayName, locale);
         }
-        
+
         // Set current language
         QString currentLocale = translationManager_->currentLocale();
         int currentIndex = languageCombo_->findData(currentLocale);
         if (currentIndex >= 0) {
             languageCombo_->setCurrentIndex(currentIndex);
         }
-        
+
         connect(languageCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
                 this, &SettingsPage::onLanguageChanged);
     }
-    
+
     contentLayout->addWidget(languageCombo_);
 
     // Game section
@@ -145,10 +145,10 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     gameTitle->setObjectName("sectionTitle");
     QLabel *gameSubtitle = new QLabel(tr("Manage your game library and installations"), content);
     gameSubtitle->setObjectName("sectionSubtitle");
-    
+
     contentLayout->addWidget(gameTitle);
     contentLayout->addWidget(gameSubtitle);
-    
+
     // Show hidden games checkbox
     showHiddenGamesCheckbox_ = new QCheckBox(tr("Show hidden games in library"), content);
     showHiddenGamesCheckbox_->setStyleSheet(R"(
@@ -173,21 +173,21 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             border-radius: 4px;
         }
     )");
-    
+
     // Load current setting
     opengalaxy::util::Config& config = opengalaxy::util::Config::instance();
     showHiddenGamesCheckbox_->setChecked(config.showHiddenGames());
-    
+
     connect(showHiddenGamesCheckbox_, &QCheckBox::toggled, this, [](bool checked) {
         opengalaxy::util::Config::instance().setShowHiddenGames(checked);
     });
-    
+
     contentLayout->addWidget(showHiddenGamesCheckbox_);
-    
+
     QPushButton *installsBtn = new QPushButton(tr("Installation Folders"), content);
-    
+
     connect(installsBtn, &QPushButton::clicked, this, &SettingsPage::onInstallationFoldersClicked);
-    
+
     contentLayout->addWidget(installsBtn);
 
     // Account section
@@ -195,7 +195,7 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     accountTitle->setObjectName("sectionTitle");
     QLabel *accountSubtitle = new QLabel(tr("Manage your GOG account"), content);
     accountSubtitle->setObjectName("sectionSubtitle");
-    
+
     QPushButton *logoutBtn = new QPushButton(tr("Logout"), content);
     logoutBtn->setStyleSheet(R"(
         QPushButton {
@@ -216,9 +216,9 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
             background: #a93226;
         }
     )");
-    
+
     connect(logoutBtn, &QPushButton::clicked, this, &SettingsPage::onLogoutClicked);
-    
+
     contentLayout->addWidget(accountTitle);
     contentLayout->addWidget(accountSubtitle);
     contentLayout->addWidget(logoutBtn);
@@ -228,10 +228,10 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     aboutTitle->setObjectName("sectionTitle");
     QLabel *aboutSubtitle = new QLabel(tr("Information about OpenGalaxy"), content);
     aboutSubtitle->setObjectName("sectionSubtitle");
-    
+
     QPushButton *aboutBtn = new QPushButton(tr("About OpenGalaxy"), content);
     connect(aboutBtn, &QPushButton::clicked, this, &SettingsPage::onAboutClicked);
-    
+
     contentLayout->addWidget(aboutTitle);
     contentLayout->addWidget(aboutSubtitle);
     contentLayout->addWidget(aboutBtn);
@@ -247,17 +247,17 @@ void SettingsPage::onLanguageChanged(int index)
     if (!translationManager_ || index < 0) {
         return;
     }
-    
+
     QString selectedLocale = languageCombo_->itemData(index).toString();
     QString currentLocale = translationManager_->currentLocale();
-    
+
     if (selectedLocale == currentLocale) {
         return;
     }
-    
+
     // Change language
     translationManager_->setLocale(selectedLocale);
-    
+
     // Show restart message
     QMessageBox::information(this,
         tr("Restart Required"),
@@ -269,12 +269,12 @@ void SettingsPage::onInstallationFoldersClicked()
     QDialog dialog(this);
     dialog.setWindowTitle(tr("Installation Folders"));
     dialog.setMinimumSize(600, 400);
-    
+
     QVBoxLayout* layout = new QVBoxLayout(&dialog);
-    
+
     QLabel* infoLabel = new QLabel(tr("Manage folders where games can be installed:"), &dialog);
     layout->addWidget(infoLabel);
-    
+
     QListWidget* folderList = new QListWidget(&dialog);
     folderList->setStyleSheet(R"(
         QListWidget {
@@ -285,16 +285,16 @@ void SettingsPage::onInstallationFoldersClicked()
             color: #3c3a37;
         }
     )");
-    
+
     // TODO: Load saved installation folders from settings
     // For now, show default location
     QString defaultPath = QDir::homePath() + "/Games/OpenGalaxy";
     folderList->addItem(defaultPath);
-    
+
     layout->addWidget(folderList);
-    
+
     QHBoxLayout* buttonLayout = new QHBoxLayout();
-    
+
     QPushButton* addBtn = new QPushButton(tr("Add Folder"), &dialog);
     addBtn->setStyleSheet(R"(
         QPushButton {
@@ -309,7 +309,7 @@ void SettingsPage::onInstallationFoldersClicked()
             background: #8b3dba;
         }
     )");
-    
+
     connect(addBtn, &QPushButton::clicked, [&]() {
         QString dir = QFileDialog::getExistingDirectory(
             &dialog,
@@ -317,13 +317,13 @@ void SettingsPage::onInstallationFoldersClicked()
             QDir::homePath(),
             QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
         );
-        
+
         if (!dir.isEmpty()) {
             folderList->addItem(dir);
             // TODO: Save to settings
         }
     });
-    
+
     QPushButton* removeBtn = new QPushButton(tr("Remove Selected"), &dialog);
     removeBtn->setStyleSheet(R"(
         QPushButton {
@@ -338,7 +338,7 @@ void SettingsPage::onInstallationFoldersClicked()
             background: #c0392b;
         }
     )");
-    
+
     connect(removeBtn, &QPushButton::clicked, [&]() {
         QListWidgetItem* item = folderList->currentItem();
         if (item) {
@@ -346,17 +346,17 @@ void SettingsPage::onInstallationFoldersClicked()
             // TODO: Save to settings
         }
     });
-    
+
     buttonLayout->addWidget(addBtn);
     buttonLayout->addWidget(removeBtn);
     buttonLayout->addStretch();
-    
+
     layout->addLayout(buttonLayout);
-    
+
     QDialogButtonBox* dialogButtons = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
     connect(dialogButtons, &QDialogButtonBox::rejected, &dialog, &QDialog::accept);
     layout->addWidget(dialogButtons);
-    
+
     dialog.exec();
 }
 
@@ -368,7 +368,7 @@ void SettingsPage::onLogoutClicked()
         tr("Are you sure you want to logout?\n\nYou will need to login again next time."),
         QMessageBox::Yes | QMessageBox::No
     );
-    
+
     if (reply == QMessageBox::Yes) {
         if (session_) {
             session_->logout();
@@ -390,32 +390,32 @@ void SettingsPage::onAboutClicked()
             color: #3c3a37;
         }
     )");
-    
+
     QVBoxLayout* layout = new QVBoxLayout(&dialog);
     layout->setContentsMargins(30, 30, 30, 30);
     layout->setSpacing(15);
-    
+
     // Icon
     QLabel* iconLabel = new QLabel(&dialog);
     QPixmap iconPixmap(":/data/opengalaxyicon.png");
     iconLabel->setPixmap(iconPixmap.scaled(128, 128, Qt::KeepAspectRatio, Qt::SmoothTransformation));
     iconLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(iconLabel);
-    
+
     // App name
     QLabel* nameLabel = new QLabel(tr("OpenGalaxy"), &dialog);
     nameLabel->setStyleSheet("font-size: 24px; font-weight: bold;");
     nameLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(nameLabel);
-    
+
     // Version
     QLabel* versionLabel = new QLabel(tr("Version 1.0.0"), &dialog);
     versionLabel->setStyleSheet("font-size: 14px; color: #5a5855;");
     versionLabel->setAlignment(Qt::AlignCenter);
     layout->addWidget(versionLabel);
-    
+
     layout->addSpacing(10);
-    
+
     // Description
     QLabel* descLabel = new QLabel(
         tr("OpenGalaxy is a free and open-source multiplatform GOG client.\n\n"
@@ -429,9 +429,9 @@ void SettingsPage::onAboutClicked()
     descLabel->setStyleSheet("font-size: 13px; line-height: 1.5;");
     descLabel->setAlignment(Qt::AlignLeft);
     layout->addWidget(descLabel);
-    
+
     layout->addSpacing(10);
-    
+
     // Links
     QLabel* linksLabel = new QLabel(
         tr("<b>Project:</b> <a href='https://github.com/mateusbentes/opengalaxy'>github.com/mateusbentes/opengalaxy</a><br>"
@@ -443,34 +443,34 @@ void SettingsPage::onAboutClicked()
     linksLabel->setStyleSheet("font-size: 12px;");
     linksLabel->setTextFormat(Qt::RichText);
     layout->addWidget(linksLabel);
-    
+
     layout->addSpacing(15);
-    
+
     // System Information
     QLabel* sysInfoTitle = new QLabel(tr("System Information"), &dialog);
     sysInfoTitle->setStyleSheet("font-size: 14px; font-weight: 600; color: #3c3a37;");
     layout->addWidget(sysInfoTitle);
-    
+
     // Get system information
     QString osInfo = QSysInfo::prettyProductName();
     QString cpuArch = QSysInfo::currentCpuArchitecture();
     QString qtVersion = QString("Qt %1").arg(QT_VERSION_STR);
     QString kernelVersion = QSysInfo::kernelVersion();
-    
+
     QString sysInfoText = QString(
         "<b>OS:</b> %1 (%2)<br>"
         "<b>Kernel:</b> %3<br>"
         "<b>Qt Version:</b> %4"
     ).arg(osInfo, cpuArch, kernelVersion, qtVersion);
-    
+
     QLabel* sysInfoLabel = new QLabel(sysInfoText, &dialog);
     sysInfoLabel->setStyleSheet("font-size: 11px; color: #5a5855; padding: 5px; background: #f5f5f5; border-radius: 5px;");
     sysInfoLabel->setTextFormat(Qt::RichText);
     sysInfoLabel->setWordWrap(true);
     layout->addWidget(sysInfoLabel);
-    
+
     layout->addSpacing(10);
-    
+
     // Check for Updates button
     QPushButton* updateButton = new QPushButton(tr("Check for Updates"), &dialog);
     updateButton->setStyleSheet(R"(
@@ -492,9 +492,9 @@ void SettingsPage::onAboutClicked()
     )");
     connect(updateButton, &QPushButton::clicked, this, &SettingsPage::onCheckForUpdates);
     layout->addWidget(updateButton);
-    
+
     layout->addStretch();
-    
+
     // Close button
     QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
     buttonBox->setStyleSheet(R"(
@@ -516,7 +516,7 @@ void SettingsPage::onAboutClicked()
     )");
     connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::accept);
     layout->addWidget(buttonBox);
-    
+
     dialog.exec();
 }
 
@@ -524,7 +524,7 @@ void SettingsPage::onCheckForUpdates()
 {
     // Open the GitHub releases page
     QDesktopServices::openUrl(QUrl("https://github.com/mateusbentes/opengalaxy/releases"));
-    
+
     // Show a message to the user
     QMessageBox::information(
         this,

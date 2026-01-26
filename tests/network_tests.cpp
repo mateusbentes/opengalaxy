@@ -18,56 +18,56 @@ private slots:
     }
 
     // ========== Login Tests ==========
-    
+
     void testLoginSuccess() {
         api::Session session;
-        
+
         // Mock successful login response
         QJsonObject loginResponse;
         loginResponse["access_token"] = "mock_access_token_12345";
         loginResponse["refresh_token"] = "mock_refresh_token_67890";
         loginResponse["expires_in"] = 3600;
-        
+
         QByteArray responseBody = QJsonDocument(loginResponse).toJson();
-        
+
         bool callbackCalled = false;
         QString receivedToken;
-        
-        session.loginWithPassword("test@example.com", "password123", 
+
+        session.loginWithPassword("test@example.com", "password123",
             [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
                 if (result.isOk()) {
                     receivedToken = result.value().accessToken;
                 }
             });
-        
+
         QTest::qWait(200);
         QVERIFY(callbackCalled);
     }
 
     void testLoginInvalidCredentials() {
         api::Session session;
-        
+
         bool callbackCalled = false;
         bool isError = false;
-        
+
         session.loginWithPassword("wrong@example.com", "wrongpass",
             [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
                 isError = result.isError();
             });
-        
+
         QTest::qWait(200);
         QVERIFY(callbackCalled);
     }
 
     void testLoginNetworkError() {
         api::Session session;
-        
+
         bool callbackCalled = false;
         bool isError = false;
         QString errorMsg;
-        
+
         session.loginWithPassword("test@example.com", "password",
             [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
@@ -76,51 +76,51 @@ private slots:
                     errorMsg = result.errorMessage();
                 }
             });
-        
+
         QTest::qWait(200);
         QVERIFY(callbackCalled);
     }
 
     // ========== Token Refresh Tests ==========
-    
+
     void testTokenRefreshSuccess() {
         api::Session session;
-        
+
         // Set up expired tokens
         api::AuthTokens tokens;
         tokens.accessToken = "old_token";
         tokens.refreshToken = "refresh_token";
         tokens.expiresAt = QDateTime::currentDateTime().addSecs(-100);
-        
+
         session.setTokens(tokens);
-        
+
         bool callbackCalled = false;
         session.refreshToken([&](util::Result<api::AuthTokens> result) {
             callbackCalled = true;
         });
-        
+
         QTest::qWait(200);
         QVERIFY(callbackCalled);
     }
 
     void testTokenRefreshNoRefreshToken() {
         api::Session session;
-        
+
         bool callbackCalled = false;
         bool isError = false;
-        
+
         session.refreshToken([&](util::Result<api::AuthTokens> result) {
             callbackCalled = true;
             isError = result.isError();
         });
-        
+
         QTest::qWait(100);
         QVERIFY(callbackCalled);
         QVERIFY(isError);
     }
 
     // ========== Library Fetch Tests ==========
-    
+
     void testFetchLibrarySuccess() {
         // Test will use mock data
         QVERIFY(true);
@@ -137,7 +137,7 @@ private slots:
     }
 
     // ========== Download Tests ==========
-    
+
     void testDownloadGameSuccess() {
         // Test successful game download
         QVERIFY(true);
@@ -164,7 +164,7 @@ private slots:
     }
 
     // ========== Update Tests ==========
-    
+
     void testCheckForUpdates() {
         // Test checking for game updates
         QVERIFY(true);
@@ -186,7 +186,7 @@ private slots:
     }
 
     // ========== Store Tests ==========
-    
+
     void testSearchStoreSuccess() {
         // Test store search
         QVERIFY(true);
@@ -203,7 +203,7 @@ private slots:
     }
 
     // ========== Cloud Saves Tests ==========
-    
+
     void testUploadCloudSave() {
         // Test cloud save upload
         QVERIFY(true);

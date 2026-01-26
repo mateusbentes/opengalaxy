@@ -32,14 +32,14 @@ void FriendsPage::setupUI()
 
     // Header
     QHBoxLayout* headerLayout = new QHBoxLayout();
-    
+
     QLabel* titleLabel = new QLabel(tr("Friends"), this);
     titleLabel->setStyleSheet(R"(
         QLabel { color: #3c3a37; font-size: 28px; font-weight: 700; }
     )");
     headerLayout->addWidget(titleLabel);
     headerLayout->addStretch();
-    
+
     QPushButton* refreshBtn = new QPushButton(tr("Refresh"), this);
     refreshBtn->setStyleSheet(R"(
         QPushButton {
@@ -57,7 +57,7 @@ void FriendsPage::setupUI()
     )");
     connect(refreshBtn, &QPushButton::clicked, this, &FriendsPage::refreshFriends);
     headerLayout->addWidget(refreshBtn);
-    
+
     layout->addLayout(headerLayout);
 
     // Status label
@@ -114,30 +114,30 @@ void FriendsPage::refreshFriends()
     // Note: GOG API doesn't have a public friends endpoint in the current implementation
     // This is a placeholder that shows the structure
     // You would need to implement gogClient_.getFriends() in the GOGClient class
-    
+
     // For now, show a message
     statusLabel->setText(tr("Friends feature coming soon!"));
-    
+
     QListWidgetItem* item = new QListWidgetItem(friendsView);
     item->setText(tr("🚧 The GOG API friends endpoint is not yet implemented.\n"
                      "This feature will be available in a future update."));
     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
-    
+
     // TODO: Implement when GOG API client has friends support
     // gogClient_.getFriends([this](util::Result<std::vector<api::Friend>> result) {
     //     if (!result.isOk()) {
     //         statusLabel->setText(tr("Failed to load friends: %1").arg(result.errorMessage()));
     //         return;
     //     }
-    //     
+    //
     //     const auto& friends = result.value();
     //     if (friends.empty()) {
     //         statusLabel->setText(tr("No friends found."));
     //         return;
     //     }
-    //     
+    //
     //     statusLabel->setText(tr("%1 friends").arg(friends.size()));
-    //     
+    //
     //     for (const auto& friendData : friends) {
     //         QListWidgetItem* item = new QListWidgetItem(friendsView);
     //         item->setText(QString("%1 - %2").arg(friendData.username, friendData.status));

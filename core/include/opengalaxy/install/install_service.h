@@ -19,7 +19,7 @@ class InstallService : public QObject {
 public:
     explicit InstallService(QObject* parent = nullptr);
     ~InstallService() override;
-    
+
     // Set the session for authenticated downloads (forward declared)
     void setSession(void* session) { session_ = session; }
 

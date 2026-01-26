@@ -11,18 +11,18 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    
+
     // Initialize configuration system (must be done early)
     opengalaxy::util::Config::initialize();
-    
+
     // Application metadata (already set by Config::initialize, but kept for clarity)
     app.setApplicationName("OpenGalaxy");
     app.setApplicationVersion("1.0.0");
     app.setOrganizationName("OpenGalaxy");
-    
+
     // Set Fusion style as base
     app.setStyle(QStyleFactory::create("Fusion"));
-    
+
     // Load beautiful dark theme stylesheet
     QFile styleFile(":/styles/dark_theme.qss");
     if (!styleFile.exists()) {
@@ -30,22 +30,22 @@ int main(int argc, char *argv[])
         QString sourcePath = QCoreApplication::applicationDirPath() + "/../ui/qt/resources/styles/dark_theme.qss";
         styleFile.setFileName(sourcePath);
     }
-    
+
     if (styleFile.open(QFile::ReadOnly | QFile::Text)) {
         QTextStream stream(&styleFile);
         QString styleSheet = stream.readAll();
         app.setStyleSheet(styleSheet);
         styleFile.close();
     }
-    
+
     // Set application font
     QFont appFont("Segoe UI", 10);
     app.setFont(appFont);
-    
+
     // Initialize translation system
     opengalaxy::ui::TranslationManager translationManager(&app);
     translationManager.loadFromSettings();
-    
+
     // Create and show main window
     opengalaxy::ui::AppWindow window(&translationManager);
     window.show();

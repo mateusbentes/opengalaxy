@@ -25,10 +25,10 @@ public:
 
     // Fetch library (from cache or API)
     void fetchLibrary(bool forceRefresh, GamesCallback callback);
-    
+
     // Get single game
     void getGame(const QString& gameId, GameCallback callback);
-    
+
     // Update game installation status
     void updateGameInstallation(const QString& gameId, const QString& installPath, const QString& version);
     void removeGameInstallation(const QString& gameId);

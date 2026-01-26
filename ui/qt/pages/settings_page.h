@@ -16,7 +16,7 @@ class SettingsPage : public QWidget
     Q_OBJECT
 
 public:
-    explicit SettingsPage(opengalaxy::ui::TranslationManager* translationManager, 
+    explicit SettingsPage(opengalaxy::ui::TranslationManager* translationManager,
                          opengalaxy::api::Session* session,
                          QWidget *parent = nullptr);
 

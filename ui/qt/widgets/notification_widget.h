@@ -23,7 +23,7 @@ private slots:
 private:
     void setupUI();
     void setupAnimations();
-    
+
     QLabel *messageLabel;
     QPropertyAnimation *slideInAnimation;
     QPropertyAnimation *slideOutAnimation;

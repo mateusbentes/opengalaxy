@@ -122,7 +122,7 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
     // Load library
     libraryService_.fetchLibrary(forceRefresh, [this](opengalaxy::util::Result<std::vector<api::GameInfo>> result) {
         isLoading_ = false;  // Reset loading flag
-        
+
         if (!result.isOk()) {
             qDebug() << "LibraryPage - Failed to load library:" << result.errorMessage();
             QMessageBox::warning(this, "Library", result.errorMessage());
@@ -130,18 +130,18 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
         }
 
         qDebug() << "LibraryPage - Loaded" << result.value().size() << "games";
-        
+
         // Store all games for filtering (deduplicate by ID)
         allGames_.clear();
         QSet<QString> seenIds;
-        
+
         for (const auto& game : result.value()) {
             // Skip duplicates (same game ID)
             if (seenIds.contains(game.id)) {
                 qDebug() << "  - Skipping duplicate:" << game.title << "(" << game.id << ")";
                 continue;
             }
-            
+
             seenIds.insert(game.id);
             allGames_.append(game);
             qDebug() << "  -" << game.title << "(" << game.id << ")" << game.platform;
@@ -151,7 +151,7 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
 
         // Clear existing cards completely
         qDebug() << "Clearing" << cardsById_.size() << "existing cards";
-        
+
         // First, hide and remove all card widgets
         for (auto it = cardsById_.begin(); it != cardsById_.end(); ++it) {
             GameCard* card = it.value();
@@ -161,16 +161,16 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
             delete card;                   // Delete immediately
         }
         cardsById_.clear();
-        
+
         // Then clear any remaining layout items
         while (QLayoutItem* item = gameGrid->takeAt(0)) {
             delete item;
         }
-        
+
         // Force layout update
         gameGrid->update();
         gameGrid->parentWidget()->update();
-        
+
         qDebug() << "All cards cleared";
 
         // Create cards for all games
@@ -188,7 +188,7 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
             connect(card, &GameCard::propertiesRequested, this, &LibraryPage::openGameProperties);
 
             cardsById_.insert(game.id, card);
-            
+
             // Check for updates if game is installed
             if (game.isInstalled) {
                 checkForUpdate(game.id);
@@ -199,9 +199,9 @@ void LibraryPage::refreshLibrary(bool forceRefresh)
 
         // Update grid layout with all cards
         updateGridLayout();
-        
+
         qDebug() << "Grid layout updated";
-        
+
         // Apply current search filter if any
         if (searchBox_ && !searchBox_->text().isEmpty()) {
             filterGames(searchBox_->text());
@@ -348,26 +348,26 @@ void LibraryPage::installGame(const QString& gameId)
     // Use default installation directory: ~/Games/OpenGalaxy
     QString homeDir = QDir::homePath();
     QDir dir(homeDir);
-    
+
     // Create Games directory if it doesn't exist
     if (!dir.exists("Games")) {
         if (!dir.mkdir("Games")) {
-            QMessageBox::warning(this, "Install Error", 
+            QMessageBox::warning(this, "Install Error",
                 "Failed to create Games directory in home folder");
             return;
         }
     }
     dir.cd("Games");
-    
+
     // Create OpenGalaxy directory if it doesn't exist
     if (!dir.exists("OpenGalaxy")) {
         if (!dir.mkdir("OpenGalaxy")) {
-            QMessageBox::warning(this, "Install Error", 
+            QMessageBox::warning(this, "Install Error",
                 "Failed to create OpenGalaxy directory");
             return;
         }
     }
-    
+
     const QString installDir = dir.absoluteFilePath("OpenGalaxy");
 
     gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId](opengalaxy::util::Result<api::GameInfo> result) {
@@ -421,22 +421,22 @@ void LibraryPage::checkForUpdate(const QString& gameId)
         if (!result.isOk()) {
             return;
         }
-        
+
         api::GameInfo currentGame = result.value();
-        
+
         // Only check if game is installed and has a version
         if (!currentGame.isInstalled || currentGame.version.isEmpty()) {
             return;
         }
-        
+
         // Fetch latest download info from GOG
         gogClient_.fetchGameDownloads(gameId, [this, gameId, currentGame](opengalaxy::util::Result<api::GameInfo> downloadResult) {
             if (!downloadResult.isOk()) {
                 return;
             }
-            
+
             api::GameInfo latestInfo = downloadResult.value();
-            
+
             // Find the latest version from downloads
             QString latestVersion;
             for (const auto& download : latestInfo.downloads) {
@@ -447,13 +447,13 @@ void LibraryPage::checkForUpdate(const QString& gameId)
                     }
                 }
             }
-            
+
             // Check if update is available
             if (!latestVersion.isEmpty() && latestVersion != currentGame.version) {
-                qDebug() << "Update available for" << currentGame.title 
-                         << "- Current:" << currentGame.version 
+                qDebug() << "Update available for" << currentGame.title
+                         << "- Current:" << currentGame.version
                          << "Latest:" << latestVersion;
-                
+
                 if (cardsById_.contains(gameId)) {
                     cardsById_[gameId]->setUpdateAvailable(true, latestVersion);
                 }
@@ -470,25 +470,25 @@ void LibraryPage::updateGame(const QString& gameId)
             QMessageBox::warning(this, "Update Error", result.errorMessage());
             return;
         }
-        
+
         api::GameInfo currentGame = result.value();
-        
+
         if (!currentGame.isInstalled) {
             QMessageBox::information(this, "Update", "Game is not installed.");
             return;
         }
-        
+
         // Mark as updating
         if (cardsById_.contains(gameId)) {
             cardsById_[gameId]->setUpdating(true);
             cardsById_[gameId]->setInstallProgress(0);
         }
-        
+
         NotificationWidget::showToast("Updating game...", this);
-        
+
         // Use the existing install directory
         QString installDir = QFileInfo(currentGame.installPath).absolutePath();
-        
+
         // Fetch latest downloads
         gogClient_.fetchGameDownloads(gameId, [this, installDir, gameId, currentGame](opengalaxy::util::Result<api::GameInfo> result) {
             if (!result.isOk()) {
@@ -498,29 +498,29 @@ void LibraryPage::updateGame(const QString& gameId)
                 QMessageBox::warning(this, "Update Error", result.errorMessage());
                 return;
             }
-            
+
             api::GameInfo game = result.value();
-            
+
             // Keep title/platform from current game
             game.platform = currentGame.platform;
             game.title = currentGame.title;
-            
+
             // Set up progress callback
             auto progressCallback = [this, gameId](const install::InstallService::InstallProgress& progress) {
                 if (cardsById_.contains(gameId)) {
                     cardsById_[gameId]->setInstallProgress(progress.percentage);
                 }
             };
-            
+
             // Set up completion callback
             auto completionCallback = [this, gameId](util::Result<QString> result) {
                 if (cardsById_.contains(gameId)) {
                     cardsById_[gameId]->setUpdating(false);
-                    
+
                     if (result.isOk()) {
                         cardsById_[gameId]->setUpdateAvailable(false);
                         NotificationWidget::showToast("Update completed", this);
-                        
+
                         // Refresh game info to get new version
                         checkForUpdate(gameId);
                     } else {
@@ -528,7 +528,7 @@ void LibraryPage::updateGame(const QString& gameId)
                     }
                 }
             };
-            
+
             // Use install service to download and install the update
             installService_.installGame(game, installDir, progressCallback, completionCallback);
         });
@@ -538,19 +538,19 @@ void LibraryPage::updateGame(const QString& gameId)
 void LibraryPage::filterGames(const QString& searchText)
 {
     QString search = searchText.trimmed().toLower();
-    
+
     // Load current setting
     showHiddenGames_ = opengalaxy::util::Config::instance().showHiddenGames();
-    
+
     qDebug() << "Filtering games with search:" << search << "showHiddenGames:" << showHiddenGames_;
     qDebug() << "Total cards:" << cardsById_.size();
-    
+
     int visibleCount = 0;
-    
+
     // Show/hide cards based on search and hidden status
     for (auto it = cardsById_.begin(); it != cardsById_.end(); ++it) {
         GameCard* card = it.value();
-        
+
         // Find the game info
         bool isHidden = false;
         QString gameTitle;
@@ -561,20 +561,20 @@ void LibraryPage::filterGames(const QString& searchText)
                 break;
             }
         }
-        
+
         // Check if game should be visible
         bool shouldShow = true;
-        
+
         // Check hidden status
         if (isHidden && !showHiddenGames_) {
             shouldShow = false;
         }
-        
+
         // Check search filter
         if (shouldShow && !search.isEmpty()) {
             shouldShow = gameTitle.toLower().contains(search);
         }
-        
+
         card->setVisible(shouldShow);
         if (shouldShow) {
             if (!search.isEmpty()) {
@@ -583,9 +583,9 @@ void LibraryPage::filterGames(const QString& searchText)
             visibleCount++;
         }
     }
-    
+
     qDebug() << "Visible cards after filter:" << visibleCount;
-    
+
     // Update grid layout to reflow visible cards
     updateGridLayout();
 }
@@ -595,10 +595,10 @@ void LibraryPage::updateGridLayout()
     qDebug() << "updateGridLayout() called";
     qDebug() << "Total games in allGames_:" << allGames_.size();
     qDebug() << "Total cards in cardsById_:" << cardsById_.size();
-    
+
     // Remove all widgets from grid (but don't delete them)
     QList<GameCard*> visibleCards;
-    
+
     // Collect visible cards in order
     for (const auto& game : allGames_) {
         if (cardsById_.contains(game.id)) {
@@ -608,25 +608,25 @@ void LibraryPage::updateGridLayout()
             }
         }
     }
-    
+
     qDebug() << "Visible cards to add to grid:" << visibleCards.size();
-    
+
     // Remove all items from layout
     while (QLayoutItem* item = gameGrid->takeAt(0)) {
         delete item;  // Delete the layout item, not the widget
     }
-    
+
     // Clear all row/column stretches
     for (int i = 0; i < 100; ++i) {
         gameGrid->setRowStretch(i, 0);
         gameGrid->setColumnStretch(i, 0);
     }
-    
+
     // Re-add visible cards to grid
     int row = 0;
     int col = 0;
     const int columns = 3;  // 3 cards per row
-    
+
     for (GameCard* card : visibleCards) {
         gameGrid->addWidget(card, row, col, Qt::AlignTop | Qt::AlignLeft);
         qDebug() << "  Added card at row" << row << "col" << col;
@@ -636,9 +636,9 @@ void LibraryPage::updateGridLayout()
             row++;
         }
     }
-    
+
     qDebug() << "Grid now has" << (row * columns + col) << "cards in" << (row + 1) << "rows";
-    
+
     // Add vertical stretch after last row to push cards to top
     gameGrid->setRowStretch(row + 1, 1);
 }

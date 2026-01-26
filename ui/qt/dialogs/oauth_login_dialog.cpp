@@ -118,17 +118,17 @@ void OAuthLoginDialog::startOAuthFlow()
     // Build OAuth URL with GOG's registered redirect URI
     QString authUrl = QString("https://auth.gog.com/auth?client_id=%1&redirect_uri=%2&response_type=code&layout=client2")
                           .arg(CLIENT_ID, QUrl::toPercentEncoding(REDIRECT_URI));
-    
+
     // Open in default browser
     if (!QDesktopServices::openUrl(QUrl(authUrl))) {
-        QMessageBox::critical(this, tr("Error"), 
+        QMessageBox::critical(this, tr("Error"),
             tr("Failed to open web browser.\n\nPlease open this URL manually:\n%1").arg(authUrl));
         reject();
         return;
     }
-    
+
     statusLabel_->setText(tr("Browser opened. After logging in, copy the URL and paste it here."));
-    
+
     // Show input dialog after a delay to give user time to see the instructions
     QTimer::singleShot(3000, this, &OAuthLoginDialog::showCodeInputDialog);
 }
@@ -136,7 +136,7 @@ void OAuthLoginDialog::startOAuthFlow()
 void OAuthLoginDialog::showCodeInputDialog()
 {
     bool ok;
-    QString input = QInputDialog::getText(this, 
+    QString input = QInputDialog::getText(this,
         tr("Paste Login URL"),
         tr("After logging in to GOG, copy the ENTIRE URL from your browser's address bar and paste it here.\n\n"
            "It should look like:\n"
@@ -145,11 +145,11 @@ void OAuthLoginDialog::showCodeInputDialog()
         QLineEdit::Normal,
         "",
         &ok);
-    
+
     if (ok && !input.isEmpty()) {
         // Try to extract code from URL
         QString trimmedInput = input.trimmed();
-        
+
         // If it's a full URL, extract the code
         if (trimmedInput.contains("code=")) {
             QUrl url(trimmedInput);
@@ -158,7 +158,7 @@ void OAuthLoginDialog::showCodeInputDialog()
             // Maybe they just pasted the code directly
             authCode_ = trimmedInput;
         }
-        
+
         if (!authCode_.isEmpty()) {
             success_ = true;
             statusLabel_->setText(tr("Code received! Logging in..."));

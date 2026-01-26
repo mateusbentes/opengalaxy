@@ -21,7 +21,7 @@ private slots:
         opengalaxy::api::AuthTokens tokens;
         tokens.accessToken = "test_token";
         tokens.expiresAt = QDateTime::currentDateTime().addSecs(-3600);  // Expired
-        
+
         QVERIFY(tokens.isExpired());
         QVERIFY(!tokens.isValid());
     }
@@ -30,16 +30,16 @@ private slots:
         opengalaxy::api::AuthTokens tokens;
         tokens.accessToken = "test_token";
         tokens.expiresAt = QDateTime::currentDateTime().addSecs(3600);  // Valid for 1 hour
-        
+
         QVERIFY(!tokens.isExpired());
         QVERIFY(tokens.isValid());
     }
 
     void testHttpClientGet() {
         opengalaxy::net::HttpClient client;
-        
+
         QSignalSpy spy(&client, &opengalaxy::net::HttpClient::requestFinished);
-        
+
         bool callbackCalled = false;
         client.get("https://httpbin.org/get", [&callbackCalled](opengalaxy::util::Result<opengalaxy::net::HttpClient::Response> result) {
             callbackCalled = true;
@@ -55,7 +55,7 @@ private slots:
 
     void testHttpClientTimeout() {
         opengalaxy::net::HttpClient client;
-        
+
         opengalaxy::net::HttpClient::Request req;
         req.url = "https://httpbin.org/delay/10";  // 10 second delay
         req.timeoutMs = 1000;  // 1 second timeout

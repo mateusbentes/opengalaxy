@@ -233,7 +233,7 @@ void GameDetailsDialog::onSave()
     game_.runnerExecutable = runnerExecutableEdit_->text().trimmed();
     game_.runnerArguments = runnerArgsEdit_->toPlainText().split('\n', Qt::SkipEmptyParts);
     for (QString& s : game_.runnerArguments) s = s.trimmed();
-    
+
     // Save tweaks checkboxes
     game_.hiddenInLibrary = hideGameCheck_->isChecked();
     game_.enableDxvkHudFps = dxvkFpsCheck_->isChecked();
@@ -271,15 +271,15 @@ void GameDetailsDialog::onClose()
 void GameDetailsDialog::launchWinecfg()
 {
     qDebug() << "Launching winecfg for:" << game_.title;
-    
+
     QProcess process;
     QStringList env = QProcess::systemEnvironment();
-    
+
     // Set WINEPREFIX if available
     if (!game_.runnerExecutable.isEmpty()) {
         env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
     }
-    
+
     process.setEnvironment(env);
     const bool ok = process.startDetached("winecfg");
     if (!ok) {
@@ -290,7 +290,7 @@ void GameDetailsDialog::launchWinecfg()
 void GameDetailsDialog::launchProtontricks()
 {
     qDebug() << "Launching protontricks for:" << game_.title;
-    
+
     const bool ok = QProcess::startDetached("protontricks", QStringList() << "--gui");
     if (!ok) {
         QMessageBox::warning(this, tr("Error"), tr("Failed to launch protontricks. Make sure Protontricks is installed."));
@@ -300,15 +300,15 @@ void GameDetailsDialog::launchProtontricks()
 void GameDetailsDialog::launchWinetricks()
 {
     qDebug() << "Launching winetricks for:" << game_.title;
-    
+
     QProcess process;
     QStringList env = QProcess::systemEnvironment();
-    
+
     // Set WINEPREFIX if available
     if (!game_.runnerExecutable.isEmpty()) {
         env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
     }
-    
+
     process.setEnvironment(env);
     const bool ok = process.startDetached("winetricks", QStringList() << "--gui");
     if (!ok) {
@@ -319,15 +319,15 @@ void GameDetailsDialog::launchWinetricks()
 void GameDetailsDialog::launchRegedit()
 {
     qDebug() << "Launching regedit for:" << game_.title;
-    
+
     QProcess process;
     QStringList env = QProcess::systemEnvironment();
-    
+
     // Set WINEPREFIX if available
     if (!game_.runnerExecutable.isEmpty()) {
         env << "WINEPREFIX=" + QStandardPaths::writableLocation(QStandardPaths::HomeLocation) + "/.wine";
     }
-    
+
     process.setEnvironment(env);
     const bool ok = process.startDetached("wine", QStringList() << "regedit");
     if (!ok) {
@@ -338,20 +338,20 @@ void GameDetailsDialog::launchRegedit()
 void GameDetailsDialog::openInstallFolder()
 {
     qDebug() << "Opening install folder for:" << game_.title;
-    
+
     if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
                                  tr("This game is not installed or has no install path."));
         return;
     }
-    
+
     const QString path = game_.installPath;
     if (!QDir(path).exists()) {
         QMessageBox::warning(this, tr("Folder not found"),
                              tr("Install folder does not exist:\n%1").arg(path));
         return;
     }
-    
+
     if (!QDesktopServices::openUrl(QUrl::fromLocalFile(path))) {
         QMessageBox::warning(this, tr("Failed to open"),
                              tr("Could not open folder:\n%1").arg(path));
@@ -361,13 +361,13 @@ void GameDetailsDialog::openInstallFolder()
 void GameDetailsDialog::updateGame()
 {
     qDebug() << "Checking for updates for:" << game_.title;
-    
+
     if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
                                  tr("This game is not installed."));
         return;
     }
-    
+
     // Show progress dialog
     QMessageBox msgBox(this);
     msgBox.setWindowTitle(tr("Check for Updates"));
@@ -375,13 +375,13 @@ void GameDetailsDialog::updateGame()
     msgBox.setInformativeText(tr("Checking available versions...\n\nThis may take a moment."));
     msgBox.setStandardButtons(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Information);
-    
+
     // In a real implementation, we would:
     // 1. Fetch latest version from GOG API
     // 2. Compare with installed version
     // 3. Show update dialog if newer version available
     // 4. Download and install update
-    
+
     // For now, show a message that update check would be performed
     QMessageBox::information(this, tr("Update Check"),
                             tr("Checking for updates for:\n%1\n\n"
@@ -393,20 +393,20 @@ void GameDetailsDialog::updateGame()
 void GameDetailsDialog::verifyGameFiles()
 {
     qDebug() << "Verifying game files for:" << game_.title;
-    
+
     if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
                                  tr("This game is not installed."));
         return;
     }
-    
+
     const QString path = game_.installPath;
     if (!QDir(path).exists()) {
         QMessageBox::warning(this, tr("Folder not found"),
                              tr("Install folder does not exist:\n%1").arg(path));
         return;
     }
-    
+
     // Show progress dialog
     QMessageBox msgBox(this);
     msgBox.setWindowTitle(tr("Verify Game Files"));
@@ -414,28 +414,28 @@ void GameDetailsDialog::verifyGameFiles()
     msgBox.setInformativeText(tr("Checking file integrity...\n\nThis may take a few minutes."));
     msgBox.setStandardButtons(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Information);
-    
+
     // Count files
     QDir gameDir(path);
     gameDir.setFilter(QDir::Files | QDir::NoDotAndDotDot);
     QStringList entries = gameDir.entryList();
     int totalFiles = entries.count();
-    
+
     if (totalFiles == 0) {
         QMessageBox::warning(this, tr("No files found"),
                              tr("No game files found in:\n%1").arg(path));
         return;
     }
-    
+
     // Verify files (simplified - just check if files exist)
     int corruptedFiles = 0;
     int missingFiles = 0;
-    
+
     // In a real implementation, we would:
     // 1. Get checksums from GOG API
     // 2. Calculate checksums for local files
     // 3. Compare and report differences
-    
+
     // For now, just verify that files exist
     for (const QString& entry : entries) {
         QFileInfo info(gameDir.absoluteFilePath(entry));
@@ -443,7 +443,7 @@ void GameDetailsDialog::verifyGameFiles()
             missingFiles++;
         }
     }
-    
+
     // Show results
     if (missingFiles == 0 && corruptedFiles == 0) {
         QMessageBox::information(this, tr("Verification Complete"),
@@ -463,20 +463,20 @@ void GameDetailsDialog::verifyGameFiles()
 void GameDetailsDialog::repairGame()
 {
     qDebug() << "Repairing game:" << game_.title;
-    
+
     if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
                                  tr("This game is not installed."));
         return;
     }
-    
+
     const QString path = game_.installPath;
     if (!QDir(path).exists()) {
         QMessageBox::warning(this, tr("Folder not found"),
                              tr("Install folder does not exist:\n%1").arg(path));
         return;
     }
-    
+
     // Confirm repair
     QMessageBox::StandardButton reply = QMessageBox::question(this,
         tr("Repair Game"),
@@ -484,11 +484,11 @@ void GameDetailsDialog::repairGame()
            "This may take a while and require re-downloading files.\n"
            "Continue?").arg(game_.title),
         QMessageBox::Yes | QMessageBox::No);
-    
+
     if (reply != QMessageBox::Yes) {
         return;
     }
-    
+
     // Show repair progress
     QMessageBox msgBox(this);
     msgBox.setWindowTitle(tr("Repairing Game"));
@@ -497,13 +497,13 @@ void GameDetailsDialog::repairGame()
                                  "This may take several minutes."));
     msgBox.setStandardButtons(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Information);
-    
+
     // In a real implementation, we would:
     // 1. Get checksums from GOG API
     // 2. Identify corrupted/missing files
     // 3. Re-download and replace them
     // 4. Verify checksums after repair
-    
+
     // For now, show a message that repair would be performed
     QMessageBox::information(this, tr("Repair Started"),
                             tr("Game repair has been initiated for:\n%1\n\n"

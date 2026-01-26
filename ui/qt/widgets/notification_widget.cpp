@@ -12,7 +12,7 @@ NotificationWidget::NotificationWidget(const QString &message, QWidget *parent)
 
     setupUI();
     setupAnimations();
-    
+
     messageLabel->setText(message);
 }
 
@@ -30,7 +30,7 @@ void NotificationWidget::setupUI()
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        
+
         QLabel {
             color: #e0e0ff;
             font-size: 14px;
@@ -57,11 +57,11 @@ void NotificationWidget::setupAnimations()
     slideInAnimation = new QPropertyAnimation(this, "geometry");
     slideInAnimation->setDuration(300);
     slideInAnimation->setEasingCurve(QEasingCurve::OutBack);
-    
+
     slideOutAnimation = new QPropertyAnimation(this, "windowOpacity");
     slideOutAnimation->setDuration(200);
     slideOutAnimation->setEndValue(0);
-    
+
     hideTimer = new QTimer(this);
     connect(hideTimer, &QTimer::timeout, this, &NotificationWidget::startHideAnimation);
 }
@@ -73,7 +73,7 @@ void NotificationWidget::showNotification()
     slideInAnimation->setStartValue(QRect(parentWidget()->width(), 100, width(), height()));
     slideInAnimation->setEndValue(QRect(parentWidget()->width() - width() - 20, 100, width(), height()));
     slideInAnimation->start();
-    
+
     hideTimer->start(3000);
 }
 

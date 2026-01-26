@@ -74,11 +74,11 @@ struct AuthTokens {
     QString refreshToken;
     QString tokenType = "Bearer";
     QDateTime expiresAt;
-    
+
     bool isExpired() const {
         return QDateTime::currentDateTime() >= expiresAt;
     }
-    
+
     bool isValid() const {
         return !accessToken.isEmpty() && !isExpired();
     }

@@ -18,15 +18,15 @@ LoginPage::LoginPage(QWidget *parent)
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 60);  // Add bottom margin to prevent cutoff
     mainLayout->setSpacing(0);
-    
+
     // Create centered container
     QWidget* container = new QWidget(this);
     container->setMaximumWidth(450);
-    
+
     QVBoxLayout* containerLayout = new QVBoxLayout(container);
     containerLayout->setContentsMargins(40, 40, 40, 60);  // Increased bottom margin
     containerLayout->setSpacing(20);
-    
+
     // Title
     QLabel* titleLabel = new QLabel(tr("Welcome to OpenGalaxy"), container);
     titleLabel->setStyleSheet(R"(
@@ -39,7 +39,7 @@ LoginPage::LoginPage(QWidget *parent)
     )");
     titleLabel->setAlignment(Qt::AlignCenter);
     containerLayout->addWidget(titleLabel);
-    
+
     // Subtitle
     QLabel* subtitleLabel = new QLabel(tr("Sign in with your GOG account"), container);
     subtitleLabel->setStyleSheet(R"(
@@ -51,7 +51,7 @@ LoginPage::LoginPage(QWidget *parent)
     )");
     subtitleLabel->setAlignment(Qt::AlignCenter);
     containerLayout->addWidget(subtitleLabel);
-    
+
     // Info text
     QLabel* infoLabel = new QLabel(tr("You will be redirected to GOG's secure login page"), container);
     infoLabel->setStyleSheet(R"(
@@ -64,10 +64,10 @@ LoginPage::LoginPage(QWidget *parent)
     infoLabel->setAlignment(Qt::AlignCenter);
     infoLabel->setWordWrap(true);
     containerLayout->addWidget(infoLabel);
-    
+
     // Add spacing before button
     containerLayout->addSpacing(20);
-    
+
     // Login button with GOG branding
     QPushButton* loginButton = new QPushButton(tr("🔐 Sign In with GOG"), container);
     loginButton->setMinimumHeight(56);
@@ -93,7 +93,7 @@ LoginPage::LoginPage(QWidget *parent)
         }
     )");
     containerLayout->addWidget(loginButton);
-    
+
     // Add spacing after button
     containerLayout->addSpacing(20);
 

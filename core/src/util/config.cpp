@@ -35,10 +35,10 @@ Config::Config()
 void Config::initializePaths() {
     // Data directory (for session, library, logs)
     dataDir_ = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    
+
     // Config directory (for settings)
     configDir_ = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/OpenGalaxy";
-    
+
     // Default games directory
     defaultGamesDir_ = getDefaultGamesDirectory();
 }
@@ -63,7 +63,7 @@ QString Config::getDefaultGamesDirectory() const {
 void Config::ensureDirectoriesExist() {
     QDir().mkpath(dataDir_);
     QDir().mkpath(configDir_);
-    
+
     // Create games directory if user hasn't changed it
     QString gamesDir = gamesDirectory();
     if (!gamesDir.isEmpty()) {
@@ -104,7 +104,7 @@ QString Config::gamesDirectory() const {
 void Config::setGamesDirectory(const QString& path) {
     settings_.setValue("install/gamesDirectory", path);
     settings_.sync();
-    
+
     // Create directory if it doesn't exist
     QDir().mkpath(path);
 }
