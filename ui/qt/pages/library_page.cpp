@@ -10,6 +10,7 @@
 #include <QFileDialog>
 #include <QDebug>
 
+#include "opengalaxy/util/config.h"
 #include "../widgets/game_card.h"
 #include "../widgets/notification_widget.h"
 #include "../dialogs/game_details_dialog.h"
@@ -538,35 +539,48 @@ void LibraryPage::filterGames(const QString& searchText)
 {
     QString search = searchText.trimmed().toLower();
     
-    qDebug() << "Filtering games with search:" << search;
+    // Load current setting
+    showHiddenGames_ = opengalaxy::util::Config::instance().showHiddenGames();
+    
+    qDebug() << "Filtering games with search:" << search << "showHiddenGames:" << showHiddenGames_;
     qDebug() << "Total cards:" << cardsById_.size();
     
     int visibleCount = 0;
     
-    // Show/hide cards based on search
+    // Show/hide cards based on search and hidden status
     for (auto it = cardsById_.begin(); it != cardsById_.end(); ++it) {
         GameCard* card = it.value();
         
-        if (search.isEmpty()) {
-            // No search - show all cards
-            card->setVisible(true);
-            visibleCount++;
-        } else {
-            // Search - check if game title matches
-            bool matches = false;
-            QString gameTitle;
-            for (const auto& game : allGames_) {
-                if (game.id == it.key()) {
-                    gameTitle = game.title;
-                    matches = game.title.toLower().contains(search);
-                    break;
-                }
+        // Find the game info
+        bool isHidden = false;
+        QString gameTitle;
+        for (const auto& game : allGames_) {
+            if (game.id == it.key()) {
+                gameTitle = game.title;
+                isHidden = game.hiddenInLibrary;
+                break;
             }
-            card->setVisible(matches);
-            if (matches) {
+        }
+        
+        // Check if game should be visible
+        bool shouldShow = true;
+        
+        // Check hidden status
+        if (isHidden && !showHiddenGames_) {
+            shouldShow = false;
+        }
+        
+        // Check search filter
+        if (shouldShow && !search.isEmpty()) {
+            shouldShow = gameTitle.toLower().contains(search);
+        }
+        
+        card->setVisible(shouldShow);
+        if (shouldShow) {
+            if (!search.isEmpty()) {
                 qDebug() << "  Match:" << gameTitle;
-                visibleCount++;
             }
+            visibleCount++;
         }
     }
     

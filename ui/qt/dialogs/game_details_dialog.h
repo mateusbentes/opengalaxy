@@ -36,6 +36,8 @@ private slots:
     void launchWinetricks();
     void launchRegedit();
     void openInstallFolder();
+    void verifyGameFiles();
+    void repairGame();
 
 private:
     void populateRunners();
@@ -63,6 +65,9 @@ private:
     QPushButton* winetricksBtn_ = nullptr;
     QPushButton* regeditBtn_ = nullptr;
     QPushButton* openFolderBtn_ = nullptr;
+    QPushButton* verifyFilesBtn_ = nullptr;
+    QPushButton* repairGameBtn_ = nullptr;
+    QPushButton* updateGameBtn_ = nullptr;
 
     QPushButton* saveButton_ = nullptr;
     QPushButton* closeButton_ = nullptr;

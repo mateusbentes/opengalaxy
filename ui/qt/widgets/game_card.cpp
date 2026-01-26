@@ -90,7 +90,7 @@ GameCard::GameCard(const QString& gameId,
 
     // Update button
     updateButton_ = new QPushButton(coverContainer);
-    updateButton_->setFixedSize(160, 50);
+    updateButton_->setFixedSize(76, 50);
     updateButton_->setStyleSheet(R"(
         QPushButton {
             background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
@@ -98,7 +98,7 @@ GameCard::GameCard(const QString& gameId,
             border: none;
             border-radius: 8px;
             color: white;
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 700;
         }
         QPushButton:hover {
@@ -106,8 +106,29 @@ GameCard::GameCard(const QString& gameId,
                 stop:0 #ffa726, stop:1 #fb8c00);
         }
     )");
-    updateButton_->setText("⬆ UPDATE");
+    updateButton_->setText("⬆ UPD");
     updateButton_->hide();
+
+    // Repair button
+    repairButton_ = new QPushButton(coverContainer);
+    repairButton_->setFixedSize(76, 50);
+    repairButton_->setStyleSheet(R"(
+        QPushButton {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #e91e63, stop:1 #c2185b);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        QPushButton:hover {
+            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #f06292, stop:1 #ec407a);
+        }
+    )");
+    repairButton_->setText("🔧 REP");
+    repairButton_->hide();
 
     // Progress bar with animated gradient effect
     progressBar_ = new QProgressBar(coverContainer);
@@ -137,10 +158,17 @@ GameCard::GameCard(const QString& gameId,
     // Position overlay widgets
     actionButton_->move((coverContainer->width() - actionButton_->width()) / 2,
                         (coverContainer->height() - actionButton_->height()) / 2 - 30);
-    updateButton_->move((coverContainer->width() - updateButton_->width()) / 2,
-                        actionButton_->y() + actionButton_->height() + 10);
+    
+    // Position Update and Repair buttons side-by-side
+    int buttonY = actionButton_->y() + actionButton_->height() + 10;
+    int totalWidth = 160 + 160 + 8;  // Two buttons + spacing
+    int startX = (coverContainer->width() - totalWidth) / 2;
+    
+    updateButton_->move(startX, buttonY);
+    repairButton_->move(startX + 160 + 8, buttonY);
+    
     progressBar_->move((coverContainer->width() - progressBar_->width()) / 2,
-                       updateButton_->y() + updateButton_->height() + 12);
+                       buttonY + 50 + 12);
 
     connect(actionButton_, &QPushButton::clicked, this, [this]() {
         if (installing_ || updating_) {
@@ -156,6 +184,10 @@ GameCard::GameCard(const QString& gameId,
 
     connect(updateButton_, &QPushButton::clicked, this, [this]() {
         emit updateRequested(gameId_);
+    });
+
+    connect(repairButton_, &QPushButton::clicked, this, [this]() {
+        emit repairRequested(gameId_);
     });
 
     mainLayout->addWidget(coverContainer);
@@ -263,9 +295,10 @@ void GameCard::setUpdating(bool updating)
 
 void GameCard::refreshButton()
 {
-    if (installing_ || updating_) {
+    if (installing_ || updating_ || repairing_) {
         actionButton_->setText("CANCEL");
         updateButton_->hide();
+        repairButton_->hide();
         progressBar_->show();
         return;
     }
@@ -276,15 +309,22 @@ void GameCard::refreshButton()
         actionButton_->setText("▶ PLAY");
         if (updateAvailable_) {
             updateButton_->show();
+            repairButton_->hide();
             if (!newVersion_.isEmpty()) {
                 updateButton_->setToolTip(tr("Update to version %1").arg(newVersion_));
             }
+        } else if (repairNeeded_) {
+            updateButton_->hide();
+            repairButton_->show();
+            repairButton_->setToolTip(tr("Repair corrupted game files"));
         } else {
             updateButton_->hide();
+            repairButton_->hide();
         }
     } else {
         actionButton_->setText("⬇ INSTALL");
         updateButton_->hide();
+        repairButton_->hide();
     }
 }
 
@@ -459,6 +499,18 @@ void GameCard::loadCoverImage(const QString& url)
         // Silently ignore common network errors for cover images
         Q_UNUSED(error);
     });
+}
+
+void GameCard::setRepairNeeded(bool needed)
+{
+    repairNeeded_ = needed;
+    refreshButton();
+}
+
+void GameCard::setRepairing(bool repairing)
+{
+    repairing_ = repairing;
+    refreshButton();
 }
 
 } // namespace ui

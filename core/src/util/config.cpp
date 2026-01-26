@@ -145,6 +145,15 @@ void Config::setEnableCloudSaves(bool enabled) {
     settings_.sync();
 }
 
+bool Config::showHiddenGames() const {
+    return settings_.value("library/showHiddenGames", false).toBool();
+}
+
+void Config::setShowHiddenGames(bool enabled) {
+    settings_.setValue("library/showHiddenGames", enabled);
+    settings_.sync();
+}
+
 QByteArray Config::windowGeometry() const {
     return settings_.value("window/geometry").toByteArray();
 }

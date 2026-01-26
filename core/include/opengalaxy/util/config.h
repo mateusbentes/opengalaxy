@@ -66,6 +66,9 @@ public:
     bool enableCloudSaves() const;
     void setEnableCloudSaves(bool enabled);
 
+    bool showHiddenGames() const;
+    void setShowHiddenGames(bool enabled);
+
     // Window state
     QByteArray windowGeometry() const;
     void setWindowGeometry(const QByteArray& geometry);

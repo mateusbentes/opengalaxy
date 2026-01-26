@@ -34,6 +34,7 @@ private:
     opengalaxy::ui::TranslationManager* translationManager_ = nullptr;
     opengalaxy::api::Session* session_ = nullptr;
     QComboBox* languageCombo_ = nullptr;
+    class QCheckBox* showHiddenGamesCheckbox_ = nullptr;
 };
 
 #endif // SETTINGS_PAGE_H

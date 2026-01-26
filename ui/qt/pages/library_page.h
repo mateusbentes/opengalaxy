@@ -49,6 +49,7 @@ private:
     QMap<QString, GameCard*> cardsById_;
     QVector<api::GameInfo> allGames_;  // Store all games for filtering
     bool isLoading_ = false;  // Prevent double-loading
+    bool showHiddenGames_ = false;  // Whether to show hidden games
 
     // Core services used by UI (session is passed from AppWindow)
     api::Session* session_;

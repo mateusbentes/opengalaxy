@@ -16,6 +16,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include "i18n/translation_manager.h"
+#include "opengalaxy/util/config.h"
 
 SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager,
                            opengalaxy::api::Session* session,
@@ -145,12 +146,48 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     QLabel *gameSubtitle = new QLabel(tr("Manage your game library and installations"), content);
     gameSubtitle->setObjectName("sectionSubtitle");
     
+    contentLayout->addWidget(gameTitle);
+    contentLayout->addWidget(gameSubtitle);
+    
+    // Show hidden games checkbox
+    showHiddenGamesCheckbox_ = new QCheckBox(tr("Show hidden games in library"), content);
+    showHiddenGamesCheckbox_->setStyleSheet(R"(
+        QCheckBox {
+            color: #3c3a37;
+            font-size: 14px;
+            padding: 10px 60px;
+            spacing: 8px;
+        }
+        QCheckBox::indicator {
+            width: 18px;
+            height: 18px;
+        }
+        QCheckBox::indicator:unchecked {
+            background: #ffffff;
+            border: 2px solid #d0cec9;
+            border-radius: 4px;
+        }
+        QCheckBox::indicator:checked {
+            background: #9b4dca;
+            border: 2px solid #9b4dca;
+            border-radius: 4px;
+        }
+    )");
+    
+    // Load current setting
+    opengalaxy::util::Config& config = opengalaxy::util::Config::instance();
+    showHiddenGamesCheckbox_->setChecked(config.showHiddenGames());
+    
+    connect(showHiddenGamesCheckbox_, &QCheckBox::toggled, this, [](bool checked) {
+        opengalaxy::util::Config::instance().setShowHiddenGames(checked);
+    });
+    
+    contentLayout->addWidget(showHiddenGamesCheckbox_);
+    
     QPushButton *installsBtn = new QPushButton(tr("Installation Folders"), content);
     
     connect(installsBtn, &QPushButton::clicked, this, &SettingsPage::onInstallationFoldersClicked);
     
-    contentLayout->addWidget(gameTitle);
-    contentLayout->addWidget(gameSubtitle);
     contentLayout->addWidget(installsBtn);
 
     // Account section

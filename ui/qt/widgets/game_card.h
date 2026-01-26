@@ -34,6 +34,8 @@ public:
     void setInstallProgress(int percent);
     void setUpdateAvailable(bool available, const QString& newVersion = QString());
     void setUpdating(bool updating);
+    void setRepairNeeded(bool needed);
+    void setRepairing(bool repairing);
 
 signals:
     void playRequested(const QString& gameId);
@@ -41,6 +43,7 @@ signals:
     void installRequested(const QString& gameId);
     void cancelInstallRequested(const QString& gameId);
     void updateRequested(const QString& gameId);
+    void repairRequested(const QString& gameId);
     void informationRequested(const QString& gameId);
     void propertiesRequested(const QString& gameId);
 
@@ -62,6 +65,8 @@ private:
     int installProgress_ = 0;
     bool updateAvailable_ = false;
     bool updating_ = false;
+    bool repairNeeded_ = false;
+    bool repairing_ = false;
     QString newVersion_;
 
     QLabel* coverImage = nullptr;
@@ -70,6 +75,7 @@ private:
 
     QPushButton* actionButton_ = nullptr;
     QPushButton* updateButton_ = nullptr;
+    QPushButton* repairButton_ = nullptr;
     QProgressBar* progressBar_ = nullptr;
 
     QGraphicsDropShadowEffect* shadowEffect = nullptr;
