@@ -23,7 +23,7 @@ public:
         db_.setDatabaseName(dbPath + "/library.db");
 
         if (!db_.open()) {
-            LOG_ERROR("Failed to open library database");
+                LOG_ERROR("Failed to open library database");
         }
     }
 
@@ -53,15 +53,15 @@ void LibraryService::fetchLibrary(bool forceRefresh, GamesCallback callback)
     if (!forceRefresh) {
         auto cached = loadCachedGames();
         if (!cached.empty()) {
-            callback(util::Result<std::vector<api::GameInfo>>::success(cached));
-            return;
+                callback(util::Result<std::vector<api::GameInfo>>::success(cached));
+                return;
         }
     }
 
     gogClient_->fetchLibrary([this, callback](util::Result<std::vector<api::GameInfo>> result) {
         if (result.isOk()) {
-            cacheGames(result.value());
-            emit libraryUpdated(static_cast<int>(result.value().size()));
+                cacheGames(result.value());
+                emit libraryUpdated(static_cast<int>(result.value().size()));
         }
         callback(result);
     });
@@ -77,7 +77,7 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
     );
     query.addBindValue(gameId);
 
-    if (query.exec() && query.next()) {
+    if (query.exec()  &&  query.next()) {
         api::GameInfo game;
         game.id = query.value(0).toString();
         game.title = query.value(1).toString();
@@ -92,21 +92,21 @@ void LibraryService::getGame(const QString& gameId, GameCallback callback)
 
         const QString envJson = query.value(10).toString();
         if (!envJson.isEmpty()) {
-            const QJsonDocument doc = QJsonDocument::fromJson(envJson.toUtf8());
-            if (doc.isObject()) {
+                const QJsonDocument doc = QJsonDocument::fromJson(envJson.toUtf8());
+                if (doc.isObject()) {
                 const auto obj = doc.object();
-                for (auto it = obj.begin(); it != obj.end(); ++it) {
+                for (auto it = obj.begin(); it  !=  obj.end(); ++it) {
                     game.extraEnvironment.insert(it.key(), it.value().toString());
                 }
-            }
+                }
         }
 
         game.slug = query.value(11).toString();
-        game.hiddenInLibrary = query.value(12).toInt() != 0;
-        game.enableMangoHud = query.value(13).toInt() != 0;
-        game.enableDxvkHudFps = query.value(14).toInt() != 0;
-        game.enableGameMode = query.value(15).toInt() != 0;
-        game.enableCloudSaves = query.value(16).toInt() != 0;
+        game.hiddenInLibrary = query.value(12).toInt()  !=  0;
+        game.enableMangoHud = query.value(13).toInt()  !=  0;
+        game.enableDxvkHudFps = query.value(14).toInt()  !=  0;
+        game.enableGameMode = query.value(15).toInt()  !=  0;
+        game.enableCloudSaves = query.value(16).toInt()  !=  0;
 
         callback(util::Result<api::GameInfo>::success(game));
     } else {
@@ -149,7 +149,7 @@ void LibraryService::updateGameProperties(const api::GameInfo& game)
     QSqlQuery query(db_->database());
 
     QJsonObject envObj;
-    for (auto it = game.extraEnvironment.begin(); it != game.extraEnvironment.end(); ++it) {
+    for (auto it = game.extraEnvironment.begin(); it  !=  game.extraEnvironment.end(); ++it) {
         envObj.insert(it.key(), it.value());
     }
     const QString envJson = QString::fromUtf8(QJsonDocument(envObj).toJson(QJsonDocument::Compact));
@@ -187,15 +187,15 @@ std::vector<api::GameInfo> LibraryService::searchGames(const QString& query)
 
     if (sqlQuery.exec()) {
         while (sqlQuery.next()) {
-            api::GameInfo game;
-            game.id = sqlQuery.value(0).toString();
-            game.title = sqlQuery.value(1).toString();
-            game.platform = sqlQuery.value(2).toString();
-            game.coverUrl = sqlQuery.value(3).toString();
-            game.isInstalled = sqlQuery.value(4).toBool();
-            game.installPath = sqlQuery.value(5).toString();
-            game.version = sqlQuery.value(6).toString();
-            results.push_back(game);
+                api::GameInfo game;
+                game.id = sqlQuery.value(0).toString();
+                game.title = sqlQuery.value(1).toString();
+                game.platform = sqlQuery.value(2).toString();
+                game.coverUrl = sqlQuery.value(3).toString();
+                game.isInstalled = sqlQuery.value(4).toBool();
+                game.installPath = sqlQuery.value(5).toString();
+                game.version = sqlQuery.value(6).toString();
+                results.push_back(game);
         }
     }
 
@@ -212,15 +212,15 @@ std::vector<api::GameInfo> LibraryService::filterByPlatform(const QString& platf
 
     if (query.exec()) {
         while (query.next()) {
-            api::GameInfo game;
-            game.id = query.value(0).toString();
-            game.title = query.value(1).toString();
-            game.platform = query.value(2).toString();
-            game.coverUrl = query.value(3).toString();
-            game.isInstalled = query.value(4).toBool();
-            game.installPath = query.value(5).toString();
-            game.version = query.value(6).toString();
-            results.push_back(game);
+                api::GameInfo game;
+                game.id = query.value(0).toString();
+                game.title = query.value(1).toString();
+                game.platform = query.value(2).toString();
+                game.coverUrl = query.value(3).toString();
+                game.isInstalled = query.value(4).toBool();
+                game.installPath = query.value(5).toString();
+                game.version = query.value(6).toString();
+                results.push_back(game);
         }
     }
 
@@ -233,38 +233,38 @@ void LibraryService::initDatabase()
 
     query.exec(R"(
         CREATE TABLE IF NOT EXISTS games (
-            id TEXT PRIMARY KEY,
-            title TEXT NOT NULL,
-            platform TEXT,
-            coverUrl TEXT,
-            backgroundUrl TEXT,
-            developer TEXT,
-            publisher TEXT,
-            releaseDate TEXT,
-            description TEXT,
-            isInstalled INTEGER DEFAULT 0,
-            installPath TEXT,
-            version TEXT,
-            size INTEGER DEFAULT 0,
-            preferredRunner TEXT,
-            runnerExecutable TEXT,
-            runnerArguments TEXT,
-            extraEnvironment TEXT,
-            slug TEXT,
-            hiddenInLibrary INTEGER DEFAULT 0,
-            enableMangoHud INTEGER DEFAULT 0,
-            enableDxvkHudFps INTEGER DEFAULT 0,
-            enableGameMode INTEGER DEFAULT 0,
-            enableCloudSaves INTEGER DEFAULT 1
+                id TEXT PRIMARY KEY,
+                title TEXT NOT NULL,
+                platform TEXT,
+                coverUrl TEXT,
+                backgroundUrl TEXT,
+                developer TEXT,
+                publisher TEXT,
+                releaseDate TEXT,
+                description TEXT,
+                isInstalled INTEGER DEFAULT 0,
+                installPath TEXT,
+                version TEXT,
+                size INTEGER DEFAULT 0,
+                preferredRunner TEXT,
+                runnerExecutable TEXT,
+                runnerArguments TEXT,
+                extraEnvironment TEXT,
+                slug TEXT,
+                hiddenInLibrary INTEGER DEFAULT 0,
+                enableMangoHud INTEGER DEFAULT 0,
+                enableDxvkHudFps INTEGER DEFAULT 0,
+                enableGameMode INTEGER DEFAULT 0,
+                enableCloudSaves INTEGER DEFAULT 1
         )
     )");
 
     const auto tryAddColumn = [&](const QString& ddl) {
         if (!query.exec(ddl)) {
-            const QString err = query.lastError().text().toLower();
-            if (!err.contains("duplicate column") && !err.contains("already exists")) {
+                const QString err = query.lastError().text().toLower();
+                if (!err.contains("duplicate column")  &&  !err.contains("already exists")) {
                 LOG_ERROR(QString("Migration failed: %1 (%2)").arg(ddl, query.lastError().text()));
-            }
+                }
         }
     };
 
@@ -292,10 +292,10 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
     bool hasError = false;
     for (const auto& game : games) {
         query.prepare(R"(
-            INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size, slug,
+                INSERT OR REPLACE INTO games (id, title, platform, coverUrl, backgroundUrl, developer, publisher, description, size, slug,
                                          preferredRunner, runnerExecutable, runnerArguments, extraEnvironment,
                                          hiddenInLibrary, enableMangoHud, enableDxvkHudFps, enableGameMode, enableCloudSaves)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         )");
         query.addBindValue(game.id);
         query.addBindValue(game.title);
@@ -321,15 +321,15 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         query.addBindValue(game.enableCloudSaves ? 1 : 0);
 
         QJsonObject envObj;
-        for (auto it = game.extraEnvironment.begin(); it != game.extraEnvironment.end(); ++it) {
-            envObj.insert(it.key(), it.value());
+        for (auto it = game.extraEnvironment.begin(); it  !=  game.extraEnvironment.end(); ++it) {
+                envObj.insert(it.key(), it.value());
         }
         query.addBindValue(QString::fromUtf8(QJsonDocument(envObj).toJson(QJsonDocument::Compact)));
 
         if (!query.exec()) {
-            LOG_ERROR(QString("Failed to cache game: %1").arg(query.lastError().text()));
-            hasError = true;
-            break;
+                LOG_ERROR(QString("Failed to cache game: %1").arg(query.lastError().text()));
+                hasError = true;
+                break;
         }
     }
 
@@ -338,8 +338,8 @@ void LibraryService::cacheGames(const std::vector<api::GameInfo>& games)
         LOG_ERROR("Database transaction rolled back due to errors");
     } else {
         if (!db_->database().commit()) {
-            LOG_ERROR("Failed to commit database transaction");
-            db_->database().rollback();
+                LOG_ERROR("Failed to commit database transaction");
+                db_->database().rollback();
         }
     }
 }
@@ -355,41 +355,41 @@ std::vector<api::GameInfo> LibraryService::loadCachedGames()
                    "slug, hiddenInLibrary, enableMangoHud, enableDxvkHudFps, "
                    "enableGameMode, enableCloudSaves FROM games")) {
         while (query.next()) {
-            api::GameInfo game;
-            game.id = query.value(0).toString();
-            game.title = query.value(1).toString();
-            game.platform = query.value(2).toString();
-            game.coverUrl = query.value(3).toString();
-            game.backgroundUrl = query.value(4).toString();
-            game.developer = query.value(5).toString();
-            game.publisher = query.value(6).toString();
-            game.description = query.value(7).toString();
-            game.isInstalled = query.value(8).toBool();
-            game.installPath = query.value(9).toString();
-            game.version = query.value(10).toString();
-            game.size = query.value(11).toLongLong();
-            game.preferredRunner = query.value(12).toString();
-            game.runnerExecutable = query.value(13).toString();
-            game.runnerArguments = query.value(14).toString().split('\n', Qt::SkipEmptyParts);
+                api::GameInfo game;
+                game.id = query.value(0).toString();
+                game.title = query.value(1).toString();
+                game.platform = query.value(2).toString();
+                game.coverUrl = query.value(3).toString();
+                game.backgroundUrl = query.value(4).toString();
+                game.developer = query.value(5).toString();
+                game.publisher = query.value(6).toString();
+                game.description = query.value(7).toString();
+                game.isInstalled = query.value(8).toBool();
+                game.installPath = query.value(9).toString();
+                game.version = query.value(10).toString();
+                game.size = query.value(11).toLongLong();
+                game.preferredRunner = query.value(12).toString();
+                game.runnerExecutable = query.value(13).toString();
+                game.runnerArguments = query.value(14).toString().split('\n', Qt::SkipEmptyParts);
 
-            const QString envJson = query.value(15).toString();
-            game.slug = query.value(16).toString();
-            game.hiddenInLibrary = query.value(17).toInt() != 0;
-            game.enableMangoHud = query.value(18).toInt() != 0;
-            game.enableDxvkHudFps = query.value(19).toInt() != 0;
-            game.enableGameMode = query.value(20).toInt() != 0;
-            game.enableCloudSaves = query.value(21).toInt() != 0;
-            if (!envJson.isEmpty()) {
+                const QString envJson = query.value(15).toString();
+                game.slug = query.value(16).toString();
+                game.hiddenInLibrary = query.value(17).toInt()  !=  0;
+                game.enableMangoHud = query.value(18).toInt()  !=  0;
+                game.enableDxvkHudFps = query.value(19).toInt()  !=  0;
+                game.enableGameMode = query.value(20).toInt()  !=  0;
+                game.enableCloudSaves = query.value(21).toInt()  !=  0;
+                if (!envJson.isEmpty()) {
                 const QJsonDocument doc = QJsonDocument::fromJson(envJson.toUtf8());
                 if (doc.isObject()) {
                     const auto obj = doc.object();
-                    for (auto it = obj.begin(); it != obj.end(); ++it) {
-                        game.extraEnvironment.insert(it.key(), it.value().toString());
+                    for (auto it = obj.begin(); it  !=  obj.end(); ++it) {
+                                game.extraEnvironment.insert(it.key(), it.value().toString());
                     }
                 }
-            }
+                }
 
-            games.push_back(game);
+                games.push_back(game);
         }
     }
 

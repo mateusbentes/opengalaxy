@@ -39,7 +39,7 @@ public:
     // Cloud saves
     void listCloudSaves(const QString& gameId, CloudSavesCallback callback);
     void uploadCloudSave(const QString& gameId, const QString& filePath,
-                        std::function<void(util::Result<void>)> callback);
+                                std::function<void(util::Result<void>)> callback);
     void downloadCloudSave(const QString& gameId, const QString& filename,
                           const QString& destPath,
                           std::function<void(util::Result<void>)> callback);

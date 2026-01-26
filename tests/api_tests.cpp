@@ -42,9 +42,9 @@ private slots:
 
         bool callbackCalled = false;
         client.get("https://httpbin.org/get", [&callbackCalled](opengalaxy::util::Result<opengalaxy::net::HttpClient::Response> result) {
-            callbackCalled = true;
-            QVERIFY(result.isOk());
-            QCOMPARE(result.value().statusCode, 200);
+                callbackCalled = true;
+                QVERIFY(result.isOk());
+                QCOMPARE(result.value().statusCode, 200);
         });
 
         // Wait for async operation
@@ -63,8 +63,8 @@ private slots:
 
         bool callbackCalled = false;
         client.request(req, [&callbackCalled](opengalaxy::util::Result<opengalaxy::net::HttpClient::Response> result) {
-            callbackCalled = true;
-            QVERIFY(result.isError());
+                callbackCalled = true;
+                QVERIFY(result.isError());
         });
 
         QTest::qWait(3000);

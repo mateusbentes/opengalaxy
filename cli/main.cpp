@@ -41,35 +41,35 @@ public:
         std::cout << "Logging in..." << std::endl;
 
         session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
-            if (result.isOk()) {
+                if (result.isOk()) {
                 std::cout << "Login successful!" << std::endl;
                 app_->quit();
-            } else {
+                } else {
                 std::cerr << "Login failed: " << result.errorMessage().toStdString() << std::endl;
                 app_->exit(1);
-            }
+                }
         });
     }
 
     void listGames()
     {
         if (!session_->isAuthenticated()) {
-            std::cerr << "Not logged in. Please login first." << std::endl;
-            app_->exit(1);
-            return;
+                std::cerr << "Not logged in. Please login first." << std::endl;
+                app_->exit(1);
+                return;
         }
 
         std::cout << "Fetching library..." << std::endl;
 
         libraryService_->fetchLibrary(false, [this](util::Result<std::vector<api::GameInfo>> result) {
-            if (result.isOk()) {
+                if (result.isOk()) {
                 const auto& games = result.value();
                 std::cout << "\nYour library (" << games.size() << " games):\n" << std::endl;
 
                 for (const auto& game : games) {
                     std::cout << "  " << game.title.toStdString();
                     if (game.isInstalled) {
-                        std::cout << " [INSTALLED]";
+                                std::cout << " [INSTALLED]";
                     }
                     std::cout << std::endl;
                     std::cout << "    ID: " << game.id.toStdString() << std::endl;
@@ -78,34 +78,34 @@ public:
                 }
 
                 app_->quit();
-            } else {
+                } else {
                 std::cerr << "Failed to fetch library: " << result.errorMessage().toStdString() << std::endl;
                 app_->exit(1);
-            }
+                }
         });
     }
 
     void installGame(const QString& gameId, const QString& installDir)
     {
         if (!session_->isAuthenticated()) {
-            std::cerr << "Not logged in. Please login first." << std::endl;
-            app_->exit(1);
-            return;
+                std::cerr << "Not logged in. Please login first." << std::endl;
+                app_->exit(1);
+                return;
         }
 
         std::cout << "Fetching game details..." << std::endl;
 
         libraryService_->getGame(gameId, [this, installDir](util::Result<api::GameInfo> result) {
-            if (!result.isOk()) {
+                if (!result.isOk()) {
                 std::cerr << "Game not found: " << result.errorMessage().toStdString() << std::endl;
                 app_->exit(1);
                 return;
-            }
+                }
 
-            const auto& game = result.value();
-            std::cout << "Installing: " << game.title.toStdString() << std::endl;
+                const auto& game = result.value();
+                std::cout << "Installing: " << game.title.toStdString() << std::endl;
 
-            installService_->installGame(
+                installService_->installGame(
                 game,
                 installDir,
                 [](const install::InstallService::InstallProgress& progress) {
@@ -114,11 +114,11 @@ public:
                 [this](util::Result<QString> result) {
                     std::cout << std::endl;
                     if (result.isOk()) {
-                        std::cout << "Installation complete: " << result.value().toStdString() << std::endl;
-                        app_->quit();
+                                std::cout << "Installation complete: " << result.value().toStdString() << std::endl;
+                                app_->quit();
                     } else {
-                        std::cerr << "Installation failed: " << result.errorMessage().toStdString() << std::endl;
-                        app_->exit(1);
+                                std::cerr << "Installation failed: " << result.errorMessage().toStdString() << std::endl;
+                                app_->exit(1);
                     }
                 });
         });
@@ -127,62 +127,62 @@ public:
     void launchGame(const QString& gameId)
     {
         if (!session_->isAuthenticated()) {
-            std::cerr << "Not logged in. Please login first." << std::endl;
-            app_->exit(1);
-            return;
+                std::cerr << "Not logged in. Please login first." << std::endl;
+                app_->exit(1);
+                return;
         }
 
         libraryService_->getGame(gameId, [this](util::Result<api::GameInfo> result) {
-            if (!result.isOk()) {
+                if (!result.isOk()) {
                 std::cerr << "Game not found: " << result.errorMessage().toStdString() << std::endl;
                 app_->exit(1);
                 return;
-            }
+                }
 
-            const auto& game = result.value();
+                const auto& game = result.value();
 
-            if (!game.isInstalled) {
+                if (!game.isInstalled) {
                 std::cerr << "Game is not installed." << std::endl;
                 app_->exit(1);
                 return;
-            }
+                }
 
-            std::cout << "Launching: " << game.title.toStdString() << std::endl;
+                std::cout << "Launching: " << game.title.toStdString() << std::endl;
 
-            runners::LaunchConfig config;
-            config.gamePath = game.installPath;
-            config.workingDirectory = QFileInfo(game.installPath).absolutePath();
+                runners::LaunchConfig config;
+                config.gamePath = game.installPath;
+                config.workingDirectory = QFileInfo(game.installPath).absolutePath();
 
-            // Detect platform and architecture from binary
-            config.gamePlatform = runners::Runner::detectPlatform(game.installPath);
-            config.gameArch = runners::Runner::detectArchitecture(game.installPath);
+                // Detect platform and architecture from binary
+                config.gamePlatform = runners::Runner::detectPlatform(game.installPath);
+                config.gameArch = runners::Runner::detectArchitecture(game.installPath);
 
-            // Use game-specific settings if available
-            config.runnerExecutableOverride = game.runnerExecutable.trimmed();
-            config.runnerArguments = game.runnerArguments; // Already a QStringList
-            config.arguments = {}; // Game arguments (can be extended later)
+                // Use game-specific settings if available
+                config.runnerExecutableOverride = game.runnerExecutable.trimmed();
+                config.runnerArguments = game.runnerArguments; // Already a QStringList
+                config.arguments = {}; // Game arguments (can be extended later)
 
-            auto* runner = runnerManager_->findBestRunner(config);
-            if (!runner) {
+                auto* runner = runnerManager_->findBestRunner(config);
+                if (!runner) {
                 std::cerr << "No suitable runner found." << std::endl;
                 app_->exit(1);
                 return;
-            }
+                }
 
-            std::cout << "Using runner: " << runner->name().toStdString() << std::endl;
+                std::cout << "Using runner: " << runner->name().toStdString() << std::endl;
 
-            auto process = runner->launch(config);
-            if (!process) {
+                auto process = runner->launch(config);
+                if (!process) {
                 std::cerr << "Failed to launch game." << std::endl;
                 app_->exit(1);
                 return;
-            }
+                }
 
-            std::cout << "Game launched successfully." << std::endl;
+                std::cout << "Game launched successfully." << std::endl;
 
-            process->setParent(app_);
-            process.release();
-            app_->quit();
+                process->setParent(app_);
+                process.release();
+                app_->quit();
         });
     }
 
@@ -195,19 +195,19 @@ public:
         std::cout << "\nAvailable runners (" << runners.size() << "): \n" << std::endl;
 
         for (const auto& runner : runners) {
-            std::cout << "  " << runner.name.toStdString() << " " << runner.version.toStdString() << std::endl;
-            std::cout << "    Path: " << runner.executablePath.toStdString() << std::endl;
-            std::cout << "    Platform: ";
-            switch (runner.supportedPlatform) {
+                std::cout << "  " << runner.name.toStdString() << " " << runner.version.toStdString() << std::endl;
+                std::cout << "    Path: " << runner.executablePath.toStdString() << std::endl;
+                std::cout << "    Platform: ";
+                switch (runner.supportedPlatform) {
                 case runners::Platform::Windows: std::cout << "Windows"; break;
                 case runners::Platform::Linux: std::cout << "Linux"; break;
                 case runners::Platform::MacOS: std::cout << "macOS"; break;
                 case runners::Platform::DOS: std::cout << "DOS"; break;
                 default: std::cout << "Unknown"; break;
-            }
-            std::cout << std::endl;
+                }
+                std::cout << std::endl;
 
-            if (runner.requiresISATranslation) {
+                if (runner.requiresISATranslation) {
                 std::cout << "    ISA Translation: ";
                 switch (runner.hostArch) {
                     case runners::Architecture::X86: std::cout << "x86"; break;
@@ -225,8 +225,8 @@ public:
                     default: std::cout << "Unknown"; break;
                 }
                 std::cout << std::endl;
-            }
-            std::cout << std::endl;
+                }
+                std::cout << std::endl;
         }
 
         app_->quit();
@@ -281,36 +281,36 @@ int main(int argc, char *argv[])
     QString command = args.first();
     CLI cli(&app);
 
-    if (command == "login") {
-        if (!parser.isSet(usernameOption) || !parser.isSet(passwordOption)) {
-            std::cerr << "Error: --username and --password required for login" << std::endl;
-            return 1;
+    if (command  ==  "login") {
+        if (!parser.isSet(usernameOption)  ||  !parser.isSet(passwordOption)) {
+                std::cerr << "Error: --username and --password required for login" << std::endl;
+                return 1;
         }
         cli.login(parser.value(usernameOption), parser.value(passwordOption));
     }
-    else if (command == "list") {
+    else if (command  ==  "list") {
         cli.listGames();
     }
-    else if (command == "install") {
+    else if (command  ==  "install") {
         if (!parser.isSet(gameIdOption)) {
-            std::cerr << "Error: --game required for install" << std::endl;
-            return 1;
+                std::cerr << "Error: --game required for install" << std::endl;
+                return 1;
         }
         QString installDir = parser.value(installDirOption);
         if (installDir.isEmpty()) {
-            // Use configured games directory
-            installDir = util::Config::instance().gamesDirectory();
+                // Use configured games directory
+                installDir = util::Config::instance().gamesDirectory();
         }
         cli.installGame(parser.value(gameIdOption), installDir);
     }
-    else if (command == "launch") {
+    else if (command  ==  "launch") {
         if (!parser.isSet(gameIdOption)) {
-            std::cerr << "Error: --game required for launch" << std::endl;
-            return 1;
+                std::cerr << "Error: --game required for launch" << std::endl;
+                return 1;
         }
         cli.launchGame(parser.value(gameIdOption));
     }
-    else if (command == "runners") {
+    else if (command  ==  "runners") {
         cli.listRunners();
     }
     else {

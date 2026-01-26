@@ -19,8 +19,8 @@
 #include "opengalaxy/util/config.h"
 
 SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManager,
-                           opengalaxy::api::Session* session,
-                           QWidget *parent)
+                                    opengalaxy::api::Session* session,
+                                    QWidget *parent)
     : QWidget(parent)
     , translationManager_(translationManager)
     , session_(session)
@@ -28,64 +28,64 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     setStyleSheet(
         R"(
         SettingsPage {
-            background: #f5f3f0;
-            color: #3c3a37;
+                background: #f5f3f0;
+                color: #3c3a37;
         }
 
         QLabel#sectionTitle {
-            font-size: 22px;
-            font-weight: 600;
-            padding: 30px 60px 20px 60px;
-            border-bottom: 1px solid #d0cec9;
-            color: #3c3a37;
+                font-size: 22px;
+                font-weight: 600;
+                padding: 30px 60px 20px 60px;
+                border-bottom: 1px solid #d0cec9;
+                color: #3c3a37;
         }
 
         QLabel#sectionSubtitle {
-            font-size: 16px;
-            color: #5a5855;
-            padding: 0 60px 30px 60px;
+                font-size: 16px;
+                color: #5a5855;
+                padding: 0 60px 30px 60px;
         }
 
         QLabel#settingLabel {
-            font-size: 15px;
-            color: #3c3a37;
-            padding: 10px 60px;
+                font-size: 15px;
+                color: #3c3a37;
+                padding: 10px 60px;
         }
 
         QComboBox {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 8px;
-            padding: 10px 16px;
-            color: #3c3a37;
-            font-size: 14px;
-            margin: 0 60px 20px 60px;
-            min-width: 250px;
+                background: #ffffff;
+                border: 2px solid #d0cec9;
+                border-radius: 8px;
+                padding: 10px 16px;
+                color: #3c3a37;
+                font-size: 14px;
+                margin: 0 60px 20px 60px;
+                min-width: 250px;
         }
 
         QComboBox:hover {
-            border-color: #9b4dca;
+                border-color: #9b4dca;
         }
 
         QComboBox::drop-down {
-            border: none;
-            width: 30px;
+                border: none;
+                width: 30px;
         }
 
         QPushButton {
-            background: #ffffff;
-            border: 1px solid #d0cec9;
-            border-radius: 10px;
-            padding: 15px 25px;
-            color: #3c3a37;
-            font-size: 15px;
-            min-width: 200px;
-            margin: 5px 60px;
+                background: #ffffff;
+                border: 1px solid #d0cec9;
+                border-radius: 10px;
+                padding: 15px 25px;
+                color: #3c3a37;
+                font-size: 15px;
+                min-width: 200px;
+                margin: 5px 60px;
         }
 
         QPushButton:hover {
-            background: #fafaf9;
-            border-color: #9b4dca;
+                background: #fafaf9;
+                border-color: #9b4dca;
         }
         )");
 
@@ -123,15 +123,15 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     if (translationManager_) {
         QStringList locales = translationManager_->availableLocales();
         for (const QString& locale : locales) {
-            QString displayName = translationManager_->localeDisplayName(locale);
-            languageCombo_->addItem(displayName, locale);
+                QString displayName = translationManager_->localeDisplayName(locale);
+                languageCombo_->addItem(displayName, locale);
         }
 
         // Set current language
         QString currentLocale = translationManager_->currentLocale();
         int currentIndex = languageCombo_->findData(currentLocale);
-        if (currentIndex >= 0) {
-            languageCombo_->setCurrentIndex(currentIndex);
+        if (currentIndex  >=  0) {
+                languageCombo_->setCurrentIndex(currentIndex);
         }
 
         connect(languageCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -153,24 +153,24 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     showHiddenGamesCheckbox_ = new QCheckBox(tr("Show hidden games in library"), content);
     showHiddenGamesCheckbox_->setStyleSheet(R"(
         QCheckBox {
-            color: #3c3a37;
-            font-size: 14px;
-            padding: 10px 60px;
-            spacing: 8px;
+                color: #3c3a37;
+                font-size: 14px;
+                padding: 10px 60px;
+                spacing: 8px;
         }
         QCheckBox::indicator {
-            width: 18px;
-            height: 18px;
+                width: 18px;
+                height: 18px;
         }
         QCheckBox::indicator:unchecked {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 4px;
+                background: #ffffff;
+                border: 2px solid #d0cec9;
+                border-radius: 4px;
         }
         QCheckBox::indicator:checked {
-            background: #9b4dca;
-            border: 2px solid #9b4dca;
-            border-radius: 4px;
+                background: #9b4dca;
+                border: 2px solid #9b4dca;
+                border-radius: 4px;
         }
     )");
 
@@ -199,21 +199,21 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
     QPushButton *logoutBtn = new QPushButton(tr("Logout"), content);
     logoutBtn->setStyleSheet(R"(
         QPushButton {
-            background: #e74c3c;
-            border: none;
-            border-radius: 10px;
-            padding: 15px 25px;
-            color: white;
-            font-size: 15px;
-            min-width: 200px;
-            margin: 5px 60px;
-            font-weight: 600;
+                background: #e74c3c;
+                border: none;
+                border-radius: 10px;
+                padding: 15px 25px;
+                color: white;
+                font-size: 15px;
+                min-width: 200px;
+                margin: 5px 60px;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #c0392b;
+                background: #c0392b;
         }
         QPushButton:pressed {
-            background: #a93226;
+                background: #a93226;
         }
     )");
 
@@ -244,14 +244,14 @@ SettingsPage::SettingsPage(opengalaxy::ui::TranslationManager* translationManage
 
 void SettingsPage::onLanguageChanged(int index)
 {
-    if (!translationManager_ || index < 0) {
+    if (!translationManager_  ||  index < 0) {
         return;
     }
 
     QString selectedLocale = languageCombo_->itemData(index).toString();
     QString currentLocale = translationManager_->currentLocale();
 
-    if (selectedLocale == currentLocale) {
+    if (selectedLocale  ==  currentLocale) {
         return;
     }
 
@@ -278,11 +278,11 @@ void SettingsPage::onInstallationFoldersClicked()
     QListWidget* folderList = new QListWidget(&dialog);
     folderList->setStyleSheet(R"(
         QListWidget {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 8px;
-            padding: 8px;
-            color: #3c3a37;
+                background: #ffffff;
+                border: 2px solid #d0cec9;
+                border-radius: 8px;
+                padding: 8px;
+                color: #3c3a37;
         }
     )");
 
@@ -298,52 +298,52 @@ void SettingsPage::onInstallationFoldersClicked()
     QPushButton* addBtn = new QPushButton(tr("Add Folder"), &dialog);
     addBtn->setStyleSheet(R"(
         QPushButton {
-            background: #9b4dca;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 16px;
-            color: white;
-            font-weight: 600;
+                background: #9b4dca;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: white;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #8b3dba;
+                background: #8b3dba;
         }
     )");
 
     connect(addBtn, &QPushButton::clicked, [&]() {
         QString dir = QFileDialog::getExistingDirectory(
-            &dialog,
-            tr("Select Installation Folder"),
-            QDir::homePath(),
-            QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
+                &dialog,
+                tr("Select Installation Folder"),
+                QDir::homePath(),
+                QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks
         );
 
         if (!dir.isEmpty()) {
-            folderList->addItem(dir);
-            // TODO: Save to settings
+                folderList->addItem(dir);
+                // TODO: Save to settings
         }
     });
 
     QPushButton* removeBtn = new QPushButton(tr("Remove Selected"), &dialog);
     removeBtn->setStyleSheet(R"(
         QPushButton {
-            background: #e74c3c;
-            border: none;
-            border-radius: 6px;
-            padding: 8px 16px;
-            color: white;
-            font-weight: 600;
+                background: #e74c3c;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                color: white;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #c0392b;
+                background: #c0392b;
         }
     )");
 
     connect(removeBtn, &QPushButton::clicked, [&]() {
         QListWidgetItem* item = folderList->currentItem();
         if (item) {
-            delete item;
-            // TODO: Save to settings
+                delete item;
+                // TODO: Save to settings
         }
     });
 
@@ -369,9 +369,9 @@ void SettingsPage::onLogoutClicked()
         QMessageBox::Yes | QMessageBox::No
     );
 
-    if (reply == QMessageBox::Yes) {
+    if (reply  ==  QMessageBox::Yes) {
         if (session_) {
-            session_->logout();
+                session_->logout();
         }
         emit logoutRequested();
     }
@@ -384,10 +384,10 @@ void SettingsPage::onAboutClicked()
     dialog.setMinimumSize(550, 550);
     dialog.setStyleSheet(R"(
         QDialog {
-            background: #ffffff;
+                background: #ffffff;
         }
         QLabel {
-            color: #3c3a37;
+                color: #3c3a37;
         }
     )");
 
@@ -477,19 +477,19 @@ void SettingsPage::onAboutClicked()
     QPushButton* updateButton = new QPushButton(tr("Check for Updates"), &dialog);
     updateButton->setStyleSheet(R"(
         QPushButton {
-            background: #3498db;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            color: white;
-            font-size: 13px;
-            font-weight: 600;
+                background: #3498db;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                color: white;
+                font-size: 13px;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #2980b9;
+                background: #2980b9;
         }
         QPushButton:pressed {
-            background: #21618c;
+                background: #21618c;
         }
     )");
     connect(updateButton, &QPushButton::clicked, this, &SettingsPage::onCheckForUpdates);
@@ -501,19 +501,19 @@ void SettingsPage::onAboutClicked()
     QDialogButtonBox* buttonBox = new QDialogButtonBox(QDialogButtonBox::Close, &dialog);
     buttonBox->setStyleSheet(R"(
         QPushButton {
-            background: #9b4dca;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 30px;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
+                background: #9b4dca;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 30px;
+                color: white;
+                font-size: 14px;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #8a3eb9;
+                background: #8a3eb9;
         }
         QPushButton:pressed {
-            background: #7a2ea9;
+                background: #7a2ea9;
         }
     )");
     connect(buttonBox, &QDialogButtonBox::rejected, &dialog, &QDialog::accept);

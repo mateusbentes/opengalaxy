@@ -149,7 +149,7 @@ private slots:
 
         // Mock checksum verification
         QString actualChecksum = "abc123def456";
-        bool checksumValid = (actualChecksum == expectedChecksum);
+        bool checksumValid = (actualChecksum  ==  expectedChecksum);
 
         QVERIFY(checksumValid);
     }

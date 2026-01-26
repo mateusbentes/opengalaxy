@@ -22,7 +22,7 @@ void FriendsPage::setupUI()
 {
     setStyleSheet(R"(
         FriendsPage {
-            background: #f5f3f0;
+                background: #f5f3f0;
         }
     )");
 
@@ -43,16 +43,16 @@ void FriendsPage::setupUI()
     QPushButton* refreshBtn = new QPushButton(tr("Refresh"), this);
     refreshBtn->setStyleSheet(R"(
         QPushButton {
-            background: #9b4dca;
-            border: none;
-            border-radius: 8px;
-            padding: 10px 20px;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
+                background: #9b4dca;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                color: white;
+                font-size: 14px;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: #8b3dba;
+                background: #8b3dba;
         }
     )");
     connect(refreshBtn, &QPushButton::clicked, this, &FriendsPage::refreshFriends);
@@ -64,9 +64,9 @@ void FriendsPage::setupUI()
     statusLabel = new QLabel(tr("Loading friends..."), this);
     statusLabel->setStyleSheet(R"(
         QLabel {
-            color: #5a5855;
-            font-size: 14px;
-            padding: 10px;
+                color: #5a5855;
+                font-size: 14px;
+                padding: 10px;
         }
     )");
     layout->addWidget(statusLabel);
@@ -75,23 +75,23 @@ void FriendsPage::setupUI()
     friendsView = new QListWidget(this);
     friendsView->setStyleSheet(R"(
         QListWidget {
-            background: #ffffff;
-            border: 2px solid #d0cec9;
-            border-radius: 12px;
-            color: #3c3a37;
-            font-size: 14px;
-            padding: 8px;
+                background: #ffffff;
+                border: 2px solid #d0cec9;
+                border-radius: 12px;
+                color: #3c3a37;
+                font-size: 14px;
+                padding: 8px;
         }
         QListWidget::item {
-            padding: 12px;
-            border-bottom: 1px solid #e8e6e3;
+                padding: 12px;
+                border-bottom: 1px solid #e8e6e3;
         }
         QListWidget::item:hover {
-            background: #f9f8f7;
+                background: #f9f8f7;
         }
         QListWidget::item:selected {
-            background: #e8e0f5;
-            color: #3c3a37;
+                background: #e8e0f5;
+                color: #3c3a37;
         }
     )");
     layout->addWidget(friendsView);
@@ -102,7 +102,7 @@ void FriendsPage::setupUI()
 
 void FriendsPage::refreshFriends()
 {
-    if (!session_ || !session_->isAuthenticated()) {
+    if (!session_  ||  !session_->isAuthenticated()) {
         statusLabel->setText(tr("Please log in to view friends."));
         friendsView->clear();
         return;
@@ -120,7 +120,7 @@ void FriendsPage::refreshFriends()
 
     QListWidgetItem* item = new QListWidgetItem(friendsView);
     item->setText(tr("🚧 The GOG API friends endpoint is not yet implemented.\n"
-                     "This feature will be available in a future update."));
+                            "This feature will be available in a future update."));
     item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
 
     // TODO: Implement when GOG API client has friends support

@@ -245,9 +245,9 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
     connect(dialog, &OAuthLoginDialog::authorizationReceived, this, [this](const QString& code) {
         // Exchange authorization code for tokens
         session_->loginWithAuthCode(code, [this](util::Result<api::AuthTokens> result) {
-            if (!result.isOk()) {
+                if (!result.isOk()) {
                 QMessageBox::warning(this, tr("Login failed"), result.errorMessage());
-            }
+                }
         });
     });
     dialog->exec();
@@ -256,7 +256,7 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
     // Fallback to direct password authentication if WebEngine not available
     session_->loginWithPassword(username, password, [this](util::Result<api::AuthTokens> result) {
         if (!result.isOk()) {
-            QMessageBox::warning(this, tr("Login Failed"),
+                QMessageBox::warning(this, tr("Login Failed"),
                 tr("Failed to login: %1\n\nPlease check your credentials and try again.").arg(result.errorMessage()));
         }
         // Success is handled by the authenticated() signal
@@ -266,28 +266,28 @@ void AppWindow::startOAuthLogin(const QString& username, const QString& password
 
 void AppWindow::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
+    if (event->button()  ==  Qt::LeftButton) {
         QWidget* childWidget = childAt(event->pos());
 
         // Check if click is on title bar or its children (but not buttons)
         bool onTitleBar = false;
         QWidget* widget = childWidget;
-        while (widget && widget != this) {
-            if (widget == titleBar) {
+        while (widget  &&  widget  !=  this) {
+                if (widget  ==  titleBar) {
                 onTitleBar = true;
                 break;
-            }
-            widget = widget->parentWidget();
+                }
+                widget = widget->parentWidget();
         }
 
         // Don't drag if clicking on buttons
-        if (onTitleBar && childWidget &&
-            childWidget->objectName() != "minimizeButton" &&
-            childWidget->objectName() != "maximizeButton" &&
-            childWidget->objectName() != "closeButton") {
-            isDragging = true;
-            dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
-            event->accept();
+        if (onTitleBar  &&  childWidget  && 
+                childWidget->objectName()  !=  "minimizeButton"  && 
+                childWidget->objectName()  !=  "maximizeButton"  && 
+                childWidget->objectName()  !=  "closeButton") {
+                isDragging = true;
+                dragPosition = event->globalPosition().toPoint() - frameGeometry().topLeft();
+                event->accept();
         }
     }
     QMainWindow::mousePressEvent(event);
@@ -295,12 +295,12 @@ void AppWindow::mousePressEvent(QMouseEvent* event)
 
 void AppWindow::mouseMoveEvent(QMouseEvent* event)
 {
-    if (isDragging && (event->buttons() & Qt::LeftButton)) {
+    if (isDragging  &&  (event->buttons() & Qt::LeftButton)) {
         if (isMaximized) {
-            // If maximized, restore to normal size when dragging
-            onMaximizeClicked();
-            // Adjust drag position for the new window size
-            dragPosition = QPoint(width() / 2, 20);
+                // If maximized, restore to normal size when dragging
+                onMaximizeClicked();
+                // Adjust drag position for the new window size
+                dragPosition = QPoint(width() / 2, 20);
         }
         move(event->globalPosition().toPoint() - dragPosition);
         event->accept();
@@ -310,7 +310,7 @@ void AppWindow::mouseMoveEvent(QMouseEvent* event)
 
 void AppWindow::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
+    if (event->button()  ==  Qt::LeftButton) {
         isDragging = false;
     }
     QMainWindow::mouseReleaseEvent(event);
@@ -330,7 +330,7 @@ void AppWindow::onMaximizeClicked()
         // Update maximize button symbol
         QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
         if (maxBtn) {
-            maxBtn->setText("□");
+                maxBtn->setText("□");
         }
     } else {
         showMaximized();
@@ -339,7 +339,7 @@ void AppWindow::onMaximizeClicked()
         // Update maximize button symbol
         QPushButton* maxBtn = titleBar->findChild<QPushButton*>("maximizeButton");
         if (maxBtn) {
-            maxBtn->setText("❐");
+                maxBtn->setText("❐");
         }
     }
 }

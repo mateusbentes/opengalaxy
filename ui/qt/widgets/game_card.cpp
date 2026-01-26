@@ -37,9 +37,9 @@ GameCard::GameCard(const QString& gameId,
     coverContainer->setFixedSize(420, 220);
     coverContainer->setStyleSheet(R"(
         QWidget {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
                 stop:0 #2d1b4e, stop:1 #3d2b5e);
-            border-radius: 12px;
+                border-radius: 12px;
         }
     )");
 
@@ -51,9 +51,9 @@ GameCard::GameCard(const QString& gameId,
     coverImage->setText("🎮");
     coverImage->setStyleSheet(R"(
         QLabel {
-            font-size: 72px;
-            color: rgba(255, 255, 255, 0.3);
-            background: transparent;
+                font-size: 72px;
+                color: rgba(255, 255, 255, 0.3);
+                background: transparent;
         }
     )");
     coverImage->setScaledContents(false);  // Don't stretch, maintain aspect ratio
@@ -64,7 +64,7 @@ GameCard::GameCard(const QString& gameId,
     if (!coverUrl.isEmpty()) {
         // Use a timer to stagger image loading
         QTimer::singleShot(QRandomGenerator::global()->bounded(100, 500), this, [this, coverUrl]() {
-            loadCoverImage(coverUrl);
+                loadCoverImage(coverUrl);
         });
     }
 
@@ -73,16 +73,16 @@ GameCard::GameCard(const QString& gameId,
     actionButton_->setFixedSize(160, 50);
     actionButton_->setStyleSheet(R"(
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #7c4dff, stop:1 #5a3aff);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 15px;
-            font-weight: 700;
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 15px;
+                font-weight: 700;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #8c5dff, stop:1 #6a4aff);
         }
     )");
@@ -93,16 +93,16 @@ GameCard::GameCard(const QString& gameId,
     updateButton_->setFixedSize(76, 50);
     updateButton_->setStyleSheet(R"(
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #ff9800, stop:1 #f57c00);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 13px;
-            font-weight: 700;
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 13px;
+                font-weight: 700;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #ffa726, stop:1 #fb8c00);
         }
     )");
@@ -114,16 +114,16 @@ GameCard::GameCard(const QString& gameId,
     repairButton_->setFixedSize(76, 50);
     repairButton_->setStyleSheet(R"(
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #e91e63, stop:1 #c2185b);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 13px;
-            font-weight: 700;
+                border: none;
+                border-radius: 8px;
+                color: white;
+                font-size: 13px;
+                font-weight: 700;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #f06292, stop:1 #ec407a);
         }
     )");
@@ -139,25 +139,25 @@ GameCard::GameCard(const QString& gameId,
     progressBar_->setFormat("%p%");
     progressBar_->setStyleSheet(R"(
         QProgressBar {
-            background: rgba(0,0,0,0.5);
-            border: 2px solid rgba(124, 77, 255, 0.3);
-            border-radius: 7px;
-            color: white;
-            font-size: 10px;
-            font-weight: bold;
-            text-align: center;
+                background: rgba(0, 0, 0, 0.5);
+                border: 2px solid rgba(124, 77, 255, 0.3);
+                border-radius: 7px;
+                color: white;
+                font-size: 10px;
+                font-weight: bold;
+                text-align: center;
         }
         QProgressBar::chunk {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #00e676, stop:0.5 #00c853, stop:1 #00e676);
-            border-radius: 5px;
+                border-radius: 5px;
         }
     )");
     progressBar_->hide();
 
     // Position overlay widgets
     actionButton_->move((coverContainer->width() - actionButton_->width()) / 2,
-                        (coverContainer->height() - actionButton_->height()) / 2 - 30);
+                                (coverContainer->height() - actionButton_->height()) / 2 - 30);
 
     // Position Update and Repair buttons side-by-side
     int buttonY = actionButton_->y() + actionButton_->height() + 10;
@@ -171,14 +171,14 @@ GameCard::GameCard(const QString& gameId,
                        buttonY + 50 + 12);
 
     connect(actionButton_, &QPushButton::clicked, this, [this]() {
-        if (installing_ || updating_) {
-            emit cancelInstallRequested(gameId_);
-            return;
+        if (installing_  ||  updating_) {
+                emit cancelInstallRequested(gameId_);
+                return;
         }
         if (installed_) {
-            emit playRequested(gameId_);
+                emit playRequested(gameId_);
         } else {
-            emit installRequested(gameId_);
+                emit installRequested(gameId_);
         }
     });
 
@@ -197,9 +197,9 @@ GameCard::GameCard(const QString& gameId,
     infoContainer->setFixedHeight(90);
     infoContainer->setStyleSheet(R"(
         QWidget {
-            background: rgba(45, 27, 78, 0.6);
-            border-bottom-left-radius: 12px;
-            border-bottom-right-radius: 12px;
+                background: rgba(45, 27, 78, 0.6);
+                border-bottom-left-radius: 12px;
+                border-bottom-right-radius: 12px;
         }
     )");
 
@@ -210,10 +210,10 @@ GameCard::GameCard(const QString& gameId,
     gameTitle = new QLabel(title, infoContainer);
     gameTitle->setStyleSheet(R"(
         QLabel {
-            color: #ffffff;
-            font-size: 18px;
-            font-weight: 600;
-            background: transparent;
+                color: #ffffff;
+                font-size: 18px;
+                font-weight: 600;
+                background: transparent;
         }
     )");
     gameTitle->setWordWrap(true);
@@ -223,9 +223,9 @@ GameCard::GameCard(const QString& gameId,
     platformLabel = new QLabel(platform, infoContainer);
     platformLabel->setStyleSheet(R"(
         QLabel {
-            color: #b8b8d1;
-            font-size: 14px;
-            background: transparent;
+                color: #b8b8d1;
+                font-size: 14px;
+                background: transparent;
         }
     )");
     infoLayout->addWidget(platformLabel);
@@ -275,7 +275,7 @@ void GameCard::setInstallProgress(int percent)
 
     installProgress_ = newProgress;
 
-    if (installing_ || updating_) {
+    if (installing_  ||  updating_) {
         progressBar_->show();
     }
 }
@@ -295,7 +295,7 @@ void GameCard::setUpdating(bool updating)
 
 void GameCard::refreshButton()
 {
-    if (installing_ || updating_ || repairing_) {
+    if (installing_  ||  updating_  ||  repairing_) {
         actionButton_->setText("CANCEL");
         updateButton_->hide();
         repairButton_->hide();
@@ -308,18 +308,18 @@ void GameCard::refreshButton()
     if (installed_) {
         actionButton_->setText("▶ PLAY");
         if (updateAvailable_) {
-            updateButton_->show();
-            repairButton_->hide();
-            if (!newVersion_.isEmpty()) {
+                updateButton_->show();
+                repairButton_->hide();
+                if (!newVersion_.isEmpty()) {
                 updateButton_->setToolTip(tr("Update to version %1").arg(newVersion_));
-            }
+                }
         } else if (repairNeeded_) {
-            updateButton_->hide();
-            repairButton_->show();
-            repairButton_->setToolTip(tr("Repair corrupted game files"));
+                updateButton_->hide();
+                repairButton_->show();
+                repairButton_->setToolTip(tr("Repair corrupted game files"));
         } else {
-            updateButton_->hide();
-            repairButton_->hide();
+                updateButton_->hide();
+                repairButton_->hide();
         }
     } else {
         actionButton_->setText("⬇ INSTALL");
@@ -350,24 +350,24 @@ void GameCard::contextMenuEvent(QContextMenuEvent* event)
     QMenu menu;
     menu.setStyleSheet(R"(
         QMenu {
-            background: #f8f7f5;
-            color: #3c3a37;
-            border: 1px solid #e8e6e3;
-            border-radius: 6px;
-            padding: 4px;
+                background: #f8f7f5;
+                color: #3c3a37;
+                border: 1px solid #e8e6e3;
+                border-radius: 6px;
+                padding: 4px;
         }
         QMenu::item {
-            padding: 8px 16px;
-            border-radius: 4px;
-            color: #3c3a37;
+                padding: 8px 16px;
+                border-radius: 4px;
+                color: #3c3a37;
         }
         QMenu::item:hover {
-            background: #e8e6e3;
-            color: #3c3a37;
+                background: #e8e6e3;
+                color: #3c3a37;
         }
         QMenu::item:selected {
-            background: #6c5ce7;
-            color: white;
+                background: #6c5ce7;
+                color: white;
         }
     )");
 
@@ -376,9 +376,9 @@ void GameCard::contextMenuEvent(QContextMenuEvent* event)
 
     QAction* selectedAction = menu.exec(event->globalPos());
 
-    if (selectedAction == informationAction) {
+    if (selectedAction  ==  informationAction) {
         emit informationRequested(gameId_);
-    } else if (selectedAction == propertiesAction) {
+    } else if (selectedAction  ==  propertiesAction) {
         emit propertiesRequested(gameId_);
     }
 }
@@ -397,10 +397,10 @@ void GameCard::enterEvent(QEnterEvent* event)
     shadowAnimation->start();
 
     actionButton_->show();
-    if (updateAvailable_ && installed_ && !installing_ && !updating_) {
+    if (updateAvailable_  &&  installed_  &&  !installing_  &&  !updating_) {
         updateButton_->show();
     }
-    if (installing_ || updating_) {
+    if (installing_  ||  updating_) {
         progressBar_->show();
     }
 
@@ -428,13 +428,13 @@ void GameCard::leaveEvent(QEvent* event)
 void GameCard::loadCoverImage(const QString& url)
 {
     // Don't attempt to load if URL is empty or invalid
-    if (url.isEmpty() || url.trimmed().isEmpty()) {
+    if (url.isEmpty()  ||  url.trimmed().isEmpty()) {
         return;
     }
 
     // Validate URL has a protocol
     QUrl qurl(url);
-    if (!qurl.isValid() || qurl.scheme().isEmpty()) {
+    if (!qurl.isValid()  ||  qurl.scheme().isEmpty()) {
         qDebug() << "Invalid cover URL (no protocol):" << url;
         return;
     }
@@ -461,37 +461,37 @@ void GameCard::loadCoverImage(const QString& url)
     connect(reply, &QNetworkReply::finished, this, [this, reply, url]() {
         reply->deleteLater();
 
-        if (reply->error() != QNetworkReply::NoError) {
-            // Silently ignore connection errors for cover images
-            // They're not critical and will just show the placeholder
-            // Common errors that are safe to ignore:
-            // - ProtocolUnknownError: Invalid URL
-            // - RemoteHostClosedError: Server closed connection
-            // - OperationCanceledError: Request was cancelled
-            // - ContentNotFoundError: 404 errors
-            // - UnknownContentError: Server replied with error
-            if (reply->error() != QNetworkReply::ProtocolUnknownError &&
-                reply->error() != QNetworkReply::RemoteHostClosedError &&
-                reply->error() != QNetworkReply::OperationCanceledError &&
-                reply->error() != QNetworkReply::ContentNotFoundError &&
-                reply->error() != QNetworkReply::UnknownContentError) {
+        if (reply->error()  !=  QNetworkReply::NoError) {
+                // Silently ignore connection errors for cover images
+                // They're not critical and will just show the placeholder
+                // Common errors that are safe to ignore:
+                // - ProtocolUnknownError: Invalid URL
+                // - RemoteHostClosedError: Server closed connection
+                // - OperationCanceledError: Request was cancelled
+                // - ContentNotFoundError: 404 errors
+                // - UnknownContentError: Server replied with error
+                if (reply->error()  !=  QNetworkReply::ProtocolUnknownError  && 
+                reply->error()  !=  QNetworkReply::RemoteHostClosedError  && 
+                reply->error()  !=  QNetworkReply::OperationCanceledError  && 
+                reply->error()  !=  QNetworkReply::ContentNotFoundError  && 
+                reply->error()  !=  QNetworkReply::UnknownContentError) {
                 qDebug() << "Failed to load cover image for" << gameId_ << ":" << reply->errorString();
-            }
-            return;
+                }
+                return;
         }
 
         QByteArray imageData = reply->readAll();
         if (imageData.isEmpty()) {
-            return;
+                return;
         }
 
         QPixmap pixmap;
         if (pixmap.loadFromData(imageData)) {
-            // Scale to fit within the cover container while maintaining aspect ratio
-            QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio,
+                // Scale to fit within the cover container while maintaining aspect ratio
+                QPixmap scaled = pixmap.scaled(420, 220, Qt::KeepAspectRatio,
                                            Qt::SmoothTransformation);
-            coverImage->setPixmap(scaled);
-            coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
+                coverImage->setPixmap(scaled);
+                coverImage->setStyleSheet("background: transparent;"); // Remove placeholder styling
         }
     });
 

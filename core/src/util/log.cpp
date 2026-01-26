@@ -61,7 +61,7 @@ void Logger::log(LogLevel level, const QString& message, const QString& category
                          .arg(message);
 
     // Output to console
-    if (level >= LogLevel::Error) {
+    if (level  >=  LogLevel::Error) {
         std::cerr << logLine.toStdString() << std::endl;
     } else {
         std::cout << logLine.toStdString() << std::endl;

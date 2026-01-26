@@ -11,7 +11,7 @@ namespace opengalaxy {
 namespace ui {
 
 GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
-                                             QWidget* parent)
+                                                            QWidget* parent)
     : QDialog(parent)
     , game_(game)
 {
@@ -19,42 +19,42 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     setMinimumSize(600, 500);
     setStyleSheet(R"(
         QDialog {
-            background: #f8f7f5;
+                background: #f8f7f5;
         }
         QLabel {
-            color: #3c3a37;
+                color: #3c3a37;
         }
         QLabel#title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #2c2a27;
+                font-size: 24px;
+                font-weight: bold;
+                color: #2c2a27;
         }
         QLabel#section {
-            font-size: 14px;
-            font-weight: 600;
-            color: #3c3a37;
-            margin-top: 15px;
-            margin-bottom: 8px;
+                font-size: 14px;
+                font-weight: 600;
+                color: #3c3a37;
+                margin-top: 15px;
+                margin-bottom: 8px;
         }
         QLabel#content {
-            font-size: 13px;
-            color: #5a5855;
-            line-height: 1.5;
+                font-size: 13px;
+                color: #5a5855;
+                line-height: 1.5;
         }
         QPushButton {
-            background: #6c5ce7;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 18px;
-            color: white;
-            font-weight: 600;
-            font-size: 13px;
+                background: #6c5ce7;
+                border: none;
+                border-radius: 6px;
+                padding: 10px 18px;
+                color: white;
+                font-weight: 600;
+                font-size: 13px;
         }
         QPushButton:hover {
-            background: #5f3dc4;
+                background: #5f3dc4;
         }
         QPushButton:pressed {
-            background: #4c2d9f;
+                background: #4c2d9f;
         }
     )");
 
@@ -99,12 +99,12 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     connect(gogBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-            url = QString("https://www.gog.com/en/game/%1").arg(game_.slug);
+                url = QString("https://www.gog.com/en/game/%1").arg(game_.slug);
         } else {
-            // Fallback: search for game by title
-            QString searchQuery = game_.title;
-            searchQuery = searchQuery.replace(" ", "%20");
-            url = QString("https://www.gog.com/en/games?search=%1").arg(searchQuery);
+                // Fallback: search for game by title
+                QString searchQuery = game_.title;
+                searchQuery = searchQuery.replace(" ", "%20");
+                url = QString("https://www.gog.com/en/games?search=%1").arg(searchQuery);
         }
         qDebug() << "Opening GOG Store:" << url << "Slug:" << game_.slug;
         openLink(url);
@@ -116,13 +116,13 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     connect(supportBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-            // Try to open game-specific support article
-            url = QString(
+                // Try to open game-specific support article
+                url = QString(
                 "https://support.gog.com/hc/en-us/search?query=%1&product=gog")
                 .arg(game_.title.replace(" ", "%20"));
         } else {
-            // Fallback: GOG support main page
-            url = "https://support.gog.com/hc/en-us";
+                // Fallback: GOG support main page
+                url = "https://support.gog.com/hc/en-us";
         }
         qDebug() << "Opening Support:" << url << "Slug:" << game_.slug;
         openLink(url);
@@ -134,10 +134,10 @@ GameInformationDialog::GameInformationDialog(const api::GameInfo& game,
     connect(forumBtn, &QPushButton::clicked, this, [this]() {
         QString url;
         if (!game_.slug.isEmpty()) {
-            url = QString("https://www.gog.com/forum/%1").arg(game_.slug);
+                url = QString("https://www.gog.com/forum/%1").arg(game_.slug);
         } else {
-            // Fallback: GOG forum main page
-            url = "https://www.gog.com/forum";
+                // Fallback: GOG forum main page
+                url = "https://www.gog.com/forum";
         }
         qDebug() << "Opening Forum:" << url << "Slug:" << game_.slug;
         openLink(url);

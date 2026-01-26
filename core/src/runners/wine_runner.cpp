@@ -35,7 +35,7 @@ RunnerCapabilities WineRunner::capabilities() const
 bool WineRunner::canRun(const LaunchConfig& config) const
 {
     // Wine is for Windows games on Linux.
-    return config.gamePlatform == Platform::Windows;
+    return config.gamePlatform  ==  Platform::Windows;
 }
 
 std::unique_ptr<QProcess> WineRunner::launch(const LaunchConfig& config)
@@ -44,7 +44,7 @@ std::unique_ptr<QProcess> WineRunner::launch(const LaunchConfig& config)
 
     // env: start from system and append overrides
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
+    for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);

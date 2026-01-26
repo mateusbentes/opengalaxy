@@ -34,12 +34,12 @@ private slots:
         QString receivedToken;
 
         session.loginWithPassword("test@example.com", "password123",
-            [&](util::Result<api::AuthTokens> result) {
+                [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
                 if (result.isOk()) {
                     receivedToken = result.value().accessToken;
                 }
-            });
+                });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -52,10 +52,10 @@ private slots:
         bool isError = false;
 
         session.loginWithPassword("wrong@example.com", "wrongpass",
-            [&](util::Result<api::AuthTokens> result) {
+                [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
                 isError = result.isError();
-            });
+                });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -69,13 +69,13 @@ private slots:
         QString errorMsg;
 
         session.loginWithPassword("test@example.com", "password",
-            [&](util::Result<api::AuthTokens> result) {
+                [&](util::Result<api::AuthTokens> result) {
                 callbackCalled = true;
                 isError = result.isError();
                 if (isError) {
                     errorMsg = result.errorMessage();
                 }
-            });
+                });
 
         QTest::qWait(200);
         QVERIFY(callbackCalled);
@@ -96,7 +96,7 @@ private slots:
 
         bool callbackCalled = false;
         session.refreshToken([&](util::Result<api::AuthTokens> result) {
-            callbackCalled = true;
+                callbackCalled = true;
         });
 
         QTest::qWait(200);
@@ -110,8 +110,8 @@ private slots:
         bool isError = false;
 
         session.refreshToken([&](util::Result<api::AuthTokens> result) {
-            callbackCalled = true;
-            isError = result.isError();
+                callbackCalled = true;
+                isError = result.isError();
         });
 
         QTest::qWait(100);

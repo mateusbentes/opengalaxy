@@ -35,14 +35,14 @@ QStringList TranslationManager::availableLocales() const
     QDir resourceDir(":/i18n");
     if (resourceDir.exists()) {
         QStringList qmFiles = resourceDir.entryList(
-            QStringList() << "opengalaxy_*.qm", QDir::Files);
+                QStringList() << "opengalaxy_*.qm", QDir::Files);
         for (const QString& file : qmFiles) {
-            // Extract locale from filename: opengalaxy_pt_BR.qm -> pt_BR
-            QString locale = file;
-            locale.remove("opengalaxy_").remove(".qm");
-            if (!locales.contains(locale)) {
+                // Extract locale from filename: opengalaxy_pt_BR.qm -> pt_BR
+                QString locale = file;
+                locale.remove("opengalaxy_").remove(".qm");
+                if (!locales.contains(locale)) {
                 locales << locale;
-            }
+                }
         }
     }
 
@@ -78,7 +78,7 @@ bool TranslationManager::loadTranslator(const QString& locale)
     qApp->removeTranslator(&translator_);
 
     // English is the source language, no translation file needed
-    if (locale == "en_US") {
+    if (locale  ==  "en_US") {
         return true;
     }
 
@@ -97,7 +97,7 @@ bool TranslationManager::loadTranslator(const QString& locale)
 
 void TranslationManager::setLocale(const QString& locale)
 {
-    if (currentLocale_ == locale) {
+    if (currentLocale_  ==  locale) {
         return;
     }
 
@@ -130,12 +130,12 @@ void TranslationManager::loadFromSettings()
         // Check if we have a translation for this locale
         QStringList available = availableLocales();
         if (available.contains(systemLocale)) {
-            currentLocale_ = systemLocale;
-            qDebug() << "Using system locale:" << currentLocale_;
+                currentLocale_ = systemLocale;
+                qDebug() << "Using system locale:" << currentLocale_;
         } else {
-            // Fallback to English
-            currentLocale_ = "en_US";
-            qDebug() << "Falling back to English";
+                // Fallback to English
+                currentLocale_ = "en_US";
+                qDebug() << "Falling back to English";
         }
 
         // Save the detected/fallback locale

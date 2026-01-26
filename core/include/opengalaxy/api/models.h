@@ -76,11 +76,11 @@ struct AuthTokens {
     QDateTime expiresAt;
 
     bool isExpired() const {
-        return QDateTime::currentDateTime() >= expiresAt;
+        return QDateTime::currentDateTime()  >=  expiresAt;
     }
 
     bool isValid() const {
-        return !accessToken.isEmpty() && !isExpired();
+        return !accessToken.isEmpty()  &&  !isExpired();
     }
 };
 

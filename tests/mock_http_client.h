@@ -34,15 +34,15 @@ public:
     // Mock request method to return mock data
     void request(const Request& req, std::function<void(util::Result<Response>)> callback) {
         QTimer::singleShot(10, this, [this, callback]() {
-            if (shouldFail_) {
+                if (shouldFail_) {
                 callback(util::Result<Response>::error(mockError_));
-            } else {
+                } else {
                 Response response;
                 response.statusCode = mockStatusCode_;
                 response.body = mockBody_;
                 response.headers = mockHeaders_;
                 callback(util::Result<Response>::success(response));
-            }
+                }
         });
     }
 

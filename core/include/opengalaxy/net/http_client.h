@@ -50,7 +50,7 @@ public:
     // Download file with progress
     using ProgressCallback = std::function<void(qint64 received, qint64 total)>;
     void downloadFile(const QString& url, const QString& destPath,
-                     Callback callback, ProgressCallback progressCallback = nullptr);
+                            Callback callback, ProgressCallback progressCallback = nullptr);
 
     // Set default headers (e.g., User-Agent, Authorization)
     void setDefaultHeader(const QString& name, const QString& value);

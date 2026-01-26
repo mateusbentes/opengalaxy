@@ -8,11 +8,11 @@ namespace opengalaxy::runners {
 class WrapperRunner : public Runner {
 public:
     WrapperRunner(QString runnerName,
-                  QString wrapperExecutable,
-                  Platform supportedPlatform,
-                  Architecture hostArch,
-                  Architecture targetArch,
-                  bool requiresISATranslation);
+                        QString wrapperExecutable,
+                        Platform supportedPlatform,
+                        Architecture hostArch,
+                        Architecture targetArch,
+                        bool requiresISATranslation);
 
     QString name() const override;
     QString version() const override;

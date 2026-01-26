@@ -31,10 +31,10 @@ LoginPage::LoginPage(QWidget *parent)
     QLabel* titleLabel = new QLabel(tr("Welcome to OpenGalaxy"), container);
     titleLabel->setStyleSheet(R"(
         QLabel {
-            color: #3c3a37;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 20px;
+                color: #3c3a37;
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 20px;
         }
     )");
     titleLabel->setAlignment(Qt::AlignCenter);
@@ -44,9 +44,9 @@ LoginPage::LoginPage(QWidget *parent)
     QLabel* subtitleLabel = new QLabel(tr("Sign in with your GOG account"), container);
     subtitleLabel->setStyleSheet(R"(
         QLabel {
-            color: #5a5855;
-            font-size: 16px;
-            margin-bottom: 30px;
+                color: #5a5855;
+                font-size: 16px;
+                margin-bottom: 30px;
         }
     )");
     subtitleLabel->setAlignment(Qt::AlignCenter);
@@ -56,9 +56,9 @@ LoginPage::LoginPage(QWidget *parent)
     QLabel* infoLabel = new QLabel(tr("You will be redirected to GOG's secure login page"), container);
     infoLabel->setStyleSheet(R"(
         QLabel {
-            color: #8a8884;
-            font-size: 14px;
-            margin-bottom: 20px;
+                color: #8a8884;
+                font-size: 14px;
+                margin-bottom: 20px;
         }
     )");
     infoLabel->setAlignment(Qt::AlignCenter);
@@ -73,22 +73,22 @@ LoginPage::LoginPage(QWidget *parent)
     loginButton->setMinimumHeight(56);
     loginButton->setStyleSheet(R"(
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #9b4dca, stop:1 #8b3dba);
-            border: none;
-            border-radius: 12px;
-            padding: 16px 40px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            margin-top: 10px;
+                border: none;
+                border-radius: 12px;
+                padding: 16px 40px;
+                color: white;
+                font-size: 16px;
+                font-weight: 600;
+                margin-top: 10px;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #ab5dda, stop:1 #9b4dca);
         }
         QPushButton:pressed {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #8b3dba, stop:1 #7b2daa);
         }
     )");
@@ -109,7 +109,7 @@ LoginPage::LoginPage(QWidget *parent)
     // Set page background - GOG Galaxy beige/cream color
     setStyleSheet(R"(
         LoginPage {
-            background: #f5f3f0;
+                background: #f5f3f0;
         }
     )");
 

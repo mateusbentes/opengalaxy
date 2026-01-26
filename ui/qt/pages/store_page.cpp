@@ -36,10 +36,10 @@ StorePage::StorePage(QWidget* parent)
     titleLabel->setAlignment(Qt::AlignCenter);
     titleLabel->setStyleSheet(R"(
         QLabel {
-            color: #3c3a37;
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
+                color: #3c3a37;
+                font-size: 32px;
+                font-weight: 700;
+                margin-bottom: 10px;
         }
     )");
     contentLayout->addWidget(titleLabel);
@@ -54,9 +54,9 @@ StorePage::StorePage(QWidget* parent)
     descLabel->setWordWrap(true);
     descLabel->setStyleSheet(R"(
         QLabel {
-            color: #5a5855;
-            font-size: 16px;
-            line-height: 1.6;
+                color: #5a5855;
+                font-size: 16px;
+                line-height: 1.6;
         }
     )");
     contentLayout->addWidget(descLabel);
@@ -69,21 +69,21 @@ StorePage::StorePage(QWidget* parent)
     openStoreBtn->setCursor(Qt::PointingHandCursor);
     openStoreBtn->setStyleSheet(R"(
         QPushButton {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #9b4dca, stop:1 #8b3dba);
-            border: none;
-            border-radius: 12px;
-            padding: 16px 40px;
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
+                border: none;
+                border-radius: 12px;
+                padding: 16px 40px;
+                color: white;
+                font-size: 16px;
+                font-weight: 600;
         }
         QPushButton:hover {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #ab5dda, stop:1 #9b4dca);
         }
         QPushButton:pressed {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #8b3dba, stop:1 #7b2daa);
         }
     )");
@@ -98,12 +98,12 @@ StorePage::StorePage(QWidget* parent)
     infoLabel->setWordWrap(true);
     infoLabel->setStyleSheet(R"(
         QLabel {
-            color: #8a8884;
-            font-size: 14px;
-            margin-top: 20px;
-            padding: 15px;
-            background: rgba(155, 77, 202, 0.1);
-            border-radius: 8px;
+                color: #8a8884;
+                font-size: 14px;
+                margin-top: 20px;
+                padding: 15px;
+                background: rgba(155, 77, 202, 0.1);
+                border-radius: 8px;
         }
     )");
     contentLayout->addWidget(infoLabel);
@@ -122,7 +122,7 @@ StorePage::StorePage(QWidget* parent)
 
     setStyleSheet(R"(
         StorePage {
-            background: #f5f3f0;
+                background: #f5f3f0;
         }
     )");
 

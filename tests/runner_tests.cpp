@@ -23,7 +23,7 @@ private slots:
         manager_->discoverRunners();
         auto* runner = manager_->getRunner("Native");
 
-        QVERIFY(runner != nullptr);
+        QVERIFY(runner  !=  nullptr);
         QVERIFY(runner->isAvailable());
     }
 
@@ -36,19 +36,19 @@ private slots:
 
         // At least one runner should match host architecture
         bool foundHostArch = false;
-#if defined(__x86_64__) || defined(_M_X64)
+#if defined(__x86_64__)  ||  defined(_M_X64)
         for (const auto& r : runners) {
-            if (r.hostArch == opengalaxy::runners::Architecture::X86_64) {
+                if (r.hostArch  ==  opengalaxy::runners::Architecture::X86_64) {
                 foundHostArch = true;
                 break;
-            }
+                }
         }
-#elif defined(__aarch64__) || defined(_M_ARM64)
+#elif defined(__aarch64__)  ||  defined(_M_ARM64)
         for (const auto& r : runners) {
-            if (r.hostArch == opengalaxy::runners::Architecture::ARM64) {
+                if (r.hostArch  ==  opengalaxy::runners::Architecture::ARM64) {
                 foundHostArch = true;
                 break;
-            }
+                }
         }
 #endif
         QVERIFY(foundHostArch);
@@ -64,24 +64,24 @@ private slots:
         bool foundHostPlatform = false;
 #ifdef Q_OS_LINUX
         for (const auto& r : runners) {
-            if (r.supportedPlatform == opengalaxy::runners::Platform::Linux) {
+                if (r.supportedPlatform  ==  opengalaxy::runners::Platform::Linux) {
                 foundHostPlatform = true;
                 break;
-            }
+                }
         }
 #elif defined(Q_OS_WIN)
         for (const auto& r : runners) {
-            if (r.supportedPlatform == opengalaxy::runners::Platform::Windows) {
+                if (r.supportedPlatform  ==  opengalaxy::runners::Platform::Windows) {
                 foundHostPlatform = true;
                 break;
-            }
+                }
         }
 #elif defined(Q_OS_MACOS)
         for (const auto& r : runners) {
-            if (r.supportedPlatform == opengalaxy::runners::Platform::MacOS) {
+                if (r.supportedPlatform  ==  opengalaxy::runners::Platform::MacOS) {
                 foundHostPlatform = true;
                 break;
-            }
+                }
         }
 #endif
         QVERIFY(foundHostPlatform);
@@ -96,7 +96,7 @@ private slots:
         config.gameArch = opengalaxy::runners::Architecture::X86_64;
 
         auto* runner = manager_->findBestRunner(config);
-        QVERIFY(runner != nullptr);
+        QVERIFY(runner  !=  nullptr);
     }
 
     void cleanupTestCase() {

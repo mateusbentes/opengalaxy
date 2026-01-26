@@ -25,17 +25,17 @@ void NotificationWidget::setupUI()
     setStyleSheet(
         R"(
         NotificationWidget {
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
                 stop:0 #2a1f4e, stop:1 #3a2b5e);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         QLabel {
-            color: #e0e0ff;
-            font-size: 14px;
-            font-weight: 500;
-            padding: 0 20px;
+                color: #e0e0ff;
+                font-size: 14px;
+                font-weight: 500;
+                padding: 0 20px;
         }
         )");
 
@@ -47,7 +47,7 @@ void NotificationWidget::setupUI()
 
     QGraphicsDropShadowEffect *shadow = new QGraphicsDropShadowEffect(this);
     shadow->setBlurRadius(20);
-    shadow->setColor(QColor(0,0,0,0.5));
+    shadow->setColor(QColor(0, 0, 0, 0.5));
     shadow->setOffset(0, 8);
     setGraphicsEffect(shadow);
 }

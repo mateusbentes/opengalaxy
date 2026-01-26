@@ -44,7 +44,7 @@ RunnerCapabilities ProtonRunner::capabilities() const
 
 bool ProtonRunner::canRun(const LaunchConfig& config) const
 {
-    return config.gamePlatform == Platform::Windows;
+    return config.gamePlatform  ==  Platform::Windows;
 }
 
 std::unique_ptr<QProcess> ProtonRunner::launch(const LaunchConfig& config)
@@ -53,7 +53,7 @@ std::unique_ptr<QProcess> ProtonRunner::launch(const LaunchConfig& config)
 
     // Merge env
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
+    for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
 
@@ -62,8 +62,8 @@ std::unique_ptr<QProcess> ProtonRunner::launch(const LaunchConfig& config)
     QString compatPath;
     for (const QString& e : env) {
         if (e.startsWith("STEAM_COMPAT_DATA_PATH=")) {
-            compatPath = e.mid(QString("STEAM_COMPAT_DATA_PATH=").size());
-            break;
+                compatPath = e.mid(QString("STEAM_COMPAT_DATA_PATH=").size());
+                break;
         }
     }
     if (compatPath.isEmpty()) {

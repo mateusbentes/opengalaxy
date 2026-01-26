@@ -89,8 +89,8 @@ private:
     // Disable copy/move
     Config(const Config&) = delete;
     Config& operator=(const Config&) = delete;
-    Config(Config&&) = delete;
-    Config& operator=(Config&&) = delete;
+    Config(Config && ) = delete;
+    Config& operator=(Config && ) = delete;
 
     QSettings settings_;
     QString dataDir_;

@@ -58,7 +58,7 @@ bool WrapperRunner::canRun(const LaunchConfig& config) const
 {
     // For now, runners are selected explicitly by name in UI (preferredRunner).
     // As a safety net, require matching platform.
-    return config.gamePlatform == supportedPlatform_;
+    return config.gamePlatform  ==  supportedPlatform_;
 }
 
 std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
@@ -68,10 +68,10 @@ std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
     // Use custom executable if provided, otherwise use auto-detected one
     const QString chosenWrapper =
         config.runnerExecutableOverride.trimmed().isEmpty()
-            ? wrapperExecutable_
-            : config.runnerExecutableOverride.trimmed();
+                ? wrapperExecutable_
+                : config.runnerExecutableOverride.trimmed();
 
-    if (chosenWrapper.isEmpty() || !QFileInfo::exists(chosenWrapper)) {
+    if (chosenWrapper.isEmpty()  ||  !QFileInfo::exists(chosenWrapper)) {
         LOG_ERROR(QString("Wrapper executable not found for %1: '%2'")
                       .arg(runnerName_, chosenWrapper));
         return nullptr;
@@ -79,14 +79,14 @@ std::unique_ptr<QProcess> WrapperRunner::launch(const LaunchConfig& config)
 
     // env: start from current environment and override
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
+    for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);
 
     QStringList args;
 
-    if (runnerName_ == "Rosetta2") {
+    if (runnerName_  ==  "Rosetta2") {
         // Use: arch -x86_64 [runnerArgs...] <game> [gameArgs...]
         args << "-x86_64";
         args << config.runnerArguments;  // Custom wrapper args

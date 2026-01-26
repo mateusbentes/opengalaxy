@@ -44,9 +44,9 @@ void OAuthLoginDialog::setupUi()
     QLabel* titleLabel = new QLabel(tr("Sign in with GOG"), this);
     titleLabel->setStyleSheet(R"(
         QLabel {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3c3a37;
+                font-size: 24px;
+                font-weight: bold;
+                color: #3c3a37;
         }
     )");
     titleLabel->setAlignment(Qt::AlignCenter);
@@ -66,12 +66,12 @@ void OAuthLoginDialog::setupUi()
     infoLabel->setWordWrap(true);
     infoLabel->setStyleSheet(R"(
         QLabel {
-            font-size: 13px;
-            color: #5a5855;
-            padding: 20px;
-            background: #f5f3f0;
-            border-radius: 8px;
-            line-height: 1.5;
+                font-size: 13px;
+                color: #5a5855;
+                padding: 20px;
+                background: #f5f3f0;
+                border-radius: 8px;
+                line-height: 1.5;
         }
     )");
     infoLabel->setAlignment(Qt::AlignLeft);
@@ -81,9 +81,9 @@ void OAuthLoginDialog::setupUi()
     statusLabel_ = new QLabel(tr("Waiting for login..."), this);
     statusLabel_->setStyleSheet(R"(
         QLabel {
-            font-size: 12px;
-            color: #8a8884;
-            padding: 10px;
+                font-size: 12px;
+                color: #8a8884;
+                padding: 10px;
         }
     )");
     statusLabel_->setAlignment(Qt::AlignCenter);
@@ -95,15 +95,15 @@ void OAuthLoginDialog::setupUi()
     QPushButton* cancelBtn = new QPushButton(tr("Cancel"), this);
     cancelBtn->setStyleSheet(R"(
         QPushButton {
-            background: #e0e0e0;
-            border: none;
-            border-radius: 8px;
-            padding: 12px 30px;
-            font-size: 14px;
-            color: #3c3a37;
+                background: #e0e0e0;
+                border: none;
+                border-radius: 8px;
+                padding: 12px 30px;
+                font-size: 14px;
+                color: #3c3a37;
         }
         QPushButton:hover {
-            background: #d0d0d0;
+                background: #d0d0d0;
         }
     )");
     connect(cancelBtn, &QPushButton::clicked, this, &QDialog::reject);
@@ -122,7 +122,7 @@ void OAuthLoginDialog::startOAuthFlow()
     // Open in default browser
     if (!QDesktopServices::openUrl(QUrl(authUrl))) {
         QMessageBox::critical(this, tr("Error"),
-            tr("Failed to open web browser.\n\nPlease open this URL manually:\n%1").arg(authUrl));
+                tr("Failed to open web browser.\n\nPlease open this URL manually:\n%1").arg(authUrl));
         reject();
         return;
     }
@@ -145,30 +145,30 @@ void OAuthLoginDialog::showCodeInputDialog()
            "Paste the URL:"),
         QLineEdit::Normal, "", &ok);
 
-    if (ok && !input.isEmpty()) {
+    if (ok  &&  !input.isEmpty()) {
         // Try to extract code from URL
         QString trimmedInput = input.trimmed();
 
         // If it's a full URL, extract the code
         if (trimmedInput.contains("code=")) {
-            QUrl url(trimmedInput);
-            authCode_ = extractCodeFromUrl(url);
+                QUrl url(trimmedInput);
+                authCode_ = extractCodeFromUrl(url);
         } else {
-            // Maybe they just pasted the code directly
-            authCode_ = trimmedInput;
+                // Maybe they just pasted the code directly
+                authCode_ = trimmedInput;
         }
 
         if (!authCode_.isEmpty()) {
-            success_ = true;
-            statusLabel_->setText(tr("Code received! Logging in..."));
-            emit authorizationReceived(authCode_);
-            accept();
+                success_ = true;
+                statusLabel_->setText(tr("Code received! Logging in..."));
+                emit authorizationReceived(authCode_);
+                accept();
         } else {
-            QMessageBox::warning(this, tr("Invalid Input"),
+                QMessageBox::warning(this, tr("Invalid Input"),
                 tr("Could not find authorization code in the URL.\n\n"
                    "Please make sure you copied the entire URL from the browser's address bar."));
-            // Try again
-            QTimer::singleShot(500, this, &OAuthLoginDialog::showCodeInputDialog);
+                // Try again
+                QTimer::singleShot(500, this, &OAuthLoginDialog::showCodeInputDialog);
         }
     } else {
         reject();

@@ -38,25 +38,25 @@ static Architecture hostArchitecture()
     const QString arch = QSysInfo::currentCpuArchitecture().toLower();
 
     // x86 family
-    if (arch == "x86_64" || arch == "amd64") return Architecture::X86_64;
-    if (arch == "i386" || arch == "i686" || arch == "x86") return Architecture::X86;
+    if (arch  ==  "x86_64"  ||  arch  ==  "amd64") return Architecture::X86_64;
+    if (arch  ==  "i386"  ||  arch  ==  "i686"  ||  arch  ==  "x86") return Architecture::X86;
 
     // ARM family
-    if (arch == "arm64" || arch == "aarch64") return Architecture::ARM64;
+    if (arch  ==  "arm64"  ||  arch  ==  "aarch64") return Architecture::ARM64;
     if (arch.startsWith("arm")) return Architecture::ARM;
 
     // RISC-V
-    if (arch == "riscv64" || arch == "riscv") return Architecture::RISCV64;
+    if (arch  ==  "riscv64"  ||  arch  ==  "riscv") return Architecture::RISCV64;
 
     // PowerPC
-    if (arch == "ppc64" || arch == "ppc64le" || arch == "powerpc64" || arch == "powerpc64le")
+    if (arch  ==  "ppc64"  ||  arch  ==  "ppc64le"  ||  arch  ==  "powerpc64"  ||  arch  ==  "powerpc64le")
         return Architecture::PPC64;
 
     // MIPS
-    if (arch == "mips64" || arch == "mips64el") return Architecture::MIPS64;
+    if (arch  ==  "mips64"  ||  arch  ==  "mips64el") return Architecture::MIPS64;
 
     // LoongArch
-    if (arch == "loongarch64") return Architecture::LoongArch64;
+    if (arch  ==  "loongarch64") return Architecture::LoongArch64;
 
     return Architecture::Unknown;
 }
@@ -91,7 +91,7 @@ public:
         return caps;
     }
 
-    bool canRun(const LaunchConfig& config) const override { return config.gamePlatform == Platform::Linux; }
+    bool canRun(const LaunchConfig& config) const override { return config.gamePlatform  ==  Platform::Linux; }
 
     std::unique_ptr<QProcess> launch(const LaunchConfig& config) override
     {
@@ -101,16 +101,16 @@ public:
         process->setWorkingDirectory(config.workingDirectory);
 
         QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-        for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
-            env << (it.key() + "=" + it.value());
+        for (auto it = config.environment.begin(); it  !=  config.environment.end(); ++it) {
+                env << (it.key() + "=" + it.value());
         }
         process->setEnvironment(env);
 
         process->start();
 
         if (!process->waitForStarted(3000)) {
-            LOG_ERROR(QString("Failed to start game: %1 - %2").arg(config.gamePath, process->errorString()));
-            return nullptr;
+                LOG_ERROR(QString("Failed to start game: %1 - %2").arg(config.gamePath, process->errorString()));
+                return nullptr;
         }
 
         return process;
@@ -145,27 +145,27 @@ void RunnerManager::discoverRunners()
 
     // ISA translators / wrappers (register only on ARM64 hosts for x86_64 translation)
     const Architecture hostArch = hostArchitecture();
-    if (hostArch == Architecture::ARM64) {
+    if (hostArch  ==  Architecture::ARM64) {
         LOG_INFO("ARM64 host detected, discovering ISA translators...");
 
         const QString box64 = findExe({"box64"});
         if (!box64.isEmpty()) {
-            LOG_INFO(QString("Found Box64: %1").arg(box64));
-            registerRunner(std::make_unique<WrapperRunner>("Box64", box64, Platform::Linux,
+                LOG_INFO(QString("Found Box64: %1").arg(box64));
+                registerRunner(std::make_unique<WrapperRunner>("Box64", box64, Platform::Linux,
                                                           Architecture::ARM64, Architecture::X86_64, true));
         }
 
         const QString fex = findExe({"FEXInterpreter", "FEXLoader"});
         if (!fex.isEmpty()) {
-            LOG_INFO(QString("Found FEX-Emu: %1").arg(fex));
-            registerRunner(std::make_unique<WrapperRunner>("FEX", fex, Platform::Linux,
+                LOG_INFO(QString("Found FEX-Emu: %1").arg(fex));
+                registerRunner(std::make_unique<WrapperRunner>("FEX", fex, Platform::Linux,
                                                           Architecture::ARM64, Architecture::X86_64, true));
         }
 
         const QString qemu = findExe({"qemu-x86_64", "qemu-x86_64-static"});
         if (!qemu.isEmpty()) {
-            LOG_INFO(QString("Found QEMU: %1").arg(qemu));
-            registerRunner(std::make_unique<WrapperRunner>("QEMU", qemu, Platform::Linux,
+                LOG_INFO(QString("Found QEMU: %1").arg(qemu));
+                registerRunner(std::make_unique<WrapperRunner>("QEMU", qemu, Platform::Linux,
                                                           Architecture::ARM64, Architecture::X86_64, true));
         }
     }
@@ -174,11 +174,11 @@ void RunnerManager::discoverRunners()
 #ifdef Q_OS_MACOS
     // Rosetta 2 on Apple Silicon (ARM64 only)
     const Architecture hostArch = hostArchitecture();
-    if (hostArch == Architecture::ARM64) {
+    if (hostArch  ==  Architecture::ARM64) {
         const QString arch = findExe({"arch"});
         if (!arch.isEmpty()) {
-            LOG_INFO(QString("Found Rosetta2 (via arch): %1").arg(arch));
-            registerRunner(std::make_unique<WrapperRunner>(
+                LOG_INFO(QString("Found Rosetta2 (via arch): %1").arg(arch));
+                registerRunner(std::make_unique<WrapperRunner>(
                 "Rosetta2", arch, Platform::MacOS, Architecture::ARM64,
                 Architecture::X86_64, true));
         }
@@ -210,48 +210,48 @@ Runner* RunnerManager::findBestRunner(const LaunchConfig& config)
         int score = 0;
 
         // Platform match is mandatory, but reward it anyway
-        if (caps.supportedPlatform == config.gamePlatform) {
-            score += 100;
+        if (caps.supportedPlatform  ==  config.gamePlatform) {
+                score += 100;
         }
 
         // If the game arch is known, prefer exact target arch match
-        if (config.gameArch != Architecture::Unknown) {
-            if (caps.targetArch == config.gameArch) {
+        if (config.gameArch  !=  Architecture::Unknown) {
+                if (caps.targetArch  ==  config.gameArch) {
                 score += 50;
-            } else {
+                } else {
                 // Penalize non-matching target arch
                 score -= 50;
-            }
+                }
 
-            // Prefer not translating when unnecessary (native execution)
-            if (!caps.requiresISATranslation && caps.hostArch == config.gameArch) {
+                // Prefer not translating when unnecessary (native execution)
+                if (!caps.requiresISATranslation  &&  caps.hostArch  ==  config.gameArch) {
                 score += 10;
-            }
-            // Slight penalty for translation when not needed
-            if (caps.requiresISATranslation && caps.hostArch == config.gameArch) {
+                }
+                // Slight penalty for translation when not needed
+                if (caps.requiresISATranslation  &&  caps.hostArch  ==  config.gameArch) {
                 score -= 10;
-            }
+                }
         }
 
         // Preference among translators (typical performance: FEX > Box64 > QEMU)
-        if (caps.name == "FEX") score += 3;
-        if (caps.name == "Box64") score += 2;
-        if (caps.name == "QEMU") score += 1;
+        if (caps.name  ==  "FEX") score += 3;
+        if (caps.name  ==  "Box64") score += 2;
+        if (caps.name  ==  "QEMU") score += 1;
 
         // Prefer Proton over Wine for Windows games (better compatibility)
-        if (config.gamePlatform == Platform::Windows) {
-            if (caps.name.contains("Proton")) score += 5;
+        if (config.gamePlatform  ==  Platform::Windows) {
+                if (caps.name.contains("Proton")) score += 5;
         }
 
         if (score > bestScore) {
-            bestScore = score;
-            best = runner.get();
+                bestScore = score;
+                best = runner.get();
         }
     }
 
     if (best) {
         LOG_INFO(QString("Auto-selected runner: %1 (score: %2)")
-                     .arg(best->name()).arg(bestScore));
+                            .arg(best->name()).arg(bestScore));
     }
 
     return best;
@@ -260,8 +260,8 @@ Runner* RunnerManager::findBestRunner(const LaunchConfig& config)
 Runner* RunnerManager::getRunner(const QString& name)
 {
     for (const auto& runner : runners_) {
-        if (runner->name() == name) {
-            return runner.get();
+        if (runner->name()  ==  name) {
+                return runner.get();
         }
     }
     return nullptr;

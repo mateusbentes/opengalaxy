@@ -37,15 +37,15 @@ private slots:
         QVector<int> progressValues;
 
         installService->installGame(
-            game,
-            tempDir->path(),
-            [&](const install::InstallService::InstallProgress& progress) {
+                game,
+                tempDir->path(),
+                [&](const install::InstallService::InstallProgress& progress) {
                 progressValues.append(progress.percentage);
                 qDebug() << "Progress:" << progress.percentage << "%" << progress.status;
-            },
-            [](util::Result<QString> result) {
+                },
+                [](util::Result<QString> result) {
                 // Completion callback
-            }
+                }
         );
 
         QTest::qWait(1000);
@@ -63,14 +63,14 @@ private slots:
         bool installCompleted = false;
 
         installService->installGame(
-            game,
-            tempDir->path(),
-            [&](const install::InstallService::InstallProgress& progress) {
+                game,
+                tempDir->path(),
+                [&](const install::InstallService::InstallProgress& progress) {
                 installStarted = true;
-            },
-            [&](util::Result<QString> result) {
+                },
+                [&](util::Result<QString> result) {
                 installCompleted = true;
-            }
+                }
         );
 
         QTest::qWait(100);
@@ -97,19 +97,19 @@ private slots:
         int completedDownloads = 0;
 
         installService->installGame(game1, tempDir->path(),
-            [](const install::InstallService::InstallProgress&) {},
-            [&](util::Result<QString>) { completedDownloads++; }
+                [](const install::InstallService::InstallProgress&) {},
+                [&](util::Result<QString>) { completedDownloads++; }
         );
 
         installService->installGame(game2, tempDir->path(),
-            [](const install::InstallService::InstallProgress&) {},
-            [&](util::Result<QString>) { completedDownloads++; }
+                [](const install::InstallService::InstallProgress&) {},
+                [&](util::Result<QString>) { completedDownloads++; }
         );
 
         QTest::qWait(2000);
 
         // Both downloads should be handled
-        QVERIFY(completedDownloads >= 0);
+        QVERIFY(completedDownloads  >=  0);
     }
 
     // ========== Download Error Handling ==========
@@ -123,15 +123,15 @@ private slots:
         QString errorMessage;
 
         installService->installGame(
-            game,
-            tempDir->path(),
-            [](const install::InstallService::InstallProgress&) {},
-            [&](util::Result<QString> result) {
+                game,
+                tempDir->path(),
+                [](const install::InstallService::InstallProgress&) {},
+                [&](util::Result<QString> result) {
                 if (result.isError()) {
                     errorOccurred = true;
                     errorMessage = result.errorMessage();
                 }
-            }
+                }
         );
 
         QTest::qWait(1000);
@@ -157,12 +157,12 @@ private slots:
         bool errorOccurred = false;
 
         installService->installGame(
-            game,
-            readOnlyPath,
-            [](const install::InstallService::InstallProgress&) {},
-            [&](util::Result<QString> result) {
+                game,
+                readOnlyPath,
+                [](const install::InstallService::InstallProgress&) {},
+                [&](util::Result<QString> result) {
                 errorOccurred = result.isError();
-            }
+                }
         );
 
         QTest::qWait(1000);

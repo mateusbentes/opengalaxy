@@ -17,7 +17,7 @@ namespace ui {
 static QStringList envToLines(const QMap<QString, QString>& env)
 {
     QStringList lines;
-    for (auto it = env.begin(); it != env.end(); ++it) {
+    for (auto it = env.begin(); it  !=  env.end(); ++it) {
         lines << (it.key() + "=" + it.value());
     }
     return lines;
@@ -31,9 +31,9 @@ static QMap<QString, QString> parseEnvLines(const QString& text, QString* error)
         const QString line = raw.trimmed();
         if (line.isEmpty()) continue;
         const int eq = line.indexOf('=');
-        if (eq <= 0) {
-            if (error) *error = QString("Invalid env line: '%1' (expected KEY=VALUE)").arg(line);
-            return {};
+        if (eq  <=  0) {
+                if (error) *error = QString("Invalid env line: '%1' (expected KEY=VALUE)").arg(line);
+                return {};
         }
         const QString key = line.left(eq).trimmed();
         const QString value = line.mid(eq + 1);
@@ -60,7 +60,7 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
     root->setSpacing(12);
 
     titleLabel_ = new QLabel(QString("<b>%1</b><br/><span style='color:#888'>%2</span>")
-                                 .arg(game_.title, game_.platform),
+                                            .arg(game_.title, game_.platform),
                              this);
     root->addWidget(titleLabel_);
 
@@ -202,7 +202,7 @@ GameDetailsDialog::GameDetailsDialog(const api::GameInfo& game,
     const QString pref = game_.preferredRunner.trimmed();
     if (!pref.isEmpty()) {
         const int idx = runnerCombo_->findData(pref);
-        if (idx >= 0) runnerCombo_->setCurrentIndex(idx);
+        if (idx  >=  0) runnerCombo_->setCurrentIndex(idx);
     }
 }
 
@@ -242,13 +242,13 @@ void GameDetailsDialog::onSave()
     game_.enableCloudSaves = cloudSavesCheck_->isChecked();
 
     // Apply environment variables based on tweaks (don't override user settings)
-    if (game_.enableDxvkHudFps && !env.contains("DXVK_HUD")) {
+    if (game_.enableDxvkHudFps  &&  !env.contains("DXVK_HUD")) {
         env["DXVK_HUD"] = "fps";
     }
-    if (game_.enableMangoHud && !env.contains("MANGOHUD")) {
+    if (game_.enableMangoHud  &&  !env.contains("MANGOHUD")) {
         env["MANGOHUD"] = "1";
     }
-    if (game_.enableGameMode && !env.contains("GAMEMODE")) {
+    if (game_.enableGameMode  &&  !env.contains("GAMEMODE")) {
         env["GAMEMODE"] = "1";
     }
 
@@ -339,9 +339,9 @@ void GameDetailsDialog::openInstallFolder()
 {
     qDebug() << "Opening install folder for:" << game_.title;
 
-    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+    if (!game_.isInstalled  ||  game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
-                                 tr("This game is not installed or has no install path."));
+                                            tr("This game is not installed or has no install path."));
         return;
     }
 
@@ -362,9 +362,9 @@ void GameDetailsDialog::updateGame()
 {
     qDebug() << "Checking for updates for:" << game_.title;
 
-    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+    if (!game_.isInstalled  ||  game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
-                                 tr("This game is not installed."));
+                                            tr("This game is not installed."));
         return;
     }
 
@@ -389,16 +389,16 @@ void GameDetailsDialog::updateGame()
            "Note: Full update functionality requires GOG SDK integration.\n"
            "Currently, you can use the Update button on the game card to "
            "check for updates.")
-            .arg(game_.title));
+                .arg(game_.title));
 }
 
 void GameDetailsDialog::verifyGameFiles()
 {
     qDebug() << "Verifying game files for:" << game_.title;
 
-    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+    if (!game_.isInstalled  ||  game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
-                                 tr("This game is not installed."));
+                                            tr("This game is not installed."));
         return;
     }
 
@@ -423,7 +423,7 @@ void GameDetailsDialog::verifyGameFiles()
     QStringList entries = gameDir.entryList();
     int totalFiles = entries.count();
 
-    if (totalFiles == 0) {
+    if (totalFiles  ==  0) {
         QMessageBox::warning(this, tr("No files found"),
                              tr("No game files found in:\n%1").arg(path));
         return;
@@ -442,15 +442,15 @@ void GameDetailsDialog::verifyGameFiles()
     for (const QString& entry : entries) {
         QFileInfo info(gameDir.absoluteFilePath(entry));
         if (!info.exists()) {
-            missingFiles++;
+                missingFiles++;
         }
     }
 
     // Show results
-    if (missingFiles == 0 && corruptedFiles == 0) {
+    if (missingFiles  ==  0  &&  corruptedFiles  ==  0) {
         QMessageBox::information(this, tr("Verification Complete"),
-                                 tr("All game files are intact!\n\n"
-                                    "Total files checked: %1").arg(totalFiles));
+                                            tr("All game files are intact!\n\n"
+                                                "Total files checked: %1").arg(totalFiles));
     } else {
         QString message = tr("Verification Complete\n\n"
                             "Total files: %1\n"
@@ -466,9 +466,9 @@ void GameDetailsDialog::repairGame()
 {
     qDebug() << "Repairing game:" << game_.title;
 
-    if (!game_.isInstalled || game_.installPath.trimmed().isEmpty()) {
+    if (!game_.isInstalled  ||  game_.installPath.trimmed().isEmpty()) {
         QMessageBox::information(this, tr("Not installed"),
-                                 tr("This game is not installed."));
+                                            tr("This game is not installed."));
         return;
     }
 
@@ -487,7 +487,7 @@ void GameDetailsDialog::repairGame()
            "Continue?").arg(game_.title),
         QMessageBox::Yes | QMessageBox::No);
 
-    if (reply != QMessageBox::Yes) {
+    if (reply  !=  QMessageBox::Yes) {
         return;
     }
 
@@ -496,7 +496,7 @@ void GameDetailsDialog::repairGame()
     msgBox.setWindowTitle(tr("Repairing Game"));
     msgBox.setText(tr("Repairing: %1").arg(game_.title));
     msgBox.setInformativeText(tr("Checking and repairing game files...\n\n"
-                                 "This may take several minutes."));
+                                            "This may take several minutes."));
     msgBox.setStandardButtons(QMessageBox::Cancel);
     msgBox.setIcon(QMessageBox::Information);
 

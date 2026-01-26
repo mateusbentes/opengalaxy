@@ -21,10 +21,10 @@ int LibraryModel::rowCount(const QModelIndex &parent) const
 
 QVariant LibraryModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() >= gameNames.size())
+    if (!index.isValid()  ||  index.row()  >=  gameNames.size())
         return QVariant();
 
-    if (role == GameNameRole)
+    if (role  ==  GameNameRole)
         return gameNames.at(index.row());
 
     return QVariant();

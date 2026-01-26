@@ -38,18 +38,18 @@ void Session::loginWithPassword(const QString& username, const QString& password
 
         net::HttpClient* client = new net::HttpClient(this);
         client->get(url,
-                     [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+                            [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
                          if (!result.isOk()) {
                              // Network-level error (connection failed, timeout, etc.)
                              QString errorMsg = result.errorMessage();
 
-                             if (errorMsg.contains("timeout") || errorMsg.toLower().contains("timed out")) {
-                                 callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
-                             } else if (errorMsg.contains("network") || errorMsg.contains("connection") ||
-                                        errorMsg.contains("host") || errorMsg.contains("resolve")) {
-                                 callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
+                             if (errorMsg.contains("timeout")  ||  errorMsg.toLower().contains("timed out")) {
+                                            callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
+                             } else if (errorMsg.contains("network")  ||  errorMsg.contains("connection")  || 
+                                        errorMsg.contains("host")  ||  errorMsg.contains("resolve")) {
+                                            callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
                              } else {
-                                 callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
+                                            callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
                              }
                              return;
                          }
@@ -64,27 +64,27 @@ void Session::loginWithPassword(const QString& username, const QString& password
                              QString errorDesc = json["error_description"].toString();
 
                              // Map GOG error codes to user-friendly messages
-                             if (errorCode == "invalid_grant" || errorCode == "invalid_client" ||
-                                 errorCode == "unauthorized_client") {
-                                 callback(util::Result<AuthTokens>::error("Login or password are wrong"));
-                             } else if (errorCode == "invalid_request") {
-                                 callback(util::Result<AuthTokens>::error("Invalid request. Please try again."));
+                             if (errorCode  ==  "invalid_grant"  ||  errorCode  ==  "invalid_client"  || 
+                                            errorCode  ==  "unauthorized_client") {
+                                            callback(util::Result<AuthTokens>::error("Login or password are wrong"));
+                             } else if (errorCode  ==  "invalid_request") {
+                                            callback(util::Result<AuthTokens>::error("Invalid request. Please try again."));
                              } else if (!errorDesc.isEmpty()) {
-                                 callback(util::Result<AuthTokens>::error(errorDesc));
+                                            callback(util::Result<AuthTokens>::error(errorDesc));
                              } else {
-                                 callback(util::Result<AuthTokens>::error("Login or password are wrong"));
+                                            callback(util::Result<AuthTokens>::error("Login or password are wrong"));
                              }
                              return;
                          }
 
                          // Check HTTP status code
-                         if (response.statusCode >= 400) {
-                             if (response.statusCode == 401 || response.statusCode == 403) {
-                                 callback(util::Result<AuthTokens>::error("Login or password are wrong"));
-                             } else if (response.statusCode >= 500) {
-                                 callback(util::Result<AuthTokens>::error("Server error. Please try again later."));
+                         if (response.statusCode  >=  400) {
+                             if (response.statusCode  ==  401  ||  response.statusCode  ==  403) {
+                                            callback(util::Result<AuthTokens>::error("Login or password are wrong"));
+                             } else if (response.statusCode  >=  500) {
+                                            callback(util::Result<AuthTokens>::error("Server error. Please try again later."));
                              } else {
-                                 callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
+                                            callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
                              }
                              return;
                          }
@@ -102,7 +102,7 @@ void Session::loginWithPassword(const QString& username, const QString& password
 
                          setTokens(tokens);
                          callback(util::Result<AuthTokens>::success(tokens));
-                     });
+                            });
     });
 }
 
@@ -130,17 +130,17 @@ void Session::loginWithAuthCode(const QString& authCode, AuthCallback callback)
 
         net::HttpClient* client = new net::HttpClient(this);
         client->get(url,
-                     [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+                            [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
                          if (!result.isOk()) {
                              QString errorMsg = result.errorMessage();
 
-                             if (errorMsg.contains("timeout") || errorMsg.toLower().contains("timed out")) {
-                                 callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
-                             } else if (errorMsg.contains("network") || errorMsg.contains("connection") ||
-                                        errorMsg.contains("host") || errorMsg.contains("resolve")) {
-                                 callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
+                             if (errorMsg.contains("timeout")  ||  errorMsg.toLower().contains("timed out")) {
+                                            callback(util::Result<AuthTokens>::error("Connection timeout. Please try again."));
+                             } else if (errorMsg.contains("network")  ||  errorMsg.contains("connection")  || 
+                                        errorMsg.contains("host")  ||  errorMsg.contains("resolve")) {
+                                            callback(util::Result<AuthTokens>::error("Network error. Please check your internet connection."));
                              } else {
-                                 callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
+                                            callback(util::Result<AuthTokens>::error("Login failed. Please try again."));
                              }
                              return;
                          }
@@ -153,17 +153,17 @@ void Session::loginWithAuthCode(const QString& authCode, AuthCallback callback)
                              QString errorCode = json["error"].toString();
                              QString errorDesc = json["error_description"].toString();
 
-                             if (errorCode == "invalid_grant" || errorCode == "invalid_client") {
-                                 callback(util::Result<AuthTokens>::error("Authorization failed. Please try logging in again."));
+                             if (errorCode  ==  "invalid_grant"  ||  errorCode  ==  "invalid_client") {
+                                            callback(util::Result<AuthTokens>::error("Authorization failed. Please try logging in again."));
                              } else if (!errorDesc.isEmpty()) {
-                                 callback(util::Result<AuthTokens>::error(errorDesc));
+                                            callback(util::Result<AuthTokens>::error(errorDesc));
                              } else {
-                                 callback(util::Result<AuthTokens>::error("Authorization failed"));
+                                            callback(util::Result<AuthTokens>::error("Authorization failed"));
                              }
                              return;
                          }
 
-                         if (response.statusCode >= 400) {
+                         if (response.statusCode  >=  400) {
                              callback(util::Result<AuthTokens>::error("Authorization failed. Please try again."));
                              return;
                          }
@@ -181,7 +181,7 @@ void Session::loginWithAuthCode(const QString& authCode, AuthCallback callback)
 
                          setTokens(tokens);
                          callback(util::Result<AuthTokens>::success(tokens));
-                     });
+                            });
     });
 }
 
@@ -195,8 +195,8 @@ void Session::logout() {
 void Session::refreshToken(AuthCallback callback) {
     QTimer::singleShot(100, this, [this, callback = std::move(callback)]() mutable {
         if (tokens_.refreshToken.isEmpty()) {
-            callback(util::Result<AuthTokens>::error("No refresh token"));
-            return;
+                callback(util::Result<AuthTokens>::error("No refresh token"));
+                return;
         }
 
         const QString CLIENT_ID = qEnvironmentVariable("GOG_CLIENT_ID", "468999770165");
@@ -211,8 +211,8 @@ void Session::refreshToken(AuthCallback callback) {
         net::HttpClient* client = new net::HttpClient(this);
         connect(client, &net::HttpClient::destroyed, this, &QObject::deleteLater);
         client->get(url,
-                     [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
-            if (result) {
+                            [this, callback = std::move(callback)](util::Result<net::HttpClient::Response> result) mutable {
+                if (result) {
                 auto json = QJsonDocument::fromJson(result.value().body).object();
                 AuthTokens newTokens;
                 newTokens.accessToken = json["access_token"].toString();
@@ -220,10 +220,10 @@ void Session::refreshToken(AuthCallback callback) {
                 newTokens.expiresAt = QDateTime::currentDateTime().addSecs(json["expires_in"].toInt());
                 setTokens(newTokens);
                 callback(util::Result<AuthTokens>::success(newTokens));
-            } else {
+                } else {
                 logout();
                 callback(util::Result<AuthTokens>::error(result.errorMessage()));
-            }
+                }
         });
     });
 }
@@ -237,13 +237,13 @@ void Session::setTokens(const AuthTokens& tokens) {
     authenticated_ = tokens.isValid();
     if (authenticated_) {
         fetchUserInfo([this](util::Result<UserInfo> result) {
-            if (result) {
+                if (result) {
                 user_ = result.value();
                 emit authenticated(user_);
                 saveSession();
-            } else {
+                } else {
                 emit authenticationFailed(result.errorMessage());
-            }
+                }
         });
     }
 }
@@ -258,37 +258,37 @@ void Session::loadSession() {
         tokens_.refreshToken = obj["refreshToken"].toString();
         tokens_.expiresAt = QDateTime::fromString(obj["expiresAt"].toString(), Qt::ISODate);
 
-        if (!tokens_.accessToken.isEmpty() && !tokens_.refreshToken.isEmpty()) {
-            // We have tokens, check if they're still valid
-            if (tokens_.isValid()) {
+        if (!tokens_.accessToken.isEmpty()  &&  !tokens_.refreshToken.isEmpty()) {
+                // We have tokens, check if they're still valid
+                if (tokens_.isValid()) {
                 // Token not expired yet, use it directly
                 authenticated_ = true;
                 // Fetch user info to complete authentication
                 fetchUserInfo([this](util::Result<UserInfo> result) {
                     if (result.isOk()) {
-                        user_ = result.value();
-                        emit authenticated(user_);
+                                user_ = result.value();
+                                emit authenticated(user_);
                     } else {
-                        // Token might be invalid, try refresh
-                        refreshToken([this](util::Result<AuthTokens> refreshResult) {
+                                // Token might be invalid, try refresh
+                                refreshToken([this](util::Result<AuthTokens> refreshResult) {
                             if (!refreshResult.isOk()) {
                                 // Refresh failed, user needs to login again
                                 authenticated_ = false;
                                 tokens_ = {};
                             }
-                        });
+                                });
                     }
                 });
-            } else {
+                } else {
                 // Token expired, try to refresh it
                 refreshToken([this](util::Result<AuthTokens> result) {
                     if (!result.isOk()) {
-                        // Refresh failed, user needs to login again
-                        authenticated_ = false;
-                        tokens_ = {};
+                                // Refresh failed, user needs to login again
+                                authenticated_ = false;
+                                tokens_ = {};
                     }
                 });
-            }
+                }
         }
     }
 }
@@ -319,10 +319,10 @@ void Session::fetchUserInfo(UserCallback callback)
     client->request(
         req,
         [callback = std::move(callback)](
-            util::Result<net::HttpClient::Response> result) mutable {
+                util::Result<net::HttpClient::Response> result) mutable {
         if (!result.isOk()) {
-            callback(util::Result<UserInfo>::error(result.errorMessage()));
-            return;
+                callback(util::Result<UserInfo>::error(result.errorMessage()));
+                return;
         }
 
         const QJsonObject obj = QJsonDocument::fromJson(result.value().body).object();
