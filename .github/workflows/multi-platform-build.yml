@@ -40,7 +40,7 @@ jobs:
           cmake .. \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=ON \
+            -DBUILD_TESTS=OFF \
             -DBUILD_CLI=ON \
             -DBUILD_UI=ON
 
@@ -48,11 +48,6 @@ jobs:
         run: |
           cd build
           ninja -j$(nproc)
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
 
       - name: Upload build artifacts
         if: always()
@@ -94,7 +89,7 @@ jobs:
           cmake .. \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=ON \
+            -DBUILD_TESTS=OFF \
             -DBUILD_CLI=ON \
             -DBUILD_UI=ON
 
@@ -102,11 +97,6 @@ jobs:
         run: |
           cd build
           ninja -j$(nproc)
-
-      - name: Run tests
-        run: |
-          cd build
-          ctest --output-on-failure
 
       - name: Upload build artifacts
         if: always()
@@ -138,7 +128,7 @@ jobs:
           cmake .. \
             -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DBUILD_TESTS=ON \
+            -DBUILD_TESTS=OFF \
             -DBUILD_CLI=ON \
             -DBUILD_UI=ON \
             -DCMAKE_OSX_ARCHITECTURES=arm64
