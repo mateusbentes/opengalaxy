@@ -10,7 +10,7 @@ AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
 AlignEscapedNewlines: Right
 AlignOperands: false
-AlignTrailingComments: true
+AlignTrailingComments: false
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
@@ -28,7 +28,7 @@ BinPackArguments: true
 BinPackParameters: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
-BreakBeforeConceptDeclarations: true
+BreakBeforeConceptDeclarations: false
 BreakBeforeTernaryOperators: false
 BreakConstructorInitializers: BeforeColon
 BreakInheritanceList: BeforeColon
