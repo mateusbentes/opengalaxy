@@ -101,7 +101,26 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 - 6cba7aa: Remove macOS x86_64 build, keep arm64 only
 - ed29f32: Update architecture support for macOS arm64 only
 
-### 6. Windows arm64 Support and Translation File Issue
+### 6. Windows x86 32-bit Support
+**Status**: ✅ RESOLVED
+
+**Problem**: 32-bit Windows is obsolete for modern gaming and not practical to support.
+
+**Solution**:
+- Removed x86 (32-bit) from Windows build matrix
+- Kept x64 (64-bit) as the only Windows build
+- Reduces CI/CD complexity and build time
+- Focuses on practical modern architecture
+
+**Files**:
+- `.github/workflows/multi-platform-build.yml` - Updated workflow
+- `docs/CI_CD_ARCHITECTURE_SUPPORT.md` - Detailed documentation
+
+**Commits**:
+- 917279b: Remove Windows x86 32-bit from CI/CD
+- 7b8cb62: Update architecture support for Windows x64 only
+
+### 7. Windows arm64 Support and Translation File Issue
 **Status**: ✅ RESOLVED
 
 **Problems**:
@@ -148,11 +167,10 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 ### macOS (1 architecture)
 - ✅ arm64 (Apple Silicon)
 
-### Windows (2 architectures)
-- ✅ x64 (64-bit, primary)
-- ✅ x86 (32-bit, legacy support)
+### Windows (1 architecture)
+- ✅ x64 (64-bit, modern standard)
 
-**Total**: 4 architectures
+**Total**: 3 architectures
 
 ## Verification Results
 
@@ -185,9 +203,11 @@ This document summarizes all CI/CD fixes and improvements made to the OpenGalaxy
 
 ## Git Commits Summary
 
-Total commits: 21
+Total commits: 23
 
 **CI/CD Configuration**:
+- 917279b: Remove Windows x86 32-bit from CI/CD
+- 5c37073: Fix Qt installation on Windows
 - 77fc8db: Remove Windows arm64 and fix translation file issue
 - 6cba7aa: Remove macOS x86_64 build, keep arm64 only
 - 4bd8957: Simplify Linux build to x86_64 only
@@ -216,6 +236,7 @@ Total commits: 21
 - dc024df: Update architecture support documentation
 - ed29f32: Update architecture support for macOS arm64 only
 - a324cff: Update architecture support for Windows x64/x86 only
+- 7b8cb62: Update architecture support for Windows x64 only
 
 ## Key Achievements
 
