@@ -39,20 +39,29 @@ E: Unable to locate package libqt6widgets6:riscv64
 | **arm64** | ✅ Supported | Apple Silicon Macs (current standard) |
 | ~~x86_64~~ | ❌ Removed | Legacy Intel Macs (no longer supported) |
 
-### Windows Builds (2 architectures)
+### Windows Builds (1 architecture)
 
 | Architecture | Status | Notes |
 |---|---|---|
-| **x64** | ✅ Supported | 64-bit Windows (primary) |
-| **x86** | ✅ Supported | 32-bit Windows (legacy support) |
+| **x64** | ✅ Supported | 64-bit Windows (modern standard) |
+| ~~x86~~ | ❌ Removed | 32-bit Windows (obsolete for gaming) |
 | ~~arm64~~ | ❌ Removed | Windows on ARM (not practical) |
 
 ## Total Build Matrix
 
 - **Linux**: 1 architecture (x86_64 only)
 - **macOS**: 1 architecture (arm64 only)
-- **Windows**: 2 architectures (x64, x86)
-- **Total**: 4 architectures
+- **Windows**: 1 architecture (x64 only)
+- **Total**: 3 architectures
+
+## Why Windows x86 32-bit Was Removed
+
+### Legacy 32-bit Architecture
+- 32-bit Windows is obsolete for modern gaming
+- No modern games support 32-bit Windows
+- Gamers have moved to 64-bit systems
+- Reduces CI/CD complexity and build time
+- Focuses on practical modern architecture
 
 ## Why Windows arm64 Was Removed
 
