@@ -67,11 +67,16 @@ bool DOSBoxRunner::canRun(const LaunchConfig &config) const {
 
 QString DOSBoxRunner::createDOSBoxConfig(const LaunchConfig &config) {
     // Create a temporary DOSBox configuration file
-    QTemporaryDir tempDir;
+    // Note: We use a persistent temp directory in /tmp to avoid deletion
+    QString tempDirPath = QDir::tempPath() + "/opengalaxy-dosbox-XXXXXX";
+    QTemporaryDir tempDir(tempDirPath);
     if (!tempDir.isValid()) {
         LOG_ERROR("Failed to create temporary directory for DOSBox config");
         return {};
     }
+
+    // Keep the directory from being auto-deleted
+    tempDir.setAutoRemove(false);
 
     const QString configPath = tempDir.path() + "/dosbox.conf";
     QFile configFile(configPath);
