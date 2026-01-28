@@ -268,17 +268,27 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 // First check the executable - this is more reliable than metadata
                 bool isDOSGame = false;
 
-                // Check file extension - shell scripts and other non-DOS formats
+                // Check file extension
                 const QString fileExt = QFileInfo(installerPath).suffix().toLower();
                 const bool isShellScript = (fileExt == "sh" || fileExt == "bash");
                 const bool isWindowsExe = (fileExt == "exe");
-                const bool isArchive = (fileExt == "zip" || fileExt == "tar" || fileExt == "gz" ||
-                                        fileExt == "rar" || fileExt == "7z" || fileExt == "bz2");
                 const bool isMacPkg = (fileExt == "pkg" || fileExt == "dmg");
 
-                LOG_INFO(QString("Installer file: %1 (extension: %2, archive: %3, macPkg: %4)")
+                // Universal archive formats (work on all platforms)
+                const bool isUniversalArchive = (fileExt == "zip" || fileExt == "tar" ||
+                                                 fileExt == "gz" || fileExt == "7z");
+
+                // Platform-specific archives
+                const bool isPlatformArchive = (fileExt == "rar" || fileExt == "bz2");
+
+                LOG_INFO(QString("Installer file: %1 (extension: %2, type: %3)")
                              .arg(QFileInfo(installerPath).fileName(), fileExt,
-                                  isArchive ? "true" : "false", isMacPkg ? "true" : "false"));
+                                  isShellScript ? "shell-script"
+                                  : isWindowsExe ? "windows-exe"
+                                  : isMacPkg ? "macos-pkg"
+                                  : isUniversalArchive ? "universal-archive"
+                                  : isPlatformArchive ? "platform-archive"
+                                  : "unknown"));
 
                 // If it's a macOS package, install it
                 if (isMacPkg) {
@@ -350,30 +360,24 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 #endif
                 }
 
-                // If it's an archive, extract it first
-                if (isArchive) {
-                    LOG_INFO(QString("Archive detected, extracting: %1").arg(installerPath));
+                // If it's a universal archive, extract it (works on all platforms)
+                if (isUniversalArchive) {
+                    LOG_INFO(QString("Universal archive detected, extracting: %1").arg(installerPath));
 
                     auto *proc = new QProcess(this);
 
                     if (fileExt == "zip") {
                         proc->setProgram("unzip");
                         proc->setArguments({"-q", installerPath, "-d", installPath});
-                    } else if (fileExt == "tar" || fileExt == "gz" || fileExt == "bz2") {
+                    } else if (fileExt == "tar") {
                         proc->setProgram("tar");
-                        if (fileExt == "gz") {
-                            proc->setArguments({"xzf", installerPath, "-C", installPath});
-                        } else if (fileExt == "bz2") {
-                            proc->setArguments({"xjf", installerPath, "-C", installPath});
-                        } else {
-                            proc->setArguments({"xf", installerPath, "-C", installPath});
-                        }
+                        proc->setArguments({"xf", installerPath, "-C", installPath});
+                    } else if (fileExt == "gz") {
+                        proc->setProgram("tar");
+                        proc->setArguments({"xzf", installerPath, "-C", installPath});
                     } else if (fileExt == "7z") {
                         proc->setProgram("7z");
                         proc->setArguments({"x", installerPath, QString("-o%1").arg(installPath)});
-                    } else if (fileExt == "rar") {
-                        proc->setProgram("unrar");
-                        proc->setArguments({"x", installerPath, installPath});
                     }
 
                     proc->start();
@@ -395,18 +399,22 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     LOG_INFO(QString("Archive extracted successfully: %1").arg(installerPath));
                     proc->deleteLater();
 
-                    // After extraction, look for executable files
-                    QDir dir(installPath);
-                    QStringList exeFiles = dir.entryList({"*.exe", "*.com", "*.bat"},
-                                                         QDir::Files | QDir::Executable);
-
-                    if (!exeFiles.isEmpty()) {
-                        // Found executable, update installerPath to point to it
-                        // For now, just log it - user will need to run it manually
-                        LOG_INFO(QString("Found executable after extraction: %1").arg(exeFiles.first()));
+                    emit installCompleted(taskPtr->gameId, taskPtr->installDir);
+                    if (taskPtr->completionCallback) {
+                        taskPtr->completionCallback(
+                            util::Result<QString>::success(taskPtr->installDir));
                     }
 
+                    QMutexLocker locker2(&tasksMutex_);
+                    activeTasks_.erase(taskPtr->gameId);
                     return;
+                }
+
+                // Platform-specific archives (not recommended)
+                if (isPlatformArchive) {
+                    LOG_WARNING(QString("Platform-specific archive detected: %1 (not recommended)")
+                                    .arg(fileExt));
+                    // Could add support here if needed
                 }
 
                 if (QFile::exists(installerPath)) {
