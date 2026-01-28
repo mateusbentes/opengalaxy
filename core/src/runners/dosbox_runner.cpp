@@ -244,11 +244,16 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
             // Filter out setup/installer executables
             QStringList installerPatterns = {"setup", "install", "uninstall", "patch", "update"};
 
-            // First pass: Look for DOS executables that are NOT installers
+            // First pass: Look for .exe DOS executables that are NOT installers
             for (const auto &fileInfo : exeFiles) {
                 if (!fileInfo.isFile()) continue;
 
                 QString fileName = fileInfo.fileName().toLower();
+                QString fileExt = QFileInfo(fileName).suffix().toLower();
+
+                // Skip batch files in first pass (prefer .exe)
+                if (fileExt == "bat") continue;
+
                 bool isInstaller = false;
                 for (const auto &pattern : installerPatterns) {
                     if (fileName.contains(pattern)) {
