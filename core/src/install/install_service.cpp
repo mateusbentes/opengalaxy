@@ -247,7 +247,16 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                     auto *proc = new QProcess(this);
                     proc->setProgram(dosboxExe);
-                    proc->setArguments({installerPath});
+                    
+                    // For DOS games, we need to mount the directory and let user run installer
+                    // DOSBox will auto-execute the installer from the mounted directory
+                    QStringList args;
+                    args << "-conf" << "/dev/null";  // Use minimal config
+                    args << "-c" << QString("mount c: \"%1\"").arg(QFileInfo(installerPath).absolutePath());
+                    args << "-c" << "c:";
+                    args << "-c" << "dir";  // Show directory contents
+                    
+                    proc->setArguments(args);
                     proc->setWorkingDirectory(installPath);
                     proc->start();
 
