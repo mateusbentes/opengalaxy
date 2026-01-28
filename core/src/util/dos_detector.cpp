@@ -152,7 +152,7 @@ bool DOSDetector::isDOSExecutable(const QString &executablePath) {
         return false;
     }
 
-    // Check if it's a DOS executable (not Windows PE)
+    // Check if it's a pure DOS executable (not Windows PE)
     // Windows PE has additional headers at offset 0x3C
     file.seek(0x3C);
     const QByteArray peOffsetBytes = file.read(4);
@@ -169,9 +169,16 @@ bool DOSDetector::isDOSExecutable(const QString &executablePath) {
                               (static_cast<uint8_t>(peOffsetBytes[2]) << 16) |
                               (static_cast<uint8_t>(peOffsetBytes[3]) << 24);
 
-    // If PE offset is very small (< 64), it's likely a DOS executable
-    // Windows PE files have PE offset > 64
-    return peOffset < 64;
+    // If PE offset is 0 or very small (< 64), it's likely a pure DOS executable
+    // Windows PE files have PE offset > 64 (typically 0x80 or higher)
+    // If PE offset is valid (> 64), it's a Windows PE executable, not pure DOS
+    if (peOffset > 64 && peOffset < 0x10000) {
+        // This is a Windows PE executable (Win32), not pure DOS
+        return false;
+    }
+
+    // Pure DOS executable
+    return true;
 }
 
 } // namespace opengalaxy::util

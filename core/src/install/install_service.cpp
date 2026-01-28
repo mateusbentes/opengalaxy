@@ -16,6 +16,7 @@
 #include <QProcess>
 #include <QProcessEnvironment>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTimer>
 #include <map>
 namespace opengalaxy::install {
@@ -82,12 +83,41 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
     QDir().mkpath(installDir);
 
-    // Pick first windows installer by default (we'll improve selection later)
-    api::GameInfo::DownloadLink selected = game.downloads.front();
+    // Detect current OS and select appropriate download
+    QString currentOS;
+#ifdef Q_OS_WIN
+    currentOS = "windows";
+#elif defined(Q_OS_LINUX)
+    currentOS = "linux";
+#elif defined(Q_OS_MACOS)
+    currentOS = "mac";
+#else
+    currentOS = "windows"; // Default fallback
+#endif
+
+    LOG_INFO(QString("Detected OS: %1").arg(currentOS));
+
+    // Select download for current OS
+    api::GameInfo::DownloadLink selected;
+    bool foundForCurrentOS = false;
+
+    // First, try to find exact match for current OS
     for (const auto &dl : game.downloads) {
-        if (dl.platform.toLower().contains("windows")) {
+        const QString platform = dl.platform.toLower();
+        if (platform.contains(currentOS)) {
             selected = dl;
+            foundForCurrentOS = true;
+            LOG_INFO(QString("Found %1 version for download").arg(currentOS));
             break;
+        }
+    }
+
+    // If no match for current OS, use first available
+    if (!foundForCurrentOS) {
+        if (!game.downloads.empty()) {
+            selected = game.downloads.front();
+            LOG_WARNING(QString("No %1 version found, using: %2")
+                            .arg(currentOS, selected.platform));
         }
     }
 
