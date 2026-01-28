@@ -49,16 +49,20 @@ class InstallService : public QObject {
     // Check if game is being installed
     bool isInstalling(const QString &gameId) const;
 
+    // Get the auto-detected runner for a game (after installation)
+    QString getDetectedRunner(const QString &gameId) const;
+
   signals:
     void installStarted(const QString &gameId);
     void installProgress(const QString &gameId, int percentage);
-    void installCompleted(const QString &gameId, const QString &installPath);
+    void installCompleted(const QString &gameId, const QString &installPath, const QString &detectedRunner = "");
     void installFailed(const QString &gameId, const QString &error);
     void installCancelled(const QString &gameId);
 
   private:
     struct InstallTask;
     std::map<QString, std::unique_ptr<InstallTask>> activeTasks_;
+    std::map<QString, QString> detectedRunners_; // gameId -> detected runner name
     mutable QMutex tasksMutex_;
     void *session_ = nullptr; // api::Session* (void* to avoid forward declaration issues)
 

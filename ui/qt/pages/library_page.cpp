@@ -227,12 +227,24 @@ void LibraryPage::refreshLibrary(bool forceRefresh) {
             });
 
     connect(&installService_, &install::InstallService::installCompleted, this,
-            [this](const QString &gameId, const QString &installPath) {
+            [this](const QString &gameId, const QString &installPath, const QString &detectedRunner) {
                 if (cardsById_.contains(gameId)) {
                     cardsById_[gameId]->setInstalling(false);
                     cardsById_[gameId]->setInstalled(true);
                 }
                 libraryService_.updateGameInstallation(gameId, installPath, "");
+                
+                // Save the auto-detected runner if one was found
+                if (!detectedRunner.isEmpty()) {
+                    libraryService_.getGame(gameId, [this, gameId, detectedRunner](auto result) {
+                        if (result.isOk()) {
+                            auto game = result.value();
+                            game.preferredRunner = detectedRunner;
+                            libraryService_.updateGameProperties(game);
+                        }
+                    });
+                }
+                
                 NotificationWidget::showToast("Install completed", this);
             });
 

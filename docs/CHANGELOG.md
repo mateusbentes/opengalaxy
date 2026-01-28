@@ -2,6 +2,47 @@
 
 All notable changes to OpenGalaxy will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+**Runner Auto-Detection**
+- Auto-detected runners are now persisted to the database after installation
+- Game properties dialog now shows the correct runner instead of "Auto"
+- Runners are automatically selected based on game type:
+  - Windows games: Proton-GE > Proton > Wine-Staging > Wine-TKG > Wine
+  - DOS games: DOSBox
+  - DOS games with Windows installer: Wine/Proton for install, DOSBox for play
+
+**Installer Exit Code Handling**
+- Windows installers that exit with codes 1-3 (reboot needed, user cancelled, other) are now treated as success
+- DOSBox installers that exit with non-zero codes are now treated as success if they exit normally
+- Prevents false installation failures for valid installations
+
+**Cross-Platform Support**
+- DOS games with Windows installers now work on all platforms (Windows, Linux, macOS)
+- Proper Wine/Proton detection on all platforms
+- Consistent behavior across platforms
+
+### Added
+
+**Documentation**
+- New `RUNNER_AUTO_DETECTION.md` with comprehensive guide on runner detection and cross-platform support
+- Platform-specific installation instructions for Wine, Proton, and DOSBox
+- Troubleshooting guide for common runner issues
+
+### Technical Details
+
+**Modified Files:**
+- `core/include/opengalaxy/install/install_service.h`: Added runner tracking infrastructure
+- `core/src/install/install_service.cpp`: Implemented runner persistence and exit code tolerance
+- `ui/qt/pages/library_page.cpp`: Save detected runner to database after installation
+
+**Signal Changes:**
+- `InstallService::installCompleted()` now includes `detectedRunner` parameter (backward compatible with default empty string)
+
+---
+
 ## [1.0.0] - 2026-01-22
 
 ### Complete Rewrite - Production Ready
