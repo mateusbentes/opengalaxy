@@ -2,7 +2,7 @@
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
 
-#include "dosbox_runner.h"
+#include "opengalaxy/runners/dosbox_runner.h"
 #include "proton_discovery.h"
 #include "proton_runner.h"
 #include "wine_runner.h"

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-#include "dosbox_runner.h"
+#include "opengalaxy/runners/dosbox_runner.h"
 #include "opengalaxy/util/log.h"
 
 #include <QFile>
@@ -8,6 +8,7 @@
 #include <QProcessEnvironment>
 #include <QStandardPaths>
 #include <QTemporaryDir>
+#include <QTextStream>
 
 namespace opengalaxy::runners {
 
