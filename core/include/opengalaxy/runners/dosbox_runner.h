@@ -35,7 +35,7 @@ class DOSBoxRunner : public Runner {
 
   private:
     QString dosboxPath_;
-    QString cpuCycles_ = "max";      // CPU cycles: max, auto, or specific number
+    QString cpuCycles_ = "max";         // CPU cycles: max, auto, or specific number
     QString renderScaler_ = "normal2x"; // Scaler: normal2x, normal3x, etc.
     bool fullscreen_ = false;
 

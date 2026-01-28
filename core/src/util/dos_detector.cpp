@@ -8,15 +8,9 @@ namespace opengalaxy::util {
 
 QStringList DOSDetector::dosGameKeywords() {
     return {
-        "DOS",
-        "MS-DOS",
-        "Retro",
-        "Classic",
-        "Vintage",
-        "Point and Click",
-        "Adventure",
-        "Text Adventure",
-        "Interactive Fiction",
+        "DOS",       "MS-DOS",         "Retro",
+        "Classic",   "Vintage",        "Point and Click",
+        "Adventure", "Text Adventure", "Interactive Fiction",
     };
 }
 
