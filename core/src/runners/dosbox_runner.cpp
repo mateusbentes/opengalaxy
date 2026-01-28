@@ -221,6 +221,14 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
             
             LOG_INFO(QString("Searching for executables in: %1").arg(searchPath));
             
+            // List all files in the directory for debugging
+            QStringList allFiles = searchDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+            if (!allFiles.isEmpty()) {
+                LOG_INFO(QString("Files in %1: %2").arg(searchPath, allFiles.join(", ")));
+            } else {
+                LOG_INFO(QString("Directory is empty: %1").arg(searchPath));
+            }
+            
             // Recursive search for executables
             exeFiles = findExecutablesRecursive(searchPath);
             
