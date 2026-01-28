@@ -237,11 +237,19 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
                 QDir().mkpath(installPath);
 
-                // Check if this is a DOS game
-                bool isDOSGame = util::DOSDetector::isDOSGameByMetadata(
-                    taskPtr->game.title, taskPtr->game.genres);
-                if (!isDOSGame && QFile::exists(installerPath)) {
+                // Check if this is a pure DOS game (not Win32)
+                // First check the executable - this is more reliable than metadata
+                bool isDOSGame = false;
+                if (QFile::exists(installerPath)) {
                     isDOSGame = util::DOSDetector::isDOSExecutable(installerPath);
+                    LOG_INFO(QString("Executable check for DOS: %1").arg(isDOSGame ? "true" : "false"));
+                }
+                
+                // Only use metadata if executable check was inconclusive
+                if (!isDOSGame) {
+                    isDOSGame = util::DOSDetector::isDOSGameByMetadata(
+                        taskPtr->game.title, taskPtr->game.genres);
+                    LOG_INFO(QString("Metadata check for DOS: %1").arg(isDOSGame ? "true" : "false"));
                 }
 
                 if (isDOSGame) {
