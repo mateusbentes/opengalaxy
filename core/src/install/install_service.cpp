@@ -3,6 +3,7 @@
 #include "opengalaxy/api/session.h"
 #include "opengalaxy/net/http_client.h"
 #include "opengalaxy/util/log.h"
+#include "opengalaxy/util/dos_detector.h"
 
 #include <QDir>
 #include <QFile>
@@ -194,7 +195,7 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     return;
                 }
 
-                // Step 3: Run installer with Wine (GUI)
+                // Step 3: Run installer with appropriate runner (Wine/Proton for Windows, DOSBox for DOS)
                 InstallProgress prog;
                 prog.gameId = taskPtr->gameId;
                 prog.status = "installing";
@@ -206,7 +207,92 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 const QString installPath = taskPtr->installDir + "/" + taskPtr->game.title;
                 QDir().mkpath(installPath);
 
-                // Find Wine/Proton executable (prefer Proton-GE > Proton > Wine-Staging > Wine)
+                // Check if this is a DOS game
+                bool isDOSGame = util::DOSDetector::isDOSGameByMetadata(
+                    taskPtr->game.title, taskPtr->game.genres);
+                if (!isDOSGame && QFile::exists(installerPath)) {
+                    isDOSGame = util::DOSDetector::isDOSExecutable(installerPath);
+                }
+
+                if (isDOSGame) {
+                    // DOS game - use DOSBox
+                    LOG_INFO(QString("Detected DOS game: %1").arg(taskPtr->game.title));
+
+                    QString dosboxExe = QStandardPaths::findExecutable("dosbox");
+                    if (dosboxExe.isEmpty()) {
+                        dosboxExe = QStandardPaths::findExecutable("dosbox-x");
+                    }
+
+                    if (dosboxExe.isEmpty()) {
+                        const QString err =
+                            "DOSBox not found. Please install DOSBox to run DOS games.\n\n"
+                            "Installation:\n"
+                            "  Ubuntu/Debian: sudo apt install dosbox\n"
+                            "  Fedora: sudo dnf install dosbox\n"
+                            "  Arch: sudo pacman -S dosbox\n"
+                            "  macOS: brew install dosbox\n\n"
+                            "Download: https://www.dosbox.com/";
+                        LOG_ERROR(err);
+                        emit installFailed(taskPtr->gameId, err);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(util::Result<QString>::error(err));
+                        }
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                        return;
+                    }
+
+                    LOG_INFO(QString("Running DOS installer with DOSBox: %1 %2")
+                                 .arg(dosboxExe, installerPath));
+
+                    auto *proc = new QProcess(this);
+                    proc->setProgram(dosboxExe);
+                    proc->setArguments({installerPath});
+                    proc->setWorkingDirectory(installPath);
+                    proc->start();
+
+                    if (!proc->waitForStarted(5000)) {
+                        const QString err =
+                            QString("Failed to start DOSBox installer: %1").arg(proc->errorString());
+                        LOG_ERROR(err);
+                        emit installFailed(taskPtr->gameId, err);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(util::Result<QString>::error(err));
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                        return;
+                    }
+
+                    // For DOS games, wait for DOSBox to finish
+                    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                            [this, taskPtr, proc](int exitCode, QProcess::ExitStatus exitStatus) {
+                        if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
+                            LOG_INFO(QString("DOS installer completed: %1").arg(taskPtr->game.title));
+                            emit installCompleted(taskPtr->gameId, taskPtr->installDir);
+                            if (taskPtr->completionCallback) {
+                                taskPtr->completionCallback(
+                                    util::Result<QString>::success(taskPtr->installDir));
+                            }
+                        } else {
+                            const QString err = QString("DOS installer failed with exit code: %1")
+                                                    .arg(exitCode);
+                            LOG_ERROR(err);
+                            emit installFailed(taskPtr->gameId, err);
+                            if (taskPtr->completionCallback) {
+                                taskPtr->completionCallback(util::Result<QString>::error(err));
+                            }
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                    });
+
+                    return;
+                }
+
+                // Windows game - use Wine/Proton
                 QString wineExe;
                 QString runnerName;
 
