@@ -534,7 +534,7 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                             extractProc->setProgram(innoextractExe);
                             extractProc->setArguments({
                                 "--silent",        // Silent mode
-                                "--low-memory",    // Low memory mode
+                                "--gog",           // Handle GOG-specific installers
                                 "-d", installPath, // Extract to install path
                                 installerPath      // Installer file
                             });
