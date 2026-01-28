@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.21)
 set(CORE_SOURCES
     src/util/log.cpp
     src/util/config.cpp
+    src/util/dos_detector.cpp
     src/net/http_client.cpp
     src/api/session.cpp
     src/api/gog_client.cpp
@@ -13,6 +14,7 @@ set(CORE_SOURCES
     src/runners/wine_runner.cpp
     src/runners/proton_runner.cpp
     src/runners/proton_discovery.cpp
+    src/runners/dosbox_runner.cpp
     src/library/library_service.cpp
     src/install/install_service.cpp
 )
@@ -21,12 +23,14 @@ set(CORE_HEADERS
     include/opengalaxy/util/result.h
     include/opengalaxy/util/log.h
     include/opengalaxy/util/config.h
+    include/opengalaxy/util/dos_detector.h
     include/opengalaxy/net/http_client.h
     include/opengalaxy/api/models.h
     include/opengalaxy/api/session.h
     include/opengalaxy/api/gog_client.h
     include/opengalaxy/runners/runner.h
     include/opengalaxy/runners/runner_manager.h
+    include/opengalaxy/runners/dosbox_runner.h
     include/opengalaxy/library/library_service.h
     include/opengalaxy/install/install_service.h
 )

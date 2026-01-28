@@ -2,6 +2,7 @@
 #include "opengalaxy/runners/runner_manager.h"
 #include "opengalaxy/util/log.h"
 
+#include "dosbox_runner.h"
 #include "proton_discovery.h"
 #include "proton_runner.h"
 #include "wine_runner.h"
@@ -134,6 +135,13 @@ void RunnerManager::discoverRunners() {
     registerRunner(std::make_unique<NativeRunner>());
 
 #ifdef Q_OS_LINUX
+    // DOS compatibility (all platforms)
+    const QString dosbox = findExe({"dosbox", "dosbox-x"});
+    if (!dosbox.isEmpty()) {
+        LOG_INFO(QString("Found DOSBox: %1").arg(dosbox));
+        registerRunner(std::make_unique<DOSBoxRunner>(dosbox));
+    }
+
     // Windows compatibility on Linux
     const QString wine = findExe({"wine", "wine64"});
     if (!wine.isEmpty()) {
@@ -174,6 +182,13 @@ void RunnerManager::discoverRunners() {
 #endif
 
 #ifdef Q_OS_MACOS
+    // DOS compatibility (all platforms)
+    const QString dosbox = findExe({"dosbox", "dosbox-x"});
+    if (!dosbox.isEmpty()) {
+        LOG_INFO(QString("Found DOSBox: %1").arg(dosbox));
+        registerRunner(std::make_unique<DOSBoxRunner>(dosbox));
+    }
+
     // Rosetta 2 on Apple Silicon (ARM64 only)
     const Architecture hostArch = hostArchitecture();
     if (hostArch == Architecture::ARM64) {
