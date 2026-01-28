@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "opengalaxy/runners/dosbox_runner.h"
+#include "opengalaxy/runners/dosbox_manager.h"
 #include "opengalaxy/util/log.h"
 
 #include <QFile>
@@ -165,6 +166,22 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
     if (!isAvailable()) {
         LOG_ERROR("DOSBox is not available");
         return nullptr;
+    }
+
+    // Clean up old DOSBox processes before launching new one
+    LOG_INFO("Cleaning up old DOSBox processes...");
+    const auto oldPids = DOSBoxManager::findRunningDOSBoxProcesses();
+    for (const auto &pid : oldPids) {
+        if (DOSBoxManager::likelyHasUnsavedProgress(pid)) {
+            LOG_WARNING(QString("Old DOSBox process %1 may have unsaved progress (uptime: %2s)")
+                            .arg(pid)
+                            .arg(DOSBoxManager::getProcessUptime(pid)));
+        }
+        if (DOSBoxManager::gracefullyTerminate(pid, 3000)) {
+            LOG_INFO(QString("Terminated old DOSBox process: %1").arg(pid));
+        } else if (DOSBoxManager::forceKill(pid)) {
+            LOG_WARNING(QString("Force killed old DOSBox process: %1").arg(pid));
+        }
     }
 
     // Create DOSBox configuration
