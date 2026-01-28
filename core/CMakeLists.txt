@@ -17,6 +17,7 @@ set(CORE_SOURCES
     src/runners/dosbox_runner.cpp
     src/library/library_service.cpp
     src/install/install_service.cpp
+    src/install/installer_detector.cpp
 )
 # Core library headers
 set(CORE_HEADERS
@@ -33,6 +34,7 @@ set(CORE_HEADERS
     include/opengalaxy/runners/dosbox_runner.h
     include/opengalaxy/library/library_service.h
     include/opengalaxy/install/install_service.h
+    include/opengalaxy/install/installer_detector.h
 )
 add_library(opengalaxy_core ${CORE_SOURCES} ${CORE_HEADERS})
 
