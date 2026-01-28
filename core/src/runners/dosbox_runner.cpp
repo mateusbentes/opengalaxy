@@ -168,6 +168,46 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
         return nullptr;
     }
 
+    // Determine the actual game path
+    // config.gamePath might be a directory (install path) or an executable
+    QString gamePath = config.gamePath;
+    QFileInfo pathInfo(gamePath);
+    
+    // If gamePath is a directory, find the main executable
+    if (pathInfo.isDir()) {
+        LOG_INFO(QString("Game path is a directory, searching for executable: %1").arg(gamePath));
+        
+        // Look for DOS executables in the directory
+        QDir gameDir(gamePath);
+        QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
+        QFileInfoList exeFiles = gameDir.entryInfoList(exeFilters, QDir::Files, QDir::Size | QDir::Reversed);
+        
+        if (!exeFiles.isEmpty()) {
+            // Prefer .exe files, then .com, then .bat
+            // Also prefer larger files (likely the main executable)
+            for (const auto &fileInfo : exeFiles) {
+                if (isDOSGame(fileInfo.absoluteFilePath())) {
+                    gamePath = fileInfo.absoluteFilePath();
+                    LOG_INFO(QString("Found DOS executable: %1").arg(gamePath));
+                    break;
+                }
+            }
+            
+            // If no DOS executable found, use the largest file
+            if (gamePath == config.gamePath && !exeFiles.isEmpty()) {
+                gamePath = exeFiles.first().absoluteFilePath();
+                LOG_WARNING(QString("No DOS executable detected, using largest file: %1").arg(gamePath));
+            }
+        } else {
+            LOG_ERROR(QString("No executable files found in game directory: %1").arg(gamePath));
+            return nullptr;
+        }
+    }
+    
+    // Create a modified config with the actual executable path
+    LaunchConfig modifiedConfig = config;
+    modifiedConfig.gamePath = gamePath;
+
     // Clean up old DOSBox processes before launching new one
     LOG_INFO("Cleaning up old DOSBox processes...");
     const auto oldPids = DOSBoxManager::findRunningDOSBoxProcesses();
@@ -185,7 +225,7 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
     }
 
     // Create DOSBox configuration
-    const QString configPath = createDOSBoxConfig(config);
+    const QString configPath = createDOSBoxConfig(modifiedConfig);
     if (configPath.isEmpty()) {
         LOG_ERROR("Failed to create DOSBox configuration");
         return nullptr;
@@ -203,11 +243,11 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
     }
 
     process->setArguments(args);
-    process->setWorkingDirectory(QFileInfo(config.gamePath).absolutePath());
+    process->setWorkingDirectory(QFileInfo(modifiedConfig.gamePath).absolutePath());
 
     // Set environment
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = config.environment.begin(); it != config.environment.end(); ++it) {
+    for (auto it = modifiedConfig.environment.begin(); it != modifiedConfig.environment.end(); ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);
@@ -219,7 +259,7 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
         return nullptr;
     }
 
-    LOG_INFO(QString("DOSBox started for game: %1").arg(config.gamePath));
+    LOG_INFO(QString("DOSBox started for game: %1").arg(modifiedConfig.gamePath));
     return process;
 }
 
