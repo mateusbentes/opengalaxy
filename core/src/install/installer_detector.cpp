@@ -30,10 +30,15 @@ InstallerType InstallerDetector::detectType(const QString &filePath) {
 
     // Executables
     if (ext == "exe") {
-        // Check if it's DOS or Windows
+        // Check if it's pure DOS or Windows
+        // Pure DOS executables have PE offset < 64
+        // Windows PE executables have PE offset > 64
         if (util::DOSDetector::isDOSExecutable(filePath)) {
+            LOG_INFO(QString("Detected pure DOS executable: %1").arg(filePath));
             return InstallerType::DOSExecutable;
         }
+        // Windows executable (could be old DOS game packaged as Windows)
+        LOG_INFO(QString("Detected Windows executable: %1").arg(filePath));
         return InstallerType::WindowsExe;
     }
 
@@ -322,6 +327,11 @@ QStringList InstallerDetector::supportedExtensions() {
             "7z",    "pkg",   "dmg",  "app",  "deb",  "rpm",  "msi",  "rar",  "iso",
             "bin",   "cue",   "nrg",  "mdf",  "bat",  "cmd",  "ps1",  "py",   "rb",
             "pl",    "js",    "jar",  "AppImage"};
+}
+
+bool InstallerDetector::isLegacyDOSGame(const QString &title, const QStringList &genres) {
+    // Use the DOS detector to check metadata
+    return util::DOSDetector::isDOSGameByMetadata(title, genres);
 }
 
 } // namespace opengalaxy::install

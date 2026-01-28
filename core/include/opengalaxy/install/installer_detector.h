@@ -122,6 +122,18 @@ class InstallerDetector {
      * @return List of supported extensions
      */
     static QStringList supportedExtensions();
+
+    /**
+     * @brief Check if a Windows executable is actually a legacy DOS game
+     *
+     * Some old DOS games are packaged as Windows executables by GOG.
+     * This checks if the game metadata indicates it's a DOS game.
+     *
+     * @param title Game title
+     * @param genres Game genres
+     * @return true if it's likely a legacy DOS game
+     */
+    static bool isLegacyDOSGame(const QString &title, const QStringList &genres);
 };
 
 } // namespace opengalaxy::install

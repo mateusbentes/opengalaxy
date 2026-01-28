@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "opengalaxy/install/install_service.h"
+#include "opengalaxy/install/installer_detector.h"
 #include "opengalaxy/api/session.h"
 #include "opengalaxy/net/http_client.h"
 #include "opengalaxy/util/dos_detector.h"
@@ -290,6 +291,17 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                                   : isPlatformArchive ? "platform-archive"
                                   : "unknown"));
 
+                // Check if it's a legacy DOS game (DOS game packaged as Windows executable)
+                bool isLegacyDOSGame = false;
+                if (isWindowsExe && !isDOSGame) {
+                    isLegacyDOSGame = install::InstallerDetector::isLegacyDOSGame(
+                        taskPtr->game.title, taskPtr->game.genres);
+                    if (isLegacyDOSGame) {
+                        LOG_INFO(QString("Legacy DOS game detected (packaged as Windows): %1")
+                                     .arg(taskPtr->game.title));
+                    }
+                }
+
                 // If it's a macOS package, install it
                 if (isMacPkg) {
                     LOG_INFO(QString("macOS package detected: %1").arg(installerPath));
@@ -487,9 +499,15 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                     return;
                 } else if (isWindowsExe && !isDOSGame) {
-                    // Windows EXE that's not pure DOS - use metadata as fallback
+                    // Windows EXE that's not pure DOS - check if it's a legacy DOS game
+                    // Some old DOS games (like The Elder Scrolls: Arena) are packaged as Windows
+                    // executables by GOG. We detect these using metadata (genres, title).
                     isDOSGame = util::DOSDetector::isDOSGameByMetadata(taskPtr->game.title,
                                                                        taskPtr->game.genres);
+                    if (isDOSGame) {
+                        LOG_INFO(QString("Legacy DOS game detected (packaged as Windows): %1")
+                                     .arg(taskPtr->game.title));
+                    }
                     LOG_INFO(
                         QString("Metadata check for DOS: %1").arg(isDOSGame ? "true" : "false"));
                 }
