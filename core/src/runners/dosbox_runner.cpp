@@ -3,6 +3,8 @@
 #include "opengalaxy/runners/dosbox_manager.h"
 #include "opengalaxy/util/log.h"
 
+#include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
@@ -10,6 +12,7 @@
 #include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTextStream>
+#include <algorithm>
 
 namespace opengalaxy::runners {
 
@@ -190,6 +193,25 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
         
         QFileInfoList exeFiles;
         
+        // Helper lambda to recursively find executables
+        auto findExecutablesRecursive = [](const QString &rootPath) -> QFileInfoList {
+            QFileInfoList allExes;
+            QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
+            
+            QDirIterator it(rootPath, exeFilters, QDir::Files, QDirIterator::Subdirectories);
+            while (it.hasNext()) {
+                allExes.append(QFileInfo(it.next()));
+            }
+            
+            // Sort by size (largest first)
+            std::sort(allExes.begin(), allExes.end(), 
+                [](const QFileInfo &a, const QFileInfo &b) {
+                    return a.size() > b.size();
+                });
+            
+            return allExes;
+        };
+        
         for (const QString &searchPath : searchPaths) {
             QDir searchDir(searchPath);
             if (!searchDir.exists()) {
@@ -200,8 +222,7 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
             LOG_INFO(QString("Searching for executables in: %1").arg(searchPath));
             
             // Recursive search for executables
-            QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
-            exeFiles = searchDir.entryInfoList(exeFilters, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Size | QDir::Reversed);
+            exeFiles = findExecutablesRecursive(searchPath);
             
             // If found in this path, use it
             if (!exeFiles.isEmpty()) {
@@ -211,22 +232,70 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
         }
         
         if (!exeFiles.isEmpty()) {
-            // Prefer .exe files, then .com, then .bat
-            // Also prefer larger files (likely the main executable)
+            // Filter out setup/installer executables
+            QStringList installerPatterns = {"setup", "install", "uninstall", "patch", "update"};
+            
+            // First pass: Look for DOS executables that are NOT installers
             for (const auto &fileInfo : exeFiles) {
-                if (fileInfo.isFile() && isDOSGame(fileInfo.absoluteFilePath())) {
+                if (!fileInfo.isFile()) continue;
+                
+                QString fileName = fileInfo.fileName().toLower();
+                bool isInstaller = false;
+                for (const auto &pattern : installerPatterns) {
+                    if (fileName.contains(pattern)) {
+                        isInstaller = true;
+                        break;
+                    }
+                }
+                
+                if (!isInstaller && isDOSGame(fileInfo.absoluteFilePath())) {
                     gamePath = fileInfo.absoluteFilePath();
-                    LOG_INFO(QString("Found DOS executable: %1").arg(gamePath));
+                    LOG_INFO(QString("Found DOS executable (non-installer): %1").arg(gamePath));
                     break;
                 }
             }
             
-            // If no DOS executable found, use the largest file
+            // Second pass: Look for any DOS executable (including installers)
             if (gamePath == config.gamePath) {
+                for (const auto &fileInfo : exeFiles) {
+                    if (!fileInfo.isFile()) continue;
+                    
+                    if (isDOSGame(fileInfo.absoluteFilePath())) {
+                        gamePath = fileInfo.absoluteFilePath();
+                        LOG_INFO(QString("Found DOS executable: %1").arg(gamePath));
+                        break;
+                    }
+                }
+            }
+            
+            // Third pass: Use largest non-installer file
+            if (gamePath == config.gamePath) {
+                for (const auto &fileInfo : exeFiles) {
+                    if (!fileInfo.isFile()) continue;
+                    
+                    QString fileName = fileInfo.fileName().toLower();
+                    bool isInstaller = false;
+                    for (const auto &pattern : installerPatterns) {
+                        if (fileName.contains(pattern)) {
+                            isInstaller = true;
+                            break;
+                        }
+                    }
+                    
+                    if (!isInstaller) {
+                        gamePath = fileInfo.absoluteFilePath();
+                        LOG_WARNING(QString("Using largest non-installer file: %1").arg(gamePath));
+                        break;
+                    }
+                }
+            }
+            
+            // Last resort: Use largest file (even if installer)
+            if (gamePath == config.gamePath && !exeFiles.isEmpty()) {
                 for (const auto &fileInfo : exeFiles) {
                     if (fileInfo.isFile()) {
                         gamePath = fileInfo.absoluteFilePath();
-                        LOG_WARNING(QString("No DOS executable detected, using largest file: %1").arg(gamePath));
+                        LOG_WARNING(QString("No suitable executable found, using largest file: %1").arg(gamePath));
                         break;
                     }
                 }
