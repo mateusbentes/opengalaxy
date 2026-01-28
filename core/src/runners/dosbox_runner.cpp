@@ -177,16 +177,44 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
     if (pathInfo.isDir()) {
         LOG_INFO(QString("Game path is a directory, searching for executable: %1").arg(gamePath));
         
-        // Look for DOS executables in the directory
-        QDir gameDir(gamePath);
-        QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
-        QFileInfoList exeFiles = gameDir.entryInfoList(exeFilters, QDir::Files, QDir::Size | QDir::Reversed);
+        // Search in multiple locations:
+        // 1. Direct game directory
+        // 2. Wine prefix (.wine/drive_c)
+        // 3. Proton prefix (.proton/pfx/drive_c)
+        // 4. Recursively in subdirectories
+        
+        QStringList searchPaths;
+        searchPaths << gamePath;  // Direct directory
+        searchPaths << gamePath + "/.wine/drive_c";  // Wine prefix
+        searchPaths << gamePath + "/.proton/pfx/drive_c";  // Proton prefix
+        
+        QFileInfoList exeFiles;
+        
+        for (const QString &searchPath : searchPaths) {
+            QDir searchDir(searchPath);
+            if (!searchDir.exists()) {
+                LOG_INFO(QString("Search path does not exist: %1").arg(searchPath));
+                continue;
+            }
+            
+            LOG_INFO(QString("Searching for executables in: %1").arg(searchPath));
+            
+            // Recursive search for executables
+            QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
+            exeFiles = searchDir.entryInfoList(exeFilters, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDir::Size | QDir::Reversed);
+            
+            // If found in this path, use it
+            if (!exeFiles.isEmpty()) {
+                LOG_INFO(QString("Found %1 executable files in: %2").arg(exeFiles.size()).arg(searchPath));
+                break;
+            }
+        }
         
         if (!exeFiles.isEmpty()) {
             // Prefer .exe files, then .com, then .bat
             // Also prefer larger files (likely the main executable)
             for (const auto &fileInfo : exeFiles) {
-                if (isDOSGame(fileInfo.absoluteFilePath())) {
+                if (fileInfo.isFile() && isDOSGame(fileInfo.absoluteFilePath())) {
                     gamePath = fileInfo.absoluteFilePath();
                     LOG_INFO(QString("Found DOS executable: %1").arg(gamePath));
                     break;
@@ -194,12 +222,17 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
             }
             
             // If no DOS executable found, use the largest file
-            if (gamePath == config.gamePath && !exeFiles.isEmpty()) {
-                gamePath = exeFiles.first().absoluteFilePath();
-                LOG_WARNING(QString("No DOS executable detected, using largest file: %1").arg(gamePath));
+            if (gamePath == config.gamePath) {
+                for (const auto &fileInfo : exeFiles) {
+                    if (fileInfo.isFile()) {
+                        gamePath = fileInfo.absoluteFilePath();
+                        LOG_WARNING(QString("No DOS executable detected, using largest file: %1").arg(gamePath));
+                        break;
+                    }
+                }
             }
         } else {
-            LOG_ERROR(QString("No executable files found in game directory: %1").arg(gamePath));
+            LOG_ERROR(QString("No executable files found in game directory or Wine/Proton prefix: %1").arg(gamePath));
             return nullptr;
         }
     }
