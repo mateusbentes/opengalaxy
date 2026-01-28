@@ -240,13 +240,27 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 // Check if this is a pure DOS game (not Win32)
                 // First check the executable - this is more reliable than metadata
                 bool isDOSGame = false;
+                
+                // Check file extension - shell scripts and other non-DOS formats
+                const QString fileExt = QFileInfo(installerPath).suffix().toLower();
+                const bool isShellScript = (fileExt == "sh" || fileExt == "bash");
+                const bool isWindowsExe = (fileExt == "exe");
+                
+                LOG_INFO(QString("Installer file: %1 (extension: %2)")
+                             .arg(QFileInfo(installerPath).fileName(), fileExt));
+                
                 if (QFile::exists(installerPath)) {
                     isDOSGame = util::DOSDetector::isDOSExecutable(installerPath);
                     LOG_INFO(QString("Executable check for DOS: %1").arg(isDOSGame ? "true" : "false"));
                 }
                 
-                // Only use metadata if executable check was inconclusive
-                if (!isDOSGame) {
+                // If it's a shell script or Windows EXE, don't use metadata for DOS detection
+                // Shell scripts are native Linux installers, not DOS
+                if (isShellScript) {
+                    LOG_INFO("Shell script detected - not a DOS game");
+                    isDOSGame = false;
+                } else if (isWindowsExe && !isDOSGame) {
+                    // Windows EXE that's not pure DOS - use metadata as fallback
                     isDOSGame = util::DOSDetector::isDOSGameByMetadata(
                         taskPtr->game.title, taskPtr->game.genres);
                     LOG_INFO(QString("Metadata check for DOS: %1").arg(isDOSGame ? "true" : "false"));
