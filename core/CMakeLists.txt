@@ -15,6 +15,7 @@ set(CORE_SOURCES
     src/runners/proton_runner.cpp
     src/runners/proton_discovery.cpp
     src/runners/dosbox_runner.cpp
+    src/runners/dosbox_manager.cpp
     src/library/library_service.cpp
     src/install/install_service.cpp
     src/install/installer_detector.cpp
@@ -32,6 +33,7 @@ set(CORE_HEADERS
     include/opengalaxy/runners/runner.h
     include/opengalaxy/runners/runner_manager.h
     include/opengalaxy/runners/dosbox_runner.h
+    include/opengalaxy/runners/dosbox_manager.h
     include/opengalaxy/library/library_service.h
     include/opengalaxy/install/install_service.h
     include/opengalaxy/install/installer_detector.h
