@@ -175,78 +175,79 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
     // config.gamePath might be a directory (install path) or an executable
     QString gamePath = config.gamePath;
     QFileInfo pathInfo(gamePath);
-    
+
     // If gamePath is a directory, find the main executable
     if (pathInfo.isDir()) {
         LOG_INFO(QString("Game path is a directory, searching for executable: %1").arg(gamePath));
-        
+
         // Search in multiple locations:
         // 1. Direct game directory
         // 2. Wine prefix (.wine/drive_c)
         // 3. Proton prefix (.proton/pfx/drive_c)
         // 4. Recursively in subdirectories
-        
+
         QStringList searchPaths;
-        searchPaths << gamePath;  // Direct directory
-        searchPaths << gamePath + "/.wine/drive_c";  // Wine prefix
-        searchPaths << gamePath + "/.proton/pfx/drive_c";  // Proton prefix
-        
+        searchPaths << gamePath;                          // Direct directory
+        searchPaths << gamePath + "/.wine/drive_c";       // Wine prefix
+        searchPaths << gamePath + "/.proton/pfx/drive_c"; // Proton prefix
+
         QFileInfoList exeFiles;
-        
+
         // Helper lambda to recursively find executables
         auto findExecutablesRecursive = [](const QString &rootPath) -> QFileInfoList {
             QFileInfoList allExes;
             QStringList exeFilters = {"*.exe", "*.com", "*.bat"};
-            
+
             QDirIterator it(rootPath, exeFilters, QDir::Files, QDirIterator::Subdirectories);
             while (it.hasNext()) {
                 allExes.append(QFileInfo(it.next()));
             }
-            
+
             // Sort by size (largest first)
-            std::sort(allExes.begin(), allExes.end(), 
-                [](const QFileInfo &a, const QFileInfo &b) {
-                    return a.size() > b.size();
-                });
-            
+            std::sort(allExes.begin(), allExes.end(),
+                      [](const QFileInfo &a, const QFileInfo &b) { return a.size() > b.size(); });
+
             return allExes;
         };
-        
+
         for (const QString &searchPath : searchPaths) {
             QDir searchDir(searchPath);
             if (!searchDir.exists()) {
                 LOG_INFO(QString("Search path does not exist: %1").arg(searchPath));
                 continue;
             }
-            
+
             LOG_INFO(QString("Searching for executables in: %1").arg(searchPath));
-            
+
             // List all files in the directory for debugging
-            QStringList allFiles = searchDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
+            QStringList allFiles =
+                searchDir.entryList(QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot);
             if (!allFiles.isEmpty()) {
                 LOG_INFO(QString("Files in %1: %2").arg(searchPath, allFiles.join(", ")));
             } else {
                 LOG_INFO(QString("Directory is empty: %1").arg(searchPath));
             }
-            
+
             // Recursive search for executables
             exeFiles = findExecutablesRecursive(searchPath);
-            
+
             // If found in this path, use it
             if (!exeFiles.isEmpty()) {
-                LOG_INFO(QString("Found %1 executable files in: %2").arg(exeFiles.size()).arg(searchPath));
+                LOG_INFO(QString("Found %1 executable files in: %2")
+                             .arg(exeFiles.size())
+                             .arg(searchPath));
                 break;
             }
         }
-        
+
         if (!exeFiles.isEmpty()) {
             // Filter out setup/installer executables
             QStringList installerPatterns = {"setup", "install", "uninstall", "patch", "update"};
-            
+
             // First pass: Look for DOS executables that are NOT installers
             for (const auto &fileInfo : exeFiles) {
                 if (!fileInfo.isFile()) continue;
-                
+
                 QString fileName = fileInfo.fileName().toLower();
                 bool isInstaller = false;
                 for (const auto &pattern : installerPatterns) {
@@ -255,19 +256,19 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
                         break;
                     }
                 }
-                
+
                 if (!isInstaller && isDOSGame(fileInfo.absoluteFilePath())) {
                     gamePath = fileInfo.absoluteFilePath();
                     LOG_INFO(QString("Found DOS executable (non-installer): %1").arg(gamePath));
                     break;
                 }
             }
-            
+
             // Second pass: Look for any DOS executable (including installers)
             if (gamePath == config.gamePath) {
                 for (const auto &fileInfo : exeFiles) {
                     if (!fileInfo.isFile()) continue;
-                    
+
                     if (isDOSGame(fileInfo.absoluteFilePath())) {
                         gamePath = fileInfo.absoluteFilePath();
                         LOG_INFO(QString("Found DOS executable: %1").arg(gamePath));
@@ -275,12 +276,12 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
                     }
                 }
             }
-            
+
             // Third pass: Use largest non-installer file
             if (gamePath == config.gamePath) {
                 for (const auto &fileInfo : exeFiles) {
                     if (!fileInfo.isFile()) continue;
-                    
+
                     QString fileName = fileInfo.fileName().toLower();
                     bool isInstaller = false;
                     for (const auto &pattern : installerPatterns) {
@@ -289,7 +290,7 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
                             break;
                         }
                     }
-                    
+
                     if (!isInstaller) {
                         gamePath = fileInfo.absoluteFilePath();
                         LOG_WARNING(QString("Using largest non-installer file: %1").arg(gamePath));
@@ -297,23 +298,26 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
                     }
                 }
             }
-            
+
             // Last resort: Use largest file (even if installer)
             if (gamePath == config.gamePath && !exeFiles.isEmpty()) {
                 for (const auto &fileInfo : exeFiles) {
                     if (fileInfo.isFile()) {
                         gamePath = fileInfo.absoluteFilePath();
-                        LOG_WARNING(QString("No suitable executable found, using largest file: %1").arg(gamePath));
+                        LOG_WARNING(QString("No suitable executable found, using largest file: %1")
+                                        .arg(gamePath));
                         break;
                     }
                 }
             }
         } else {
-            LOG_ERROR(QString("No executable files found in game directory or Wine/Proton prefix: %1").arg(gamePath));
+            LOG_ERROR(
+                QString("No executable files found in game directory or Wine/Proton prefix: %1")
+                    .arg(gamePath));
             return nullptr;
         }
     }
-    
+
     // Create a modified config with the actual executable path
     LaunchConfig modifiedConfig = config;
     modifiedConfig.gamePath = gamePath;
@@ -357,7 +361,8 @@ std::unique_ptr<QProcess> DOSBoxRunner::launch(const LaunchConfig &config) {
 
     // Set environment
     QStringList env = QProcessEnvironment::systemEnvironment().toStringList();
-    for (auto it = modifiedConfig.environment.begin(); it != modifiedConfig.environment.end(); ++it) {
+    for (auto it = modifiedConfig.environment.begin(); it != modifiedConfig.environment.end();
+         ++it) {
         env << (it.key() + "=" + it.value());
     }
     process->setEnvironment(env);

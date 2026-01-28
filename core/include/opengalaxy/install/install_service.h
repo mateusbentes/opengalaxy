@@ -55,7 +55,8 @@ class InstallService : public QObject {
   signals:
     void installStarted(const QString &gameId);
     void installProgress(const QString &gameId, int percentage);
-    void installCompleted(const QString &gameId, const QString &installPath, const QString &detectedRunner = "");
+    void installCompleted(const QString &gameId, const QString &installPath,
+                          const QString &detectedRunner = "");
     void installFailed(const QString &gameId, const QString &error);
     void installCancelled(const QString &gameId);
 

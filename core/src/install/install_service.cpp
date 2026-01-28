@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #include "opengalaxy/install/install_service.h"
-#include "opengalaxy/install/installer_detector.h"
 #include "opengalaxy/api/session.h"
+#include "opengalaxy/install/installer_detector.h"
 #include "opengalaxy/net/http_client.h"
 #include "opengalaxy/util/dos_detector.h"
 #include "opengalaxy/util/log.h"
@@ -276,20 +276,20 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 const bool isMacPkg = (fileExt == "pkg" || fileExt == "dmg");
 
                 // Universal archive formats (work on all platforms)
-                const bool isUniversalArchive = (fileExt == "zip" || fileExt == "tar" ||
-                                                 fileExt == "gz" || fileExt == "7z");
+                const bool isUniversalArchive =
+                    (fileExt == "zip" || fileExt == "tar" || fileExt == "gz" || fileExt == "7z");
 
                 // Platform-specific archives
                 const bool isPlatformArchive = (fileExt == "rar" || fileExt == "bz2");
 
                 LOG_INFO(QString("Installer file: %1 (extension: %2, type: %3)")
                              .arg(QFileInfo(installerPath).fileName(), fileExt,
-                                  isShellScript ? "shell-script"
-                                  : isWindowsExe ? "windows-exe"
-                                  : isMacPkg ? "macos-pkg"
+                                  isShellScript        ? "shell-script"
+                                  : isWindowsExe       ? "windows-exe"
+                                  : isMacPkg           ? "macos-pkg"
                                   : isUniversalArchive ? "universal-archive"
-                                  : isPlatformArchive ? "platform-archive"
-                                  : "unknown"));
+                                  : isPlatformArchive  ? "platform-archive"
+                                                       : "unknown"));
 
                 // Check if it's a legacy DOS game (DOS game packaged as Windows executable)
                 bool isLegacyDOSGame = false;
@@ -312,8 +312,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     if (fileExt == "pkg") {
                         // Install .pkg using installer command
                         proc->setProgram("sudo");
-                        proc->setArguments({"installer", "-pkg", installerPath, "-target",
-                                           QDir::homePath()});
+                        proc->setArguments(
+                            {"installer", "-pkg", installerPath, "-target", QDir::homePath()});
                     } else if (fileExt == "dmg") {
                         // Mount .dmg and copy contents
                         proc->setProgram("hdiutil");
@@ -323,8 +323,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     proc->start();
 
                     if (!proc->waitForFinished(120000)) {
-                        const QString err = QString("Failed to install macOS package: %1")
-                                                .arg(proc->errorString());
+                        const QString err =
+                            QString("Failed to install macOS package: %1").arg(proc->errorString());
                         LOG_ERROR(err);
                         emit installFailed(taskPtr->gameId, err);
                         if (taskPtr->completionCallback) {
@@ -336,7 +336,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                         return;
                     }
 
-                    LOG_INFO(QString("macOS package installed successfully: %1").arg(installerPath));
+                    LOG_INFO(
+                        QString("macOS package installed successfully: %1").arg(installerPath));
 
                     if (fileExt == "dmg") {
                         // Unmount DMG after installation
@@ -374,7 +375,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                 // If it's a universal archive, extract it (works on all platforms)
                 if (isUniversalArchive) {
-                    LOG_INFO(QString("Universal archive detected, extracting: %1").arg(installerPath));
+                    LOG_INFO(
+                        QString("Universal archive detected, extracting: %1").arg(installerPath));
 
                     auto *proc = new QProcess(this);
 
@@ -395,8 +397,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     proc->start();
 
                     if (!proc->waitForFinished(60000)) {
-                        const QString err = QString("Failed to extract archive: %1")
-                                                .arg(proc->errorString());
+                        const QString err =
+                            QString("Failed to extract archive: %1").arg(proc->errorString());
                         LOG_ERROR(err);
                         emit installFailed(taskPtr->gameId, err);
                         if (taskPtr->completionCallback) {
@@ -520,59 +522,62 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                         // Legacy DOS game packaged as Windows installer
                         // Try to extract using innoextract first (automatic, no display needed)
                         // Fall back to Wine/Proton if innoextract not available
-                        LOG_INFO("Legacy DOS game with Windows installer - attempting automatic extraction");
+                        LOG_INFO("Legacy DOS game with Windows installer - attempting automatic "
+                                 "extraction");
 
                         // First, try innoextract (works for Inno Setup installers, which GOG uses)
                         QString innoextractExe = QStandardPaths::findExecutable("innoextract");
                         if (!innoextractExe.isEmpty()) {
                             LOG_INFO("Found innoextract, attempting automatic extraction");
-                            
+
                             auto *extractProc = new QProcess(this);
                             extractProc->setProgram(innoextractExe);
                             extractProc->setArguments({
-                                "--silent",           // Silent mode
-                                "--low-memory",       // Low memory mode
-                                "-d", installPath,    // Extract to install path
-                                installerPath         // Installer file
+                                "--silent",        // Silent mode
+                                "--low-memory",    // Low memory mode
+                                "-d", installPath, // Extract to install path
+                                installerPath      // Installer file
                             });
                             extractProc->setWorkingDirectory(installPath);
-                            
+
                             extractProc->start();
-                            
-                            if (extractProc->waitForFinished(300000)) {  // 5 minute timeout
+
+                            if (extractProc->waitForFinished(300000)) { // 5 minute timeout
                                 int exitCode = extractProc->exitCode();
                                 if (exitCode == 0) {
                                     LOG_INFO(QString("innoextract completed successfully for: %1")
                                                  .arg(taskPtr->game.title));
-                                    
+
                                     // Auto-set preferred runner to DOSBox for DOS games
                                     taskPtr->game.preferredRunner = "DOSBox";
                                     LOG_INFO(QString("Auto-set preferred runner to DOSBox for: %1")
                                                  .arg(taskPtr->game.title));
-                                    
+
                                     {
                                         QMutexLocker locker(&tasksMutex_);
                                         detectedRunners_[taskPtr->gameId] = "DOSBox";
                                     }
-                                    
-                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir, "DOSBox");
+
+                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir,
+                                                          "DOSBox");
                                     if (taskPtr->completionCallback) {
-                                        taskPtr->completionCallback(util::Result<QString>::success(
-                                            taskPtr->installDir));
+                                        taskPtr->completionCallback(
+                                            util::Result<QString>::success(taskPtr->installDir));
                                     }
-                                    
+
                                     extractProc->deleteLater();
                                     QMutexLocker locker2(&tasksMutex_);
                                     activeTasks_.erase(taskPtr->gameId);
                                     return;
                                 } else {
-                                    LOG_WARNING(QString("innoextract failed with exit code %1, falling back to Wine")
-                                                   .arg(exitCode));
+                                    LOG_WARNING(QString("innoextract failed with exit code %1, "
+                                                        "falling back to Wine")
+                                                    .arg(exitCode));
                                 }
                             } else {
                                 LOG_WARNING("innoextract timed out, falling back to Wine");
                             }
-                            
+
                             extractProc->deleteLater();
                         } else {
                             LOG_INFO("innoextract not found, will use Wine/Proton to install");
@@ -584,7 +589,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                         // Check for Proton-GE
                         QStringList protonGePaths = {
-                            QDir::homePath() + "/.steam/steam/compatibilitytools.d/GE-Proton*/proton",
+                            QDir::homePath() +
+                                "/.steam/steam/compatibilitytools.d/GE-Proton*/proton",
                             QDir::homePath() +
                                 "/.local/share/Steam/compatibilitytools.d/GE-Proton*/proton",
                             "/usr/share/steam/compatibilitytools.d/GE-Proton*/proton"};
@@ -592,9 +598,9 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                         for (const QString &pattern : protonGePaths) {
                             QDir dir(QFileInfo(pattern).path());
                             if (dir.exists()) {
-                                QStringList entries = dir.entryList(
-                                    QStringList() << "GE-Proton*", QDir::Dirs,
-                                    QDir::Name | QDir::Reversed);
+                                QStringList entries =
+                                    dir.entryList(QStringList() << "GE-Proton*", QDir::Dirs,
+                                                  QDir::Name | QDir::Reversed);
                                 if (!entries.isEmpty()) {
                                     QString protonPath =
                                         dir.absolutePath() + "/" + entries.first() + "/proton";
@@ -617,9 +623,9 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                             for (const QString &pattern : protonPaths) {
                                 QDir dir(QFileInfo(pattern).path());
                                 if (dir.exists()) {
-                                    QStringList entries = dir.entryList(
-                                        QStringList() << "Proton*", QDir::Dirs,
-                                        QDir::Name | QDir::Reversed);
+                                    QStringList entries =
+                                        dir.entryList(QStringList() << "Proton*", QDir::Dirs,
+                                                      QDir::Name | QDir::Reversed);
                                     if (!entries.isEmpty()) {
                                         QString protonPath =
                                             dir.absolutePath() + "/" + entries.first() + "/proton";
@@ -726,47 +732,53 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                         LOG_INFO(QString("Wine installer started for DOS game: %1")
                                      .arg(taskPtr->game.title));
 
-                        connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                                [this, taskPtr, proc](int exitCode, QProcess::ExitStatus exitStatus) {
-                                    // Windows installers often exit with codes 0-3 even on success
-                                    // (0=success, 1=reboot needed, 2=user cancelled, 3=other)
-                                    // For DOS games, we consider 0-3 as acceptable
-                                    bool isSuccess = (exitStatus == QProcess::NormalExit && exitCode <= 3);
-                                    
-                                    if (isSuccess) {
-                                        LOG_INFO(QString("DOS game installed successfully: %1 (exit code: %2)")
-                                                     .arg(taskPtr->game.title).arg(exitCode));
+                        connect(
+                            proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                            [this, taskPtr, proc](int exitCode, QProcess::ExitStatus exitStatus) {
+                                // Windows installers often exit with codes 0-3 even on success
+                                // (0=success, 1=reboot needed, 2=user cancelled, 3=other)
+                                // For DOS games, we consider 0-3 as acceptable
+                                bool isSuccess =
+                                    (exitStatus == QProcess::NormalExit && exitCode <= 3);
 
-                                        // Auto-set preferred runner to DOSBox for DOS games
-                                        taskPtr->game.preferredRunner = "DOSBox";
-                                        LOG_INFO(QString("Auto-set preferred runner to DOSBox for: %1")
-                                                     .arg(taskPtr->game.title));
+                                if (isSuccess) {
+                                    LOG_INFO(
+                                        QString(
+                                            "DOS game installed successfully: %1 (exit code: %2)")
+                                            .arg(taskPtr->game.title)
+                                            .arg(exitCode));
 
-                                        {
-                                            QMutexLocker locker(&tasksMutex_);
-                                            detectedRunners_[taskPtr->gameId] = "DOSBox";
-                                        }
+                                    // Auto-set preferred runner to DOSBox for DOS games
+                                    taskPtr->game.preferredRunner = "DOSBox";
+                                    LOG_INFO(QString("Auto-set preferred runner to DOSBox for: %1")
+                                                 .arg(taskPtr->game.title));
 
-                                        emit installCompleted(taskPtr->gameId, taskPtr->installDir, "DOSBox");
-                                        if (taskPtr->completionCallback) {
-                                            taskPtr->completionCallback(util::Result<QString>::success(
-                                                taskPtr->installDir));
-                                        }
-                                    } else {
-                                        const QString err =
-                                            QString("DOS game installer failed with exit code: %1")
-                                                .arg(exitCode);
-                                        LOG_ERROR(err);
-                                        emit installFailed(taskPtr->gameId, err);
-                                        if (taskPtr->completionCallback) {
-                                            taskPtr->completionCallback(
-                                                util::Result<QString>::error(err));
-                                        }
+                                    {
+                                        QMutexLocker locker(&tasksMutex_);
+                                        detectedRunners_[taskPtr->gameId] = "DOSBox";
                                     }
-                                    proc->deleteLater();
-                                    QMutexLocker locker(&tasksMutex_);
-                                    activeTasks_.erase(taskPtr->gameId);
-                                });
+
+                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir,
+                                                          "DOSBox");
+                                    if (taskPtr->completionCallback) {
+                                        taskPtr->completionCallback(
+                                            util::Result<QString>::success(taskPtr->installDir));
+                                    }
+                                } else {
+                                    const QString err =
+                                        QString("DOS game installer failed with exit code: %1")
+                                            .arg(exitCode);
+                                    LOG_ERROR(err);
+                                    emit installFailed(taskPtr->gameId, err);
+                                    if (taskPtr->completionCallback) {
+                                        taskPtr->completionCallback(
+                                            util::Result<QString>::error(err));
+                                    }
+                                }
+                                proc->deleteLater();
+                                QMutexLocker locker(&tasksMutex_);
+                                activeTasks_.erase(taskPtr->gameId);
+                            });
 
                         return;
                     }
@@ -810,7 +822,7 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                     args << "-c" << QString("mount c: \"%1\"").arg(installerDir);
                     args << "-c" << "c:";
                     args << "-c" << installerExe; // Auto-run the installer
-                    args << "-c" << "exit"; // Exit DOSBox when done
+                    args << "-c" << "exit";       // Exit DOSBox when done
 
                     proc->setArguments(args);
                     proc->setWorkingDirectory(installPath);
@@ -836,10 +848,11 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                                 // DOSBox may exit with non-zero codes, but we consider it success
                                 // if it exited normally (not crashed)
                                 bool isSuccess = (exitStatus == QProcess::NormalExit);
-                                
+
                                 if (isSuccess) {
                                     LOG_INFO(QString("DOS installer completed: %1 (exit code: %2)")
-                                                 .arg(taskPtr->game.title).arg(exitCode));
+                                                 .arg(taskPtr->game.title)
+                                                 .arg(exitCode));
 
                                     // Auto-set preferred runner to DOSBox for DOS games
                                     taskPtr->game.preferredRunner = "DOSBox";
@@ -851,7 +864,8 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                                         detectedRunners_[taskPtr->gameId] = "DOSBox";
                                     }
 
-                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir, "DOSBox");
+                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir,
+                                                          "DOSBox");
                                     if (taskPtr->completionCallback) {
                                         taskPtr->completionCallback(
                                             util::Result<QString>::success(taskPtr->installDir));
@@ -1024,131 +1038,134 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                 LOG_INFO(QString("Wine installer started for: %1").arg(taskPtr->game.title));
 
-                connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
-                        [this, gameId, installPath, proc](int exitCode,
-                                                          QProcess::ExitStatus status) mutable {
-                            proc->deleteLater();
+                connect(
+                    proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                    [this, gameId, installPath, proc](int exitCode,
+                                                      QProcess::ExitStatus status) mutable {
+                        proc->deleteLater();
 
-                            // Check if task still exists
-                            QMutexLocker locker(&tasksMutex_);
-                            auto it = activeTasks_.find(gameId);
-                            if (it == activeTasks_.end()) {
-                                return; // Cancelled
-                            }
-                            InstallTask *taskPtr = it->second.get();
-                            locker.unlock();
+                        // Check if task still exists
+                        QMutexLocker locker(&tasksMutex_);
+                        auto it = activeTasks_.find(gameId);
+                        if (it == activeTasks_.end()) {
+                            return; // Cancelled
+                        }
+                        InstallTask *taskPtr = it->second.get();
+                        locker.unlock();
 
-                            // Windows installers often exit with codes 0-3 even on success
-                            // (0=success, 1=reboot needed, 2=user cancelled, 3=other)
-                            bool isSuccess = (status == QProcess::NormalExit && exitCode <= 3);
-                            
-                            if (!isSuccess) {
-                                const QString err =
-                                    QString("Installer exited with code %1").arg(exitCode);
-                                emit installFailed(taskPtr->gameId, err);
-                                if (taskPtr->completionCallback) {
-                                    taskPtr->completionCallback(util::Result<QString>::error(err));
-                                }
-                                QMutexLocker locker2(&tasksMutex_);
-                                activeTasks_.erase(taskPtr->gameId);
-                                return;
-                            }
+                        // Windows installers often exit with codes 0-3 even on success
+                        // (0=success, 1=reboot needed, 2=user cancelled, 3=other)
+                        bool isSuccess = (status == QProcess::NormalExit && exitCode <= 3);
 
-                            // Auto-set preferred runner based on what was used for installation
-                            // For Windows games, prefer Proton-GE > Proton > Wine
-                            if (taskPtr->game.preferredRunner.isEmpty()) {
-                                // Check what runner was available during installation
-                                QString dosboxExe = QStandardPaths::findExecutable("dosbox");
-                                if (dosboxExe.isEmpty()) {
-                                    dosboxExe = QStandardPaths::findExecutable("dosbox-x");
-                                }
-
-                                // Check for Proton-GE first
-                                bool foundProtonGE = false;
-                                QStringList protonGePaths = {
-                                    QDir::homePath() + "/.steam/steam/compatibilitytools.d/GE-Proton*/proton",
-                                    QDir::homePath() +
-                                        "/.local/share/Steam/compatibilitytools.d/GE-Proton*/proton"};
-
-                                for (const QString &pattern : protonGePaths) {
-                                    QDir dir(QFileInfo(pattern).path());
-                                    if (dir.exists()) {
-                                        QStringList entries = dir.entryList(
-                                            QStringList() << "GE-Proton*", QDir::Dirs,
-                                            QDir::Name | QDir::Reversed);
-                                        if (!entries.isEmpty()) {
-                                            taskPtr->game.preferredRunner = "Proton-GE";
-                                            foundProtonGE = true;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                // Fall back to Proton
-                                if (!foundProtonGE) {
-                                    QStringList protonPaths = {
-                                        QDir::homePath() + "/.steam/steam/steamapps/common/Proton*/proton",
-                                        QDir::homePath() +
-                                            "/.local/share/Steam/steamapps/common/Proton*/proton"};
-
-                                    for (const QString &pattern : protonPaths) {
-                                        QDir dir(QFileInfo(pattern).path());
-                                        if (dir.exists()) {
-                                            QStringList entries = dir.entryList(
-                                                QStringList() << "Proton*", QDir::Dirs,
-                                                QDir::Name | QDir::Reversed);
-                                            if (!entries.isEmpty()) {
-                                                taskPtr->game.preferredRunner = "Proton";
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                // Fall back to Wine
-                                if (taskPtr->game.preferredRunner.isEmpty()) {
-                                    QStringList winePaths = {
-                                        QStandardPaths::findExecutable("wine-staging"),
-                                        QStandardPaths::findExecutable("wine-tkg"),
-                                        QStandardPaths::findExecutable("wine")};
-
-                                    for (const QString &path : winePaths) {
-                                        if (!path.isEmpty()) {
-                                            if (path.contains("staging")) {
-                                                taskPtr->game.preferredRunner = "Wine-Staging";
-                                            } else if (path.contains("tkg")) {
-                                                taskPtr->game.preferredRunner = "Wine-TKG";
-                                            } else {
-                                                taskPtr->game.preferredRunner = "Wine";
-                                            }
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (!taskPtr->game.preferredRunner.isEmpty()) {
-                                    LOG_INFO(QString("Auto-set preferred runner to %1 for: %2")
-                                                 .arg(taskPtr->game.preferredRunner,
-                                                      taskPtr->game.title));
-                                }
-                            }
-
-                            QString detectedRunner = taskPtr->game.preferredRunner;
-                            {
-                                QMutexLocker locker2(&tasksMutex_);
-                                if (!detectedRunner.isEmpty()) {
-                                    detectedRunners_[taskPtr->gameId] = detectedRunner;
-                                }
-                            }
-
-                            emit installCompleted(taskPtr->gameId, installPath, detectedRunner);
+                        if (!isSuccess) {
+                            const QString err =
+                                QString("Installer exited with code %1").arg(exitCode);
+                            emit installFailed(taskPtr->gameId, err);
                             if (taskPtr->completionCallback) {
-                                taskPtr->completionCallback(
-                                    util::Result<QString>::success(installPath));
+                                taskPtr->completionCallback(util::Result<QString>::error(err));
                             }
                             QMutexLocker locker2(&tasksMutex_);
                             activeTasks_.erase(taskPtr->gameId);
-                        });
+                            return;
+                        }
+
+                        // Auto-set preferred runner based on what was used for installation
+                        // For Windows games, prefer Proton-GE > Proton > Wine
+                        if (taskPtr->game.preferredRunner.isEmpty()) {
+                            // Check what runner was available during installation
+                            QString dosboxExe = QStandardPaths::findExecutable("dosbox");
+                            if (dosboxExe.isEmpty()) {
+                                dosboxExe = QStandardPaths::findExecutable("dosbox-x");
+                            }
+
+                            // Check for Proton-GE first
+                            bool foundProtonGE = false;
+                            QStringList protonGePaths = {
+                                QDir::homePath() +
+                                    "/.steam/steam/compatibilitytools.d/GE-Proton*/proton",
+                                QDir::homePath() +
+                                    "/.local/share/Steam/compatibilitytools.d/GE-Proton*/proton"};
+
+                            for (const QString &pattern : protonGePaths) {
+                                QDir dir(QFileInfo(pattern).path());
+                                if (dir.exists()) {
+                                    QStringList entries =
+                                        dir.entryList(QStringList() << "GE-Proton*", QDir::Dirs,
+                                                      QDir::Name | QDir::Reversed);
+                                    if (!entries.isEmpty()) {
+                                        taskPtr->game.preferredRunner = "Proton-GE";
+                                        foundProtonGE = true;
+                                        break;
+                                    }
+                                }
+                            }
+
+                            // Fall back to Proton
+                            if (!foundProtonGE) {
+                                QStringList protonPaths = {
+                                    QDir::homePath() +
+                                        "/.steam/steam/steamapps/common/Proton*/proton",
+                                    QDir::homePath() +
+                                        "/.local/share/Steam/steamapps/common/Proton*/proton"};
+
+                                for (const QString &pattern : protonPaths) {
+                                    QDir dir(QFileInfo(pattern).path());
+                                    if (dir.exists()) {
+                                        QStringList entries =
+                                            dir.entryList(QStringList() << "Proton*", QDir::Dirs,
+                                                          QDir::Name | QDir::Reversed);
+                                        if (!entries.isEmpty()) {
+                                            taskPtr->game.preferredRunner = "Proton";
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Fall back to Wine
+                            if (taskPtr->game.preferredRunner.isEmpty()) {
+                                QStringList winePaths = {
+                                    QStandardPaths::findExecutable("wine-staging"),
+                                    QStandardPaths::findExecutable("wine-tkg"),
+                                    QStandardPaths::findExecutable("wine")};
+
+                                for (const QString &path : winePaths) {
+                                    if (!path.isEmpty()) {
+                                        if (path.contains("staging")) {
+                                            taskPtr->game.preferredRunner = "Wine-Staging";
+                                        } else if (path.contains("tkg")) {
+                                            taskPtr->game.preferredRunner = "Wine-TKG";
+                                        } else {
+                                            taskPtr->game.preferredRunner = "Wine";
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (!taskPtr->game.preferredRunner.isEmpty()) {
+                                LOG_INFO(
+                                    QString("Auto-set preferred runner to %1 for: %2")
+                                        .arg(taskPtr->game.preferredRunner, taskPtr->game.title));
+                            }
+                        }
+
+                        QString detectedRunner = taskPtr->game.preferredRunner;
+                        {
+                            QMutexLocker locker2(&tasksMutex_);
+                            if (!detectedRunner.isEmpty()) {
+                                detectedRunners_[taskPtr->gameId] = detectedRunner;
+                            }
+                        }
+
+                        emit installCompleted(taskPtr->gameId, installPath, detectedRunner);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(
+                                util::Result<QString>::success(installPath));
+                        }
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                    });
             },
             [this, gameId](qint64 received, qint64 total) {
                 // Check if task still exists

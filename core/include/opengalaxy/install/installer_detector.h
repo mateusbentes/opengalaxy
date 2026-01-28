@@ -84,9 +84,8 @@ class InstallerDetector {
      * @param outputPath Output directory
      * @return Command to execute (program and arguments)
      */
-    static QPair<QString, QStringList> getExtractionCommand(InstallerType type,
-                                                            const QString &filePath,
-                                                            const QString &outputPath);
+    static QPair<QString, QStringList>
+    getExtractionCommand(InstallerType type, const QString &filePath, const QString &outputPath);
 
     /**
      * @brief Get installation command for installer type
@@ -96,9 +95,8 @@ class InstallerDetector {
      * @param installPath Installation directory
      * @return Command to execute (program and arguments)
      */
-    static QPair<QString, QStringList> getInstallationCommand(InstallerType type,
-                                                              const QString &filePath,
-                                                              const QString &installPath);
+    static QPair<QString, QStringList>
+    getInstallationCommand(InstallerType type, const QString &filePath, const QString &installPath);
 
     /**
      * @brief Check if type requires extraction

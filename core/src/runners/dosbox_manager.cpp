@@ -57,9 +57,8 @@ bool DOSBoxManager::gracefullyTerminate(const QString &pid, int timeoutMs) {
         elapsed += checkInterval;
     }
 
-    LOG_WARNING(QString("Process %1 did not terminate within %2ms, forcing kill")
-                    .arg(pid)
-                    .arg(timeoutMs));
+    LOG_WARNING(
+        QString("Process %1 did not terminate within %2ms, forcing kill").arg(pid).arg(timeoutMs));
     return false;
 }
 

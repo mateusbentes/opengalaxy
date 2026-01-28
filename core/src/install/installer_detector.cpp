@@ -323,10 +323,9 @@ bool InstallerDetector::requiresInstallation(InstallerType type) {
 }
 
 QStringList InstallerDetector::supportedExtensions() {
-    return {"sh",    "bash",  "exe",  "zip",  "tar",  "gz",   "tgz",  "bz2",  "tbz2",
-            "7z",    "pkg",   "dmg",  "app",  "deb",  "rpm",  "msi",  "rar",  "iso",
-            "bin",   "cue",   "nrg",  "mdf",  "bat",  "cmd",  "ps1",  "py",   "rb",
-            "pl",    "js",    "jar",  "AppImage"};
+    return {"sh",  "bash", "exe", "zip", "tar", "gz",  "tgz", "bz2", "tbz2",    "7z",  "pkg",
+            "dmg", "app",  "deb", "rpm", "msi", "rar", "iso", "bin", "cue",     "nrg", "mdf",
+            "bat", "cmd",  "ps1", "py",  "rb",  "pl",  "js",  "jar", "AppImage"};
 }
 
 bool InstallerDetector::isLegacyDOSGame(const QString &title, const QStringList &genres) {
