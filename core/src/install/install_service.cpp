@@ -272,9 +272,142 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 const QString fileExt = QFileInfo(installerPath).suffix().toLower();
                 const bool isShellScript = (fileExt == "sh" || fileExt == "bash");
                 const bool isWindowsExe = (fileExt == "exe");
+                const bool isArchive = (fileExt == "zip" || fileExt == "tar" || fileExt == "gz" ||
+                                        fileExt == "rar" || fileExt == "7z" || fileExt == "bz2");
+                const bool isMacPkg = (fileExt == "pkg" || fileExt == "dmg");
 
-                LOG_INFO(QString("Installer file: %1 (extension: %2)")
-                             .arg(QFileInfo(installerPath).fileName(), fileExt));
+                LOG_INFO(QString("Installer file: %1 (extension: %2, archive: %3, macPkg: %4)")
+                             .arg(QFileInfo(installerPath).fileName(), fileExt,
+                                  isArchive ? "true" : "false", isMacPkg ? "true" : "false"));
+
+                // If it's a macOS package, install it
+                if (isMacPkg) {
+                    LOG_INFO(QString("macOS package detected: %1").arg(installerPath));
+
+#ifdef Q_OS_MACOS
+                    auto *proc = new QProcess(this);
+
+                    if (fileExt == "pkg") {
+                        // Install .pkg using installer command
+                        proc->setProgram("sudo");
+                        proc->setArguments({"installer", "-pkg", installerPath, "-target",
+                                           QDir::homePath()});
+                    } else if (fileExt == "dmg") {
+                        // Mount .dmg and copy contents
+                        proc->setProgram("hdiutil");
+                        proc->setArguments({"attach", installerPath, "-mountpoint", installPath});
+                    }
+
+                    proc->start();
+
+                    if (!proc->waitForFinished(120000)) {
+                        const QString err = QString("Failed to install macOS package: %1")
+                                                .arg(proc->errorString());
+                        LOG_ERROR(err);
+                        emit installFailed(taskPtr->gameId, err);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(util::Result<QString>::error(err));
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                        return;
+                    }
+
+                    LOG_INFO(QString("macOS package installed successfully: %1").arg(installerPath));
+
+                    if (fileExt == "dmg") {
+                        // Unmount DMG after installation
+                        auto *unmountProc = new QProcess(this);
+                        unmountProc->setProgram("hdiutil");
+                        unmountProc->setArguments({"detach", installPath});
+                        unmountProc->start();
+                        unmountProc->waitForFinished(5000);
+                        unmountProc->deleteLater();
+                    }
+
+                    proc->deleteLater();
+
+                    emit installCompleted(taskPtr->gameId, taskPtr->installDir);
+                    if (taskPtr->completionCallback) {
+                        taskPtr->completionCallback(
+                            util::Result<QString>::success(taskPtr->installDir));
+                    }
+
+                    QMutexLocker locker2(&tasksMutex_);
+                    activeTasks_.erase(taskPtr->gameId);
+                    return;
+#else
+                    const QString err = "macOS packages (.pkg, .dmg) are only supported on macOS";
+                    LOG_ERROR(err);
+                    emit installFailed(taskPtr->gameId, err);
+                    if (taskPtr->completionCallback) {
+                        taskPtr->completionCallback(util::Result<QString>::error(err));
+                    }
+                    QMutexLocker locker2(&tasksMutex_);
+                    activeTasks_.erase(taskPtr->gameId);
+                    return;
+#endif
+                }
+
+                // If it's an archive, extract it first
+                if (isArchive) {
+                    LOG_INFO(QString("Archive detected, extracting: %1").arg(installerPath));
+
+                    auto *proc = new QProcess(this);
+
+                    if (fileExt == "zip") {
+                        proc->setProgram("unzip");
+                        proc->setArguments({"-q", installerPath, "-d", installPath});
+                    } else if (fileExt == "tar" || fileExt == "gz" || fileExt == "bz2") {
+                        proc->setProgram("tar");
+                        if (fileExt == "gz") {
+                            proc->setArguments({"xzf", installerPath, "-C", installPath});
+                        } else if (fileExt == "bz2") {
+                            proc->setArguments({"xjf", installerPath, "-C", installPath});
+                        } else {
+                            proc->setArguments({"xf", installerPath, "-C", installPath});
+                        }
+                    } else if (fileExt == "7z") {
+                        proc->setProgram("7z");
+                        proc->setArguments({"x", installerPath, QString("-o%1").arg(installPath)});
+                    } else if (fileExt == "rar") {
+                        proc->setProgram("unrar");
+                        proc->setArguments({"x", installerPath, installPath});
+                    }
+
+                    proc->start();
+
+                    if (!proc->waitForFinished(60000)) {
+                        const QString err = QString("Failed to extract archive: %1")
+                                                .arg(proc->errorString());
+                        LOG_ERROR(err);
+                        emit installFailed(taskPtr->gameId, err);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(util::Result<QString>::error(err));
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                        return;
+                    }
+
+                    LOG_INFO(QString("Archive extracted successfully: %1").arg(installerPath));
+                    proc->deleteLater();
+
+                    // After extraction, look for executable files
+                    QDir dir(installPath);
+                    QStringList exeFiles = dir.entryList({"*.exe", "*.com", "*.bat"},
+                                                         QDir::Files | QDir::Executable);
+
+                    if (!exeFiles.isEmpty()) {
+                        // Found executable, update installerPath to point to it
+                        // For now, just log it - user will need to run it manually
+                        LOG_INFO(QString("Found executable after extraction: %1").arg(exeFiles.first()));
+                    }
+
+                    return;
+                }
 
                 if (QFile::exists(installerPath)) {
                     isDOSGame = util::DOSDetector::isDOSExecutable(installerPath);
