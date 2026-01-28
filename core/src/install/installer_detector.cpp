@@ -3,6 +3,7 @@
 #include "opengalaxy/util/dos_detector.h"
 #include "opengalaxy/util/log.h"
 
+#include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QSysInfo>
