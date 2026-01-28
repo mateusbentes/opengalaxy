@@ -194,7 +194,33 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
         }
 
         // Step 2: Download installer to installDir
-        const QString installerPath = taskPtr->installDir + "/" + taskPtr->game.title + ".exe";
+        // Extract filename from the ACTUAL download URL (downlink), not the API URL
+        QString installerFilename = taskPtr->game.title + ".exe"; // Default fallback
+        
+        LOG_INFO(QString("Actual download URL: %1").arg(downlink));
+        
+        // Extract filename from downlink URL (before query parameters)
+        QString urlPath = downlink;
+        
+        // Remove query parameters first
+        const int questionMark = urlPath.indexOf('?');
+        if (questionMark > 0) {
+            urlPath = urlPath.left(questionMark);
+        }
+        
+        // Extract filename from path
+        const int lastSlash = urlPath.lastIndexOf('/');
+        if (lastSlash >= 0) {
+            const QString urlFilename = urlPath.mid(lastSlash + 1);
+            LOG_INFO(QString("Extracted filename from downlink: %1").arg(urlFilename));
+            if (!urlFilename.isEmpty() && urlFilename.contains('.')) {
+                installerFilename = urlFilename;
+                LOG_INFO(QString("Using downlink filename: %1").arg(installerFilename));
+            }
+        }
+        
+        LOG_INFO(QString("Final installer filename: %1").arg(installerFilename));
+        const QString installerPath = taskPtr->installDir + "/" + installerFilename;
 
         InstallProgress prog;
         prog.gameId = taskPtr->gameId;
@@ -257,8 +283,62 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
                 // If it's a shell script or Windows EXE, don't use metadata for DOS detection
                 // Shell scripts are native Linux installers, not DOS
                 if (isShellScript) {
-                    LOG_INFO("Shell script detected - not a DOS game");
+                    LOG_INFO("Shell script detected - running as native Linux installer");
                     isDOSGame = false;
+                    
+                    // Run shell script directly
+                    auto *proc = new QProcess(this);
+                    proc->setProgram("/bin/bash");
+                    proc->setArguments({installerPath});
+                    proc->setWorkingDirectory(installPath);
+                    
+                    // Make script executable
+                    QFile scriptFile(installerPath);
+                    scriptFile.setPermissions(scriptFile.permissions() | QFile::ExeOwner | QFile::ExeGroup | QFile::ExeOther);
+                    
+                    proc->start();
+                    
+                    if (!proc->waitForStarted(5000)) {
+                        const QString err =
+                            QString("Failed to start shell script installer: %1").arg(proc->errorString());
+                        LOG_ERROR(err);
+                        emit installFailed(taskPtr->gameId, err);
+                        if (taskPtr->completionCallback) {
+                            taskPtr->completionCallback(util::Result<QString>::error(err));
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker2(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                        return;
+                    }
+                    
+                    LOG_INFO(QString("Shell script installer started: %1").arg(installerPath));
+                    
+                    // Wait for shell script to finish
+                    connect(proc, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+                            [this, taskPtr, proc](int exitCode, QProcess::ExitStatus exitStatus) {
+                        if (exitCode == 0 && exitStatus == QProcess::NormalExit) {
+                            LOG_INFO(QString("Shell script installer completed: %1").arg(taskPtr->game.title));
+                            emit installCompleted(taskPtr->gameId, taskPtr->installDir);
+                            if (taskPtr->completionCallback) {
+                                taskPtr->completionCallback(
+                                    util::Result<QString>::success(taskPtr->installDir));
+                            }
+                        } else {
+                            const QString err = QString("Shell script installer failed with exit code: %1")
+                                                    .arg(exitCode);
+                            LOG_ERROR(err);
+                            emit installFailed(taskPtr->gameId, err);
+                            if (taskPtr->completionCallback) {
+                                taskPtr->completionCallback(util::Result<QString>::error(err));
+                            }
+                        }
+                        proc->deleteLater();
+                        QMutexLocker locker(&tasksMutex_);
+                        activeTasks_.erase(taskPtr->gameId);
+                    });
+                    
+                    return;
                 } else if (isWindowsExe && !isDOSGame) {
                     // Windows EXE that's not pure DOS - use metadata as fallback
                     isDOSGame = util::DOSDetector::isDOSGameByMetadata(
