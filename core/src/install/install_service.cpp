@@ -518,9 +518,65 @@ void InstallService::installGame(const api::GameInfo &game, const QString &insta
 
                     if (isWindowsExe) {
                         // Legacy DOS game packaged as Windows installer
-                        // Use Wine/Proton to run the installer, then DOSBox for the game
-                        LOG_INFO("Legacy DOS game with Windows installer - using Wine/Proton to "
-                                 "install");
+                        // Try to extract using innoextract first (automatic, no display needed)
+                        // Fall back to Wine/Proton if innoextract not available
+                        LOG_INFO("Legacy DOS game with Windows installer - attempting automatic extraction");
+
+                        // First, try innoextract (works for Inno Setup installers, which GOG uses)
+                        QString innoextractExe = QStandardPaths::findExecutable("innoextract");
+                        if (!innoextractExe.isEmpty()) {
+                            LOG_INFO("Found innoextract, attempting automatic extraction");
+                            
+                            auto *extractProc = new QProcess(this);
+                            extractProc->setProgram(innoextractExe);
+                            extractProc->setArguments({
+                                "--silent",           // Silent mode
+                                "--low-memory",       // Low memory mode
+                                "-d", installPath,    // Extract to install path
+                                installerPath         // Installer file
+                            });
+                            extractProc->setWorkingDirectory(installPath);
+                            
+                            extractProc->start();
+                            
+                            if (extractProc->waitForFinished(300000)) {  // 5 minute timeout
+                                int exitCode = extractProc->exitCode();
+                                if (exitCode == 0) {
+                                    LOG_INFO(QString("innoextract completed successfully for: %1")
+                                                 .arg(taskPtr->game.title));
+                                    
+                                    // Auto-set preferred runner to DOSBox for DOS games
+                                    taskPtr->game.preferredRunner = "DOSBox";
+                                    LOG_INFO(QString("Auto-set preferred runner to DOSBox for: %1")
+                                                 .arg(taskPtr->game.title));
+                                    
+                                    {
+                                        QMutexLocker locker(&tasksMutex_);
+                                        detectedRunners_[taskPtr->gameId] = "DOSBox";
+                                    }
+                                    
+                                    emit installCompleted(taskPtr->gameId, taskPtr->installDir, "DOSBox");
+                                    if (taskPtr->completionCallback) {
+                                        taskPtr->completionCallback(util::Result<QString>::success(
+                                            taskPtr->installDir));
+                                    }
+                                    
+                                    extractProc->deleteLater();
+                                    QMutexLocker locker2(&tasksMutex_);
+                                    activeTasks_.erase(taskPtr->gameId);
+                                    return;
+                                } else {
+                                    LOG_WARNING(QString("innoextract failed with exit code %1, falling back to Wine")
+                                                   .arg(exitCode));
+                                }
+                            } else {
+                                LOG_WARNING("innoextract timed out, falling back to Wine");
+                            }
+                            
+                            extractProc->deleteLater();
+                        } else {
+                            LOG_INFO("innoextract not found, will use Wine/Proton to install");
+                        }
 
                         // Find Wine/Proton (same logic as Windows games)
                         QString wineExe;
