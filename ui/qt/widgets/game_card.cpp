@@ -18,8 +18,12 @@ namespace opengalaxy {
 namespace ui {
 
 GameCard::GameCard(const QString &gameId, const QString &title, const QString &platform,
-                   const QString &coverUrl, QWidget *parent)
+                   const QString &coverUrl, const QDateTime &releaseDate, QWidget *parent)
     : QWidget(parent), gameId_(gameId) {
+    // Check if game is unreleased (release date is in the future)
+    // Also consider games with no downloads as potentially unreleased
+    bool isUnreleased = releaseDate.isValid() && releaseDate > QDateTime::currentDateTime();
+    setUnreleased(isUnreleased);
     setFixedSize(420, 310);
     setCursor(Qt::PointingHandCursor);
 
@@ -491,6 +495,39 @@ void GameCard::setRepairNeeded(bool needed) {
 void GameCard::setRepairing(bool repairing) {
     repairing_ = repairing;
     refreshButton();
+}
+
+void GameCard::setUnreleased(bool unreleased) {
+    unreleased_ = unreleased;
+    
+    if (!unreleasedWarning_) {
+        // Create warning label if it doesn't exist
+        unreleasedWarning_ = new QLabel(this);
+        unreleasedWarning_->setStyleSheet(R"(
+            QLabel {
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #ff9800, stop:1 #f57c00);
+                color: white;
+                font-size: 14px;
+                font-weight: 700;
+                padding: 8px 16px;
+                border-radius: 8px;
+                qproperty-alignment: AlignCenter;
+            }
+        )");
+        unreleasedWarning_->setText("⏳ UNRELEASED");
+        unreleasedWarning_->setFixedSize(180, 40);
+        unreleasedWarning_->hide();
+        
+        // Position it in the top right corner of the cover
+        if (coverImage) {
+            unreleasedWarning_->move(coverImage->width() - unreleasedWarning_->width() - 12, 12);
+        }
+    }
+    
+    if (unreleasedWarning_) {
+        unreleasedWarning_->setVisible(unreleased);
+    }
 }
 
 } // namespace ui

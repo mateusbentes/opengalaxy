@@ -1,6 +1,7 @@
 #ifndef GAME_CARD_H
 #define GAME_CARD_H
 
+#include <QDateTime>
 #include <QGraphicsDropShadowEffect>
 #include <QLabel>
 #include <QProgressBar>
@@ -18,7 +19,7 @@ class GameCard : public QWidget {
     enum class ActionState { Install, Installing, Play };
 
     explicit GameCard(const QString &gameId, const QString &title, const QString &platform,
-                      const QString &coverUrl, QWidget *parent = nullptr);
+                      const QString &coverUrl, const QDateTime &releaseDate = QDateTime(), QWidget *parent = nullptr);
     ~GameCard();
 
     void setInstalled(bool installed);
@@ -28,6 +29,7 @@ class GameCard : public QWidget {
     void setUpdating(bool updating);
     void setRepairNeeded(bool needed);
     void setRepairing(bool repairing);
+    void setUnreleased(bool unreleased);
 
   signals:
     void playRequested(const QString &gameId);
@@ -59,6 +61,7 @@ class GameCard : public QWidget {
     bool updating_ = false;
     bool repairNeeded_ = false;
     bool repairing_ = false;
+    bool unreleased_ = false;
     QString newVersion_;
 
     QLabel *coverImage = nullptr;
@@ -69,6 +72,7 @@ class GameCard : public QWidget {
     QPushButton *updateButton_ = nullptr;
     QPushButton *repairButton_ = nullptr;
     QProgressBar *progressBar_ = nullptr;
+    QLabel *unreleasedWarning_ = nullptr;
 
     QGraphicsDropShadowEffect *shadowEffect = nullptr;
     QPropertyAnimation *hoverAnimation = nullptr;

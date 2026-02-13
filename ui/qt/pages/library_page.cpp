@@ -172,7 +172,7 @@ void LibraryPage::refreshLibrary(bool forceRefresh) {
             // Create cards for all games
             for (const auto &game : allGames_) {
                 auto *card = new GameCard(game.id, game.title, game.platform, game.coverUrl,
-                                          gameGrid->parentWidget());
+                                          game.releaseDate, gameGrid->parentWidget());
                 card->setInstalled(game.isInstalled);
                 card->show(); // Explicitly show the card
 
