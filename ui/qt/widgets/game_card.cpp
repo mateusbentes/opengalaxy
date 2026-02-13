@@ -499,7 +499,7 @@ void GameCard::setRepairing(bool repairing) {
 
 void GameCard::setUnreleased(bool unreleased) {
     unreleased_ = unreleased;
-    
+
     if (!unreleasedWarning_) {
         // Create warning label if it doesn't exist
         unreleasedWarning_ = new QLabel(this);
@@ -518,13 +518,13 @@ void GameCard::setUnreleased(bool unreleased) {
         unreleasedWarning_->setText("⏳ UNRELEASED");
         unreleasedWarning_->setFixedSize(180, 40);
         unreleasedWarning_->hide();
-        
+
         // Position it in the top right corner of the cover
         if (coverImage) {
             unreleasedWarning_->move(coverImage->width() - unreleasedWarning_->width() - 12, 12);
         }
     }
-    
+
     if (unreleasedWarning_) {
         unreleasedWarning_->setVisible(unreleased);
     }

@@ -19,7 +19,8 @@ class GameCard : public QWidget {
     enum class ActionState { Install, Installing, Play };
 
     explicit GameCard(const QString &gameId, const QString &title, const QString &platform,
-                      const QString &coverUrl, const QDateTime &releaseDate = QDateTime(), QWidget *parent = nullptr);
+                      const QString &coverUrl, const QDateTime &releaseDate = QDateTime(),
+                      QWidget *parent = nullptr);
     ~GameCard();
 
     void setInstalled(bool installed);
